@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { font-family: Arial; margin: 20px; }
+    body { font-family: Arial, sans-serif; margin: 20px; }
     label { display: block; margin-top: 10px; }
     input, select, textarea, button { width: 100%; padding: 8px; margin-top: 5px; }
     button { margin-top: 15px; font-size: 16px; }
@@ -34,87 +34,94 @@
 </form>
 
 <script>
-var profile = null;
+  var profile = null;
 
-async function initLIFF() {
-  try {
-    await liff.init({ liffId: "2008875334-eZXiyz43" });
-    if (!liff.isLoggedIn()) liff.login();
-    profile = await liff.getProfile();
-  } catch (err) {
-    alert("ไม่สามารถโหลด LIFF: " + err.message);
+  // Initialize LIFF
+  async function initLIFF() {
+    try {
+      await liff.init({ liffId: "2008875334-eZXiyz43" });  // Replace with your LIFF ID
+      if (!liff.isLoggedIn()) liff.login();
+      profile = await liff.getProfile();
+    } catch (err) {
+      alert("ไม่สามารถโหลด LIFF: " + err.message);
+    }
   }
-}
 
-// Resize รูปก่อนส่ง
-function resizeImage(file, maxSize=1024, quality=0.7) {
-  return new Promise((resolve, reject) => {
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var img = new Image();
-      img.onload = function() {
-        var width = img.width;
-        var height = img.height;
-        if (width > height && width > maxSize) { height *= maxSize / width; width = maxSize; }
-        else if (height > maxSize) { width *= maxSize / height; height = maxSize; }
+  // Resize Image before sending (optional)
+  function resizeImage(file, maxSize = 1024, quality = 0.7) {
+    return new Promise((resolve, reject) => {
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var img = new Image();
+        img.onload = function () {
+          var width = img.width;
+          var height = img.height;
+          if (width > height && width > maxSize) { height *= maxSize / width; width = maxSize; }
+          else if (height > maxSize) { width *= maxSize / height; height = maxSize; }
 
-        var canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL("image/jpeg", quality).split(",")[1]);
+          var canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", quality).split(",")[1]);
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
       };
-      img.onerror = reject;
-      img.src = e.target.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-document.getElementById("repairForm").addEventListener("submit", async function(e) {
-  e.preventDefault();
-  if (!profile) { alert("ไม่สามารถโหลดข้อมูลผู้ใช้ LINE"); return; }
-
-  var imageBase64 = "";
-  var imageType = "";
-  var fileInput = document.getElementById("imageFile");
-  if (fileInput.files.length > 0) {
-    var file = fileInput.files[0];
-    var allowed = ["image/jpeg","image/jpg","image/png"];
-    if (!allowed.includes(file.type)) { alert("รองรับเฉพาะไฟล์ jpg, jpeg, png"); return; }
-    imageType = file.type;
-    imageBase64 = await resizeImage(file, 1024, 0.7);
-  }
-
-  var payload = {
-    uid: profile.userId,
-    displayName: profile.displayName,
-    department: document.getElementById("department").value,
-    phone: document.getElementById("phone").value,
-    device: document.getElementById("device").value,
-    issue: document.getElementById("issue").value,
-    priority: document.getElementById("priority").value,
-    imageBase64: imageBase64,
-    imageType: imageType
-  };
-
-  try {
-    var res = await fetch("https://script.google.com/macros/s/AKfycbzNnHQduayFAfB2Ynu-_pOBX4VrNbr-wBJcZS6MZAfAS-b8B9f3oEPwpmEDYDAKencvDw/exec", {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" }
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
     });
-    var result = await res.json();
-    if (result.result !== "ok") { alert("ไม่สำเร็จ: " + result.message); return; }
-    alert("ส่งข้อมูลเรียบร้อยแล้ว");
-    liff.closeWindow();
-  } catch (err) {
-    alert("เกิดข้อผิดพลาด: " + err.message);
   }
-});
 
-initLIFF();
+  // Handle form submission
+  document.getElementById("repairForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    if (!profile) { alert("ไม่สามารถโหลดข้อมูลผู้ใช้ LINE"); return; }
+
+    var imageBase64 = "";
+    var imageType = "";
+    var fileInput = document.getElementById("imageFile");
+    if (fileInput.files.length > 0) {
+      var file = fileInput.files[0];
+      var allowed = ["image/jpeg", "image/jpg", "image/png"];
+      if (!allowed.includes(file.type)) { alert("รองรับเฉพาะไฟล์ jpg, jpeg, png"); return; }
+      imageType = file.type;
+      imageBase64 = await resizeImage(file, 1024, 0.7);
+    }
+
+    // Prepare payload for the POST request
+    var payload = {
+      uid: profile.userId,
+      displayName: profile.displayName,
+      department: document.getElementById("department").value,
+      phone: document.getElementById("phone").value,
+      device: document.getElementById("device").value,
+      issue: document.getElementById("issue").value,
+      priority: document.getElementById("priority").value,
+      imageBase64: imageBase64,
+      imageType: imageType
+    };
+
+    try {
+      var res = await fetch("https://script.google.com/macros/s/AKfycbzNnHQduayFAfB2Ynu-_pOBX4VrNbr-wBJcZS6MZAfAS-b8B9f3oEPwpmEDYDAKencvDw/exec", {  // Replace with your Web App URL
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "application/json" }
+      });
+      var result = await res.json();
+      if (result.result !== "ok") {
+        alert("ไม่สำเร็จ: " + result.message);
+        return;
+      }
+      alert("ส่งข้อมูลเรียบร้อยแล้ว");
+      liff.closeWindow();
+    } catch (err) {
+      alert("เกิดข้อผิดพลาด: " + err.message);
+    }
+  });
+
+  // Initialize LIFF
+  initLIFF();
 </script>
 </body>
 </html>
