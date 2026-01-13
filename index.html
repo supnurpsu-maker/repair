@@ -45,8 +45,17 @@
     <label>เบอร์โทรศัพท์ติดต่อ</label>
     <input type="tel" id="phone" placeholder="เช่น 0812345678" required>
     
-    <label>อุปกรณ์ที่เสีย</label>
-    <input type="text" id="device" placeholder="เช่น จอภาพ, ปรินเตอร์, PC" required>
+    <label>ประเภทอุปกรณ์</label>
+      <select id="device" required>
+        <option value="">-- เลือกประเภทอุปกรณ์ --</option>
+        <option value="Computer AIO">Computer AIO</option>
+        <option value="Laptop">Laptop</option>
+        <option value="Network">Network</option>
+        <option value="ZOOM">ZOOM</option>
+        <option value="UC-Phone">UC-Phone</option>
+        <option value="CCTV-FingerPrint scan">CCTV-FingerPrint scan</option>
+        <option value="Others">Others</option>
+      </select>
     
     <label>รายละเอียดปัญหา</label>
     <textarea id="issue" placeholder="ระบุอาการเสียเบื้องต้น" required></textarea>
