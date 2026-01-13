@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>แจ้งซ่อมคอมพิวเตอร์</title>
+
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, select, textarea, button {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+    }
+    button { background: #06c755; color: white; border: none; }
+  </style>
+</head>
+
+<body>
+  <h2>แจ้งซ่อมคอมพิวเตอร์</h2>
+
+  <form id="repairForm">
+    <input id="department" placeholder="แผนก" required>
+    <input id="phone" placeholder="เบอร์โทร" required>
+
+    <select id="device">
+      <option value="PC">PC</option>
+      <option value="Notebook">Notebook</option>
+      <option value="Printer">Printer</option>
+    </select>
+
+    <textarea id="issue" placeholder="อาการเสีย" required></textarea>
+
+    <select id="priority">
+      <option value="ปกติ">ปกติ</option>
+      <option value="ด่วน">ด่วน</option>
+    </select>
+
+    <button type="submit">ส่งแจ้งซ่อม</button>
+  </form>
+
+  <script>
+    async function initLIFF() {
+      await liff.init({ liffId: "2008875334-eZXiyz43" });
+
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return;
+      }
+
+      const profile = await liff.getProfile();
+
+      document.getElementById("repairForm")
+        .addEventListener("submit", async e => {
+          e.preventDefault();
+
+          const data = {
+            uid: profile.userId,
+            displayName: profile.displayName,
+            department: department.value,
+            phone: phone.value,
+            device: device.value,
+            issue: issue.value,
+            priority: priority.value
+          };
+
+          await fetch("https://script.google.com/macros/s/AKfycby6Sop9FVIzsvunBpEP2YzAUxf4H8tLakOVIbfsCxn6ATbP3s6CjWdqIbxQ77uvn7Aozw/exec", {
+            method: "POST",
+            body: JSON.stringify(data)
+          });
+
+          alert("แจ้งซ่อมเรียบร้อย");
+          liff.closeWindow();
+        });
+    }
+
+    initLIFF();
+  </script>
+</body>
+</html>
