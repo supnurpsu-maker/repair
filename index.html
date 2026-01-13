@@ -35,6 +35,9 @@
         <option value="ต่ำ">ต่ำ</option>
       </select>
     </label>
+    <label>แนบรูป (ถ้ามี)
+      <input type="file" id="imageFile" accept="image/*">
+    </label>
     <button type="submit">ส่งแจ้งซ่อม</button>
   </form>
 
@@ -74,10 +77,21 @@
       const issue = document.getElementById("issue").value.trim();
       const priority = document.getElementById("priority").value;
 
-      // Validate
       if (!department || !phone || !device || !issue || !priority) {
         alert("กรุณากรอกข้อมูลให้ครบทุกช่อง");
         return;
+      }
+
+      // อ่านไฟล์รูปถ้ามี
+      let imageBase64 = "";
+      const fileInput = document.getElementById("imageFile");
+      if(fileInput.files.length > 0){
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        await new Promise(resolve => {
+          reader.onload = () => { imageBase64 = reader.result.split(',')[1]; resolve(); };
+          reader.readAsDataURL(file);
+        });
       }
 
       const data = {
@@ -87,7 +101,8 @@
         phone,
         device,
         issue,
-        priority
+        priority,
+        imageBase64
       };
 
       console.log("Data to send:", data);
