@@ -17,7 +17,7 @@ button { margin-top: 15px; font-size: 16px; }
 <h2>แบบฟอร์มแจ้งซ่อมคอมพิวเตอร์</h2>
 
 <form id="repairForm">
-  <label>แผนก<input type="text" id="department" required></label>
+  <label>ห้อง<input type="text" id="department" required></label>
   <label>เบอร์โทร<input type="text" id="phone" required></label>
   <label>อุปกรณ์<input type="text" id="device" required></label>
   <label>ปัญหา<textarea id="issue" required></textarea></label>
@@ -102,7 +102,7 @@ document.getElementById("repairForm").addEventListener("submit", async function 
   };
 
   try {
-    var res = await fetch("https://script.google.com/macros/s/AKfycbzkCzenjGdIaQfeKKNnXLPXkawXhUxZwEGmIyP_equwt0bpZ6r14U4P97PpKHDlfPD5/exec", { // ใส่ Web App URL
+    var res = await fetch("https://script.google.com/macros/s/AKfycbyGb8E_VU2Cb0fvvh0rJSQYTODVELyVRrn2eVltJqM4nxxU0pgvsSqbBzWDdCIq2yTg/exec", { // ใส่ Web App URL
       method: "POST",
       body: JSON.stringify(payload),
       headers: { "Content-Type": "application/json" }
