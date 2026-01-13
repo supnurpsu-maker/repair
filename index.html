@@ -6,56 +6,60 @@
   <title>แจ้งซ่อมคอมพิวเตอร์</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    :root { --primary-color: #06C755; }
-    body { font-family: -apple-system, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; color: #333; }
-    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    h2 { text-align: center; color: var(--primary-color); margin-bottom: 20px; }
+    :root { --primary-color: #06C755; --error-color: #ff4d4f; }
+    body { font-family: -apple-system, sans-serif; background-color: #f5f5f5; margin: 0; padding: 15px; }
+    .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); max-width: 500px; margin: auto; }
+    h2 { text-align: center; color: var(--primary-color); margin-top: 0; }
     
-    label { display: block; margin-top: 15px; font-weight: bold; font-size: 14px; }
+    .profile-info { display: flex; align-items: center; gap: 12px; background: #f9f9f9; padding: 10px; border-radius: 10px; margin-bottom: 20px; }
+    .profile-info img { width: 45px; height: 45px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .profile-info span { font-size: 14px; font-weight: 600; color: #555; }
+
+    label { display: block; margin-top: 15px; font-weight: bold; font-size: 14px; color: #444; }
     input, select, textarea { 
-      width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; 
-      border-radius: 8px; box-sizing: border-box; font-size: 16px; 
+      width: 100%; padding: 12px; margin-top: 6px; border: 1px solid #ddd; 
+      border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none;
     }
-    textarea { height: 80px; resize: none; }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary-color); }
+    textarea { height: 90px; resize: none; }
     
     button { 
-      width: 100%; padding: 14px; margin-top: 25px; font-size: 18px; font-weight: bold;
+      width: 100%; padding: 15px; margin-top: 25px; font-size: 18px; font-weight: bold;
       background-color: var(--primary-color); color: white; border: none; border-radius: 8px; 
-      cursor: pointer; transition: background 0.3s;
+      cursor: pointer; transition: 0.3s;
     }
-    button:disabled { background-color: #ccc; }
-    .profile-info { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 14px; }
-    .profile-info img { width: 40px; border-radius: 50%; }
+    button:disabled { background-color: #ccc; cursor: not-allowed; }
+    .hint { font-size: 12px; color: #888; margin-top: 4px; }
   </style>
 </head>
 <body>
 
 <div class="card">
-  <h2>แจ้งซ่อมคอมพิวเตอร์</h2>
+  <h2>แจ้งซ่อม IT Support</h2>
   
   <div id="userProfile" class="profile-info" style="display:none;">
     <img id="userImg" src="" alt="profile">
-    <span id="userName">กำลังโหลดข้อมูลผู้ใช้...</span>
+    <span id="userName">กำลังโหลด...</span>
   </div>
 
   <form id="repairForm">
     <label>ห้อง/แผนก</label>
     <input type="text" id="department" placeholder="ระบุเลขห้องหรือชื่อแผนก" required>
     
-    <label>เบอร์โทรศัพท์ติดต่อ</label>
-    <input type="tel" id="phone" placeholder="เช่น 0812345678" required>
+    <label>เบอร์โทรศัพท์</label>
+    <input type="tel" id="phone" placeholder="เช่น 08XXXXXXXX" required>
     
     <label>ประเภทอุปกรณ์</label>
-      <select id="device" required>
-        <option value="">-- เลือกประเภทอุปกรณ์ --</option>
-        <option value="Computer AIO">Computer AIO</option>
-        <option value="Laptop">Laptop</option>
-        <option value="Network">Network</option>
-        <option value="ZOOM">ZOOM</option>
-        <option value="UC-Phone">UC-Phone</option>
-        <option value="CCTV-FingerPrint scan">CCTV-FingerPrint scan</option>
-        <option value="Others">Others</option>
-      </select>
+    <select id="device" required>
+      <option value="">-- เลือกประเภทอุปกรณ์ --</option>
+      <option value="Computer AIO">Computer AIO</option>
+      <option value="Laptop">Laptop</option>
+      <option value="Network">Network</option>
+      <option value="ZOOM">ZOOM</option>
+      <option value="UC-Phone">UC-Phone</option>
+      <option value="CCTV-FingerPrint scan">CCTV-FingerPrint scan</option>
+      <option value="Others">Others</option>
+    </select>
     
     <label>รายละเอียดปัญหา</label>
     <textarea id="issue" placeholder="ระบุอาการเสียเบื้องต้น" required></textarea>
@@ -68,14 +72,16 @@
       <option value="ต่ำ">🟢 ต่ำ (สอบถาม/ขอคำแนะนำ)</option>
     </select>
     
-    <label>แนบรูปภาพ (ถ้ามี)</label>
+    <label>แนบรูปภาพ</label>
     <input type="file" id="imageFile" accept="image/jpeg,image/png">
+    <p class="hint">*รองรับเฉพาะไฟล์รูปภาพ .jpg, .png</p>
     
     <button type="submit" id="submitBtn">ส่งแจ้งซ่อม</button>
   </form>
 </div>
 
 <script>
+// --- ตั้งค่า LIFF และ Web App ---
 const LIFF_ID = "2008875334-eZXiyz43"; 
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwm4TWCHwWMruixhziJS2O0IucQXYOzFPrVPuTNab0Pvy-bUF_ZBX-ABMILPI5vd0m5/exec";
 
@@ -93,7 +99,7 @@ async function initLIFF() {
       document.getElementById("userName").innerText = "ผู้แจ้ง: " + userProfile.displayName;
     }
   } catch (err) {
-    console.error("LIFF Init Error:", err);
+    console.error("LIFF Error:", err);
   }
 }
 
@@ -106,12 +112,10 @@ function resizeImage(file, maxSize = 1024) {
       img.src = e.target.result;
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        let width = img.width;
-        let height = img.height;
+        let width = img.width, height = img.height;
         if (width > height && width > maxSize) { height *= maxSize / width; width = maxSize; }
         else if (height > maxSize) { width *= maxSize / height; height = maxSize; }
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = width; canvas.height = height;
         canvas.getContext("2d").drawImage(img, 0, 0, width, height);
         resolve(canvas.toDataURL("image/jpeg", 0.8).split(",")[1]);
       };
@@ -122,11 +126,7 @@ function resizeImage(file, maxSize = 1024) {
 document.getElementById("repairForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const submitBtn = document.getElementById("submitBtn");
-  
-  if (!userProfile) {
-    alert("กรุณารอโหลดข้อมูล Profile สักครู่");
-    return;
-  }
+  if (!userProfile) return alert("กรุณารอโหลดข้อมูล Profile");
 
   submitBtn.disabled = true;
   submitBtn.innerText = "กำลังส่งข้อมูล...";
@@ -151,15 +151,38 @@ document.getElementById("repairForm").addEventListener("submit", async (e) => {
   try {
     const response = await fetch(WEB_APP_URL, {
       method: "POST",
-      mode: "no-cors", // ใช้ no-cors หาก Google Script ไม่ได้ตั้งค่า CORS ไว้
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" }
+      body: JSON.stringify(payload)
     });
+    const result = await response.json();
 
-    // เนื่องจากใช้ no-cors เราจะไม่สามารถอ่าน response ได้ตรงๆ 
-    // แต่ถ้าส่งสำเร็จ Google Script จะทำงานปกติ
-    alert("ส่งข้อมูลแจ้งซ่อมเรียบร้อยแล้ว!");
-    liff.closeWindow();
+    if (result.result === "ok") {
+      // ส่ง Flex Message กลับในแชท
+      if (liff.getContext().type !== "none") {
+        await liff.sendMessages([{
+          "type": "flex",
+          "altText": "แจ้งซ่อมสำเร็จ",
+          "contents": {
+            "type": "bubble",
+            "size": "mega",
+            "header": { "type": "box", "layout": "vertical", "contents": [{ "type": "text", "text": "รับเรื่องแจ้งซ่อมเรียบร้อย", "weight": "bold", "color": "#FFFFFF", "size": "lg" }], "backgroundColor": "#06C755" },
+            "body": { "type": "box", "layout": "vertical", "contents": [
+              { "type": "text", "text": "รายละเอียดข้อมูล", "weight": "bold", "size": "md", "margin": "md" },
+              { "type": "separator", "margin": "md" },
+              { "type": "box", "layout": "vertical", "margin": "lg", "spacing": "sm", "contents": [
+                { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "อุปกรณ์", "color": "#aaaaaa", "size": "sm", "flex": 2 }, { "type": "text", "text": payload.device, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }]},
+                { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "ปัญหา", "color": "#aaaaaa", "size": "sm", "flex": 2 }, { "type": "text", "text": payload.issue, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }]},
+                { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "ความด่วน", "color": "#aaaaaa", "size": "sm", "flex": 2 }, { "type": "text", "text": payload.priority, "wrap": true, "color": payload.priority === 'สูง' ? "#FF0000" : "#666666", "size": "sm", "flex": 5, "weight": "bold" }]}
+              ]}
+            ]},
+            "footer": { "type": "box", "layout": "vertical", "contents": [{ "type": "text", "text": "ติดต่อกลับ: " + payload.phone, "size": "xs", "color": "#888888", "align": "center" }] }
+          }
+        }]);
+      }
+      alert("ส่งข้อมูลแจ้งซ่อมเรียบร้อยแล้ว!");
+      liff.closeWindow();
+    } else {
+      throw new Error(result.message);
+    }
   } catch (err) {
     alert("เกิดข้อผิดพลาด: " + err.message);
     submitBtn.disabled = false;
