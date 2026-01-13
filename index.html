@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>แจ้งซ่อมคอมพิวเตอร์</title>
+<title>แบบฟอร์มแจ้งซ่อมคอมพิวเตอร์</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
@@ -17,7 +17,7 @@ button { margin-top: 15px; font-size: 16px; }
 <h2>แบบฟอร์มแจ้งซ่อมคอมพิวเตอร์</h2>
 
 <form id="repairForm">
-  <label>แผนก<input type="text" id="department" required></label>
+  <label>ห้อง<input type="text" id="department" required></label>
   <label>เบอร์โทร<input type="text" id="phone" required></label>
   <label>อุปกรณ์<input type="text" id="device" required></label>
   <label>ปัญหา<textarea id="issue" required></textarea></label>
@@ -34,15 +34,15 @@ button { margin-top: 15px; font-size: 16px; }
 </form>
 
 <script>
+const LIFF_ID = "2008875334-eZXiyz43"; // ใส่ LIFF ID
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyGL8eY3ae7pHGMyPOSibNgaMRzJFqIA6IoImjc4XFB1643-carfV_jsjVbsIcKAZDk/exec?v=" + Date.now(); // ป้องกัน cache
+
 let profile = null;
 
-// ป้องกัน cache ด้วย query string
-const webAppUrl = "https://script.google.com/macros/s/AKfycbyGL8eY3ae7pHGMyPOSibNgaMRzJFqIA6IoImjc4XFB1643-carfV_jsjVbsIcKAZDk/exec?v=8";
-
-// Initialize LIFF
+// Init LIFF
 async function initLIFF() {
   try {
-    await liff.init({ liffId: "2008875334-eZXiyz43" });
+    await liff.init({ liffId: LIFF_ID });
     if (!liff.isLoggedIn()) liff.login();
     profile = await liff.getProfile();
   } catch (err) {
@@ -76,7 +76,7 @@ function resizeImage(file, maxSize = 1024, quality = 0.7) {
   });
 }
 
-// Handle form submit
+// Handle submit
 document.getElementById("repairForm").addEventListener("submit", async function(e) {
   e.preventDefault();
   if (!profile) { alert("ไม่สามารถโหลดข้อมูลผู้ใช้ LINE"); return; }
@@ -105,7 +105,7 @@ document.getElementById("repairForm").addEventListener("submit", async function(
   };
 
   try {
-    const res = await fetch(webAppUrl, {
+    const res = await fetch(WEB_APP_URL, {
       method: "POST",
       body: JSON.stringify(payload),
       headers: { "Content-Type": "application/json" }
