@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IT Support</title>
+  <title>IT Support Repair Form</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     :root { --primary-color: #06C755; }
@@ -28,7 +28,7 @@
     <label>ห้อง/แผนก</label><input type="text" id="department" required>
     <label>เบอร์โทรศัพท์</label><input type="tel" id="phone" required>
     <label>อุปกรณ์</label>
-    <select id="device" required>
+     <select id="device" required>
       <option value="">-- เลือก --</option>
       <option value="Computer AIO">Computer AIO</option>
       <option value="Laptop">Laptop</option>
@@ -41,7 +41,9 @@
     <label>ปัญหา</label><textarea id="issue" required></textarea>
     <label>ความเร่งด่วน</label>
     <select id="priority" required>
-      <option value="สูง">🔴 สูง</option><option value="กลาง">🟡 กลาง</option><option value="ต่ำ">🟢 ต่ำ</option>
+      <option value="สูง">🔴 สูง</option>
+      <option value="กลาง">🟡 กลาง</option>
+      <option value="ต่ำ">🟢 ต่ำ</option>
     </select>
     <label>รูปภาพ</label><input type="file" id="imageFile" accept="image/*">
     <button type="submit" id="submitBtn">ส่งแจ้งซ่อม</button>
@@ -105,22 +107,27 @@ document.getElementById("repairForm").addEventListener("submit", async (e) => {
 
     if (result.result === "ok") {
       const row = result.row;
+      const pending = result.pending;
       const reviewUrl = `https://liff.line.me/${LIFF_ID_REVIEW}?row=${row}`;
       
       await liff.sendMessages([{
         "type": "flex",
-        "altText": "รับเรื่องแจ้งซ่อมแล้ว",
+        "altText": "รับเรื่องแจ้งซ่อมเรียบร้อย",
         "contents": {
           "type": "bubble",
           "header": { "type": "box", "layout": "vertical", "contents": [{ "type": "text", "text": "รับเรื่องแจ้งซ่อมแล้ว", "color": "#ffffff", "weight": "bold" }], "backgroundColor": "#06C755" },
           "body": { "type": "box", "layout": "vertical", "contents": [
-            { "type": "text", "text": "รายละเอียด", "weight": "bold", "size": "sm" },
+            { "type": "box", "layout": "vertical", "backgroundColor": "#f0f0f0", "paddingAll": "md", "cornerRadius": "md", "contents": [
+                { "type": "text", "text": "สถานะ: รอดำเนินการ", "weight": "bold", "color": "#0000FF", "size": "sm" },
+                { "type": "text", "text": "มีงานรอคิวทั้งหมด: " + pending + " รายการ", "size": "xs", "margin": "xs", "color": "#666666" }
+            ]},
+            { "type": "text", "text": "รายละเอียด", "weight": "bold", "size": "sm", "margin": "lg" },
             { "type": "box", "layout": "vertical", "margin": "md", "spacing": "sm", "contents": [
                 { "type": "box", "layout": "baseline", "contents": [{ "type": "text", "text": "อุปกรณ์", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": payload.device, "size": "xs", "flex": 5, "wrap": true }]},
                 { "type": "box", "layout": "baseline", "contents": [{ "type": "text", "text": "ปัญหา", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": payload.issue, "size": "xs", "flex": 5, "wrap": true }]}
             ]},
             { "type": "separator", "margin": "xl" },
-            { "type": "text", "text": "ประเมินความพึงพอใจ", "align": "center", "size": "xs", "margin": "md", "color": "#aaaaaa" },
+            { "type": "text", "text": "ประเมินความพึงพอใจการแจ้งซ่อม", "align": "center", "size": "xs", "margin": "md", "color": "#aaaaaa" },
             { "type": "box", "layout": "horizontal", "margin": "md", "contents": [
                 { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "uri", "uri": reviewUrl + "&score=1" }},
                 { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "uri", "uri": reviewUrl + "&score=2" }},
@@ -131,7 +138,7 @@ document.getElementById("repairForm").addEventListener("submit", async (e) => {
           ]}
         }
       }]);
-      alert("ส่งข้อมูลเรียบร้อยแล้ว!");
+      alert("ส่งข้อมูลแจ้งซ่อมเรียบร้อยแล้ว!");
       liff.closeWindow();
     }
   } catch (err) { alert("Error: " + err); btn.disabled = false; }
