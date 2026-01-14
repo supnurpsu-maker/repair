@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>แจ้งซ่อม IT Support</title>
+  <title>IT Support</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     :root { --primary-color: #06C755; }
     body { font-family: -apple-system, sans-serif; background-color: #f5f5f5; margin: 0; padding: 15px; }
     .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); max-width: 500px; margin: auto; }
     h2 { text-align: center; color: var(--primary-color); margin-top: 0; }
+    .profile-info { display: flex; align-items: center; gap: 12px; background: #f9f9f9; padding: 10px; border-radius: 10px; margin-bottom: 20px; }
+    .profile-info img { width: 45px; height: 45px; border-radius: 50%; border: 2px solid white; }
     label { display: block; margin-top: 15px; font-weight: bold; font-size: 14px; }
     input, select, textarea { width: 100%; padding: 12px; margin-top: 6px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
     button { width: 100%; padding: 15px; margin-top: 25px; font-size: 18px; font-weight: bold; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; }
@@ -19,6 +21,9 @@
 <body>
 <div class="card">
   <h2>แจ้งซ่อม IT Support</h2>
+  <div id="userProfile" class="profile-info" style="display:none;">
+    <img id="userImg" src=""><span id="userName">กำลังโหลด...</span>
+  </div>
   <form id="repairForm">
     <label>ห้อง/แผนก</label><input type="text" id="department" required>
     <label>เบอร์โทรศัพท์</label><input type="tel" id="phone" required>
@@ -32,9 +37,7 @@
     <label>ปัญหา</label><textarea id="issue" required></textarea>
     <label>ความเร่งด่วน</label>
     <select id="priority" required>
-      <option value="สูง">🔴 สูง</option>
-      <option value="กลาง">🟡 กลาง</option>
-      <option value="ต่ำ">🟢 ต่ำ</option>
+      <option value="สูง">🔴 สูง</option><option value="กลาง">🟡 กลาง</option><option value="ต่ำ">🟢 ต่ำ</option>
     </select>
     <label>รูปภาพ</label><input type="file" id="imageFile" accept="image/*">
     <button type="submit" id="submitBtn">ส่งแจ้งซ่อม</button>
@@ -42,16 +45,19 @@
 </div>
 
 <script>
-const LIFF_ID_1 = "2008875334-eZXiyz43"; 
+const LIFF_ID_MAIN = "2008875334-eZXiyz43"; 
 const LIFF_ID_REVIEW = "2008875334-d6l72Uox"; 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwm4TWCHwWMruixhziJS2O0IucQXYOzFPrVPuTNab0Pvy-bUF_ZBX-ABMILPI5vd0m5/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz0g1IJYqB_Bh19kbcQ273N1wWsI_J_AgiIoT7exbZdmpSZSJAeYVKPvIuEHmBACOGB/exec";
 
 let profile = null;
 
 async function init() {
-  await liff.init({ liffId: LIFF_ID_1 });
+  await liff.init({ liffId: LIFF_ID_MAIN });
   if (!liff.isLoggedIn()) liff.login();
   profile = await liff.getProfile();
+  document.getElementById("userProfile").style.display = "flex";
+  document.getElementById("userImg").src = profile.pictureUrl;
+  document.getElementById("userName").innerText = "ผู้แจ้ง: " + profile.displayName;
 }
 
 async function resizeImg(file) {
@@ -61,9 +67,10 @@ async function resizeImg(file) {
       const img = new Image(); img.src = e.target.result;
       img.onload = () => {
         const c = document.createElement("canvas");
-        c.width = 600; c.height = 600 * (img.height/img.width);
-        c.getContext("2d").drawImage(img,0,0,c.width,c.height);
-        res(c.toDataURL("image/jpeg", 0.7).split(",")[1]);
+        const ctx = c.getContext("2d");
+        c.width = 800; c.height = 800 * (img.height/img.width);
+        ctx.drawImage(img,0,0,c.width,c.height);
+        res(c.toDataURL("image/jpeg", 0.8).split(",")[1]);
       }
     }
   });
@@ -88,33 +95,42 @@ document.getElementById("repairForm").addEventListener("submit", async (e) => {
     imageBase64: imgBase64
   };
 
-  const res = await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(payload) });
-  const result = await res.json();
+  try {
+    const res = await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(payload) });
+    const result = await res.json();
 
-  if (result.result === "ok") {
-    const row = result.row;
-    const reviewUrl = `https://liff.line.me/${LIFF_ID_REVIEW}?row=${row}`;
-
-    await liff.sendMessages([{
-      "type": "flex",
-      "altText": "แจ้งซ่อมสำเร็จ",
-      "contents": {
-        "type": "bubble",
-        "header": { "type": "box", "layout": "vertical", "contents": [{ "type": "text", "text": "รับเรื่องแจ้งซ่อมแล้ว", "color": "#ffffff" }], "backgroundColor": "#06C755" },
-        "body": { "type": "box", "layout": "vertical", "contents": [
-          { "type": "text", "text": "กรุณาประเมินความพึงพอใจ", "align": "center", "size": "sm", "margin": "md" },
-          { "type": "box", "layout": "horizontal", "margin": "lg", "contents": [
-            { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "uri", "uri": reviewUrl + "&score=1" }},
-            { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "uri", "uri": reviewUrl + "&score=2" }},
-            { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "uri", "uri": reviewUrl + "&score=3" }},
-            { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "uri", "uri": reviewUrl + "&score=4" }},
-            { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "uri", "uri": reviewUrl + "&score=5" }}
+    if (result.result === "ok") {
+      const row = result.row;
+      const reviewUrl = `https://liff.line.me/${LIFF_ID_REVIEW}?row=${row}`;
+      
+      await liff.sendMessages([{
+        "type": "flex",
+        "altText": "รับเรื่องแจ้งซ่อมแล้ว",
+        "contents": {
+          "type": "bubble",
+          "header": { "type": "box", "layout": "vertical", "contents": [{ "type": "text", "text": "รับเรื่องแจ้งซ่อมแล้ว", "color": "#ffffff", "weight": "bold" }], "backgroundColor": "#06C755" },
+          "body": { "type": "box", "layout": "vertical", "contents": [
+            { "type": "text", "text": "รายละเอียด", "weight": "bold", "size": "sm" },
+            { "type": "box", "layout": "vertical", "margin": "md", "spacing": "sm", "contents": [
+                { "type": "box", "layout": "baseline", "contents": [{ "type": "text", "text": "อุปกรณ์", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": payload.device, "size": "xs", "flex": 5, "wrap": true }]},
+                { "type": "box", "layout": "baseline", "contents": [{ "type": "text", "text": "ปัญหา", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": payload.issue, "size": "xs", "flex": 5, "wrap": true }]}
+            ]},
+            { "type": "separator", "margin": "xl" },
+            { "type": "text", "text": "ประเมินความพึงพอใจ", "align": "center", "size": "xs", "margin": "md", "color": "#aaaaaa" },
+            { "type": "box", "layout": "horizontal", "margin": "md", "contents": [
+                { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "uri", "uri": reviewUrl + "&score=1" }},
+                { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "uri", "uri": reviewUrl + "&score=2" }},
+                { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "uri", "uri": reviewUrl + "&score=3" }},
+                { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "uri", "uri": reviewUrl + "&score=4" }},
+                { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "uri", "uri": reviewUrl + "&score=5" }}
+            ]}
           ]}
-        ]}
-      }
-    }]);
-    liff.closeWindow();
-  }
+        }
+      }]);
+      alert("ส่งข้อมูลเรียบร้อยแล้ว!");
+      liff.closeWindow();
+    }
+  } catch (err) { alert("Error: " + err); btn.disabled = false; }
 });
 init();
 </script>
