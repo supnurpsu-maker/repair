@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ติดตามสถานะแจ้งซ่อม</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 18px; text-align: center; }
+        button { width: 100%; padding: 12px; background: #06C755; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        #result { margin-top: 20px; display: none; border-top: 1px solid #eee; padding-top: 15px; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; color: white; font-size: 14px; background: #007bff; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h3>🔍 ติดตามสถานะ</h3>
+        <p style="font-size: 14px; color: #666;">กรอกเลขลำดับคิว (เช่น 001)</p>
+        <input type="number" id="ticketNo" placeholder="001" pattern="\d*">
+        <button onclick="trackStatus()">ค้นหาข้อมูล</button>
+
+        <div id="result">
+            <p><strong>Ticket:</strong> <span id="resId"></span></p>
+            <p><strong>อุปกรณ์:</strong> <span id="resDevice"></span></p>
+            <p><strong>สถานะปัจจุบัน:</strong></p>
+            <div id="resStatus" class="status-badge"></div>
+        </div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwRt9NnmJuG0eoSN4y_NApv-UPRH5XCkWvBY76mQDGDUW3nsDU3XsDD6TxZsQcPc7GU/exec";
+        liff.init({ liffId: "2008875334-wOYUvNha" });
+
+        async function trackStatus() {
+            const tid = document.getElementById("ticketNo").value;
+            if(!tid) return alert("กรุณากรอกเลขคิว");
+            
+            const res = await fetch(`${WEB_APP_URL}?action=track&tid=${tid}`);
+            const data = await res.json();
+
+            if(data.found) {
+                document.getElementById("result").style.display = "block";
+                document.getElementById("resId").innerText = data.ticketId;
+                document.getElementById("resDevice").innerText = data.device;
+                document.getElementById("resStatus").innerText = data.status;
+            } else {
+                alert("ไม่พบข้อมูลเลขคิวนี้");
+                document.getElementById("result").style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>
