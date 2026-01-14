@@ -28,12 +28,15 @@
   <form id="repairForm">
     <label>ห้อง/แผนก</label><input type="text" id="department" required>
     <label>เบอร์โทรศัพท์</label><input type="tel" id="phone" required>
-    <label>อุปกรณ์</label>
-    <select id="device" required>
+    <label>ประเภท</label>
+     <select id="device" required>
       <option value="">-- เลือก --</option>
-      <option value="Computer">Computer</option>
+      <option value="Computer AIO">Computer AIO</option>
       <option value="Laptop">Laptop</option>
-      <option value="Network/Wi-Fi">Network/Wi-Fi</option>
+      <option value="Network">Network</option>
+      <option value="PSU Passport">PSU Passport</option>
+      <option value="ZOOM/UC-Phone">ZOOM/UC-Phone</option>
+      <option value="CCTV/FingerPrint Scan">CCTV/FingerPrint Scan</option>
       <option value="Others">Others</option>
     </select>
     <label>ปัญหา</label><textarea id="issue" required></textarea>
