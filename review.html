@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ขอบคุณครับ</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body style="text-align: center; font-family: sans-serif; padding-top: 50px;">
-    <h3>กำลังบันทึกคะแนนประเมิน...</h3>
+    <h3>กำลังบันทึกคะแนน...</h3>
     <script>
         async function main() {
+            // ใส่ LIFF ID ของตัว Review (ตัวที่ 2)
             await liff.init({ liffId: "2008875334-d6l72Uox" });
             const params = new URLSearchParams(window.location.search);
             const row = params.get('row');
             const score = params.get('score');
-            const webAppUrl = "https://script.google.com/macros/s/AKfycbz0g1IJYqB_Bh19kbcQ273N1wWsI_J_AgiIoT7exbZdmpSZSJAeYVKPvIuEHmBACOGB/exec";
+            const webAppUrl = "https://script.google.com/macros/s/AKfycbz0g1IJYqB_Bh19kbcQ273N1wWsI_J_AgiIoT7exbZdmpSZSJAeYVKPvIuEHmBACOGB/exec"; // Web App URL ตัวเดิม
 
             if (row && score) {
-                // ยิงไปที่ doGet ใน GAS
                 await fetch(`${webAppUrl}?row=${row}&score=${score}`);
                 alert("ขอบคุณที่ให้คะแนน " + score + " ดาวครับ");
                 liff.closeWindow();
