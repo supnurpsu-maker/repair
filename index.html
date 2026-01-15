@@ -1,154 +1,143 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IT Repair Service</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <style>
-    :root { --primary-color: #06C755; }
-    body { font-family: -apple-system, sans-serif; background-color: #f5f5f5; margin: 0; padding: 15px; }
-    .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); max-width: 500px; margin: auto; }
-    h2 { text-align: center; color: var(--primary-color); margin-top: 0; }
-    .profile-info { display: flex; align-items: center; gap: 12px; background: #f9f9f9; padding: 10px; border-radius: 10px; margin-bottom: 20px; }
-    .profile-info img { width: 45px; height: 45px; border-radius: 50%; border: 2px solid white; }
-    label { display: block; margin-top: 15px; font-weight: bold; font-size: 14px; }
-    input, select, textarea { width: 100%; padding: 12px; margin-top: 6px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
-    textarea { height: 80px; }
-    button { width: 100%; padding: 15px; margin-top: 25px; font-size: 18px; font-weight: bold; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; }
-    button:disabled { background-color: #ccc; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แจ้งซ่อม IT Support</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #f8f9fa; padding: 20px; }
+        .form-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
+        h2 { text-align: center; color: #06C755; }
+        label { display: block; margin-top: 15px; font-weight: bold; color: #444; }
+        input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn-submit { width: 100%; padding: 15px; background: #06C755; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 25px; cursor: pointer; }
+        .preview-img { width: 100%; border-radius: 8px; margin-top: 10px; display: none; }
+        #loading { display: none; text-align: center; color: #666; font-size: 14px; margin-top: 10px; }
+    </style>
 </head>
 <body>
-<div class="card">
-  <h2>แจ้งซ่อม IT Support</h2>
-  <div id="userProfile" class="profile-info" style="display:none;">
-    <img id="userImg" src=""><span id="userName">กำลังโหลด...</span>
-  </div>
-  <form id="repairForm">
-    <label>ห้อง/แผนก</label><input type="text" id="department" required>
-    <label>เบอร์โทรศัพท์</label><input type="tel" id="phone" required>
-    <label>ประเภท</label>
-     <select id="device" required>
-      <option value="">-- เลือก --</option>
-      <option value="Computer AIO">Computer AIO</option>
-      <option value="Laptop">Laptop</option>
-      <option value="Network">Network</option>
-      <option value="PSU Passport">PSU Passport</option>
-      <option value="ZOOM/UC-Phone">ZOOM/UC-Phone</option>
-      <option value="CCTV/FingerPrint Scan">CCTV/FingerPrint Scan</option>
-      <option value="Others">Others</option>
-    </select>
-    <label>ปัญหา</label><textarea id="issue" required></textarea>
-    <label>ความเร่งด่วน</label>
-    <select id="priority" required>
-      <option value="สูง">🔴 สูง</option>
-      <option value="กลาง">🟡 กลาง</option>
-      <option value="ต่ำ">🟢 ต่ำ</option>
-    </select>
-    <label>รูปภาพ</label><input type="file" id="imageFile" accept="image/*">
-    <button type="submit" id="submitBtn">ส่งแจ้งซ่อม</button>
-  </form>
+
+<div class="form-card">
+    <h2>📝 แจ้งซ่อม IT</h2>
+    <form id="repairForm">
+        <label>📍 ห้อง/สถานที่</label>
+        <input type="text" id="room" placeholder="เช่น ห้องประชุม 1 ชั้น 2" required>
+
+        <label>📞 เบอร์ติดต่อภายใน</label>
+        <input type="tel" id="phone" placeholder="เช่น 1234 หรือ 081-xxxxxxx" required>
+
+        <label>🛠 ประเภทอุปกรณ์ (Category)</label>
+        <select id="category" required>
+            <option value="" disabled selected>--- กรุณาเลือกประเภท ---</option>
+            <option value="Computer AIO">Computer AIO</option>
+            <option value="Laptop">Laptop</option>
+            <option value="Network">Network</option>
+            <option value="PSU Passport">PSU Passport</option>
+            <option value="ZOOM/UC-Phone">ZOOM/UC-Phone</option>
+            <option value="CCTV/FingerPrint Scan">CCTV/FingerPrint Scan</option>
+            <option value="Others">Others</option>
+        </select>
+
+        <label>💡 รายละเอียดปัญหา</label>
+        <textarea id="issue" rows="3" placeholder="ระบุอาการเสียเบื้องต้น" required></textarea>
+
+        <label>🚨 ความเร่งด่วน</label>
+        <select id="priority">
+            <option value="ปกติ">ปกติ</option>
+            <option value="ด่วน">ด่วน</option>
+            <option value="ด่วนที่สุด">ด่วนที่สุด (งานหยุดชะงัก)</option>
+        </select>
+
+        <label>📸 แนบรูปภาพ (ถ้ามี)</label>
+        <input type="file" id="imageFile" accept="image/*" onchange="previewImage(event)">
+        <img id="imagePreview" class="preview-img">
+
+        <button type="submit" class="btn-submit" id="submitBtn">ส่งข้อมูลแจ้งซ่อม</button>
+        <div id="loading">กำลังประมวลผล กรุณารอครู่เดียว...</div>
+    </form>
 </div>
 
 <script>
-const LIFF_ID_MAIN = "2008875334-eZXiyz43"; 
-const LIFF_ID_REVIEW = "2008875334-d6l72Uox"; 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwrU1YTvd7OPnmlMehaqwFgZpDQatq4uh9pFPId6h75kgDSnBMa0PmpX29RRf3QGcDz/exec";
+    const LIFF_ID = "2008875334-eZXiyz43"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxPhVjAlxrJHw1JKlvWfjVySd0IaM-PQNn4ljZIFbLJ0CndMeM6eNR4zhxSifLjdVcP/exec"; 
+    let userProfile = {};
 
-let profile = null;
-
-async function init() {
-  await liff.init({ liffId: LIFF_ID_MAIN });
-  if (!liff.isLoggedIn()) liff.login();
-  profile = await liff.getProfile();
-  document.getElementById("userProfile").style.display = "flex";
-  document.getElementById("userImg").src = profile.pictureUrl;
-  document.getElementById("userName").innerText = "ผู้แจ้ง: " + profile.displayName;
-}
-
-async function resizeImg(file) {
-  return new Promise(res => {
-    const r = new FileReader(); r.readAsDataURL(file);
-    r.onload = e => {
-      const img = new Image(); img.src = e.target.result;
-      img.onload = () => {
-        const c = document.createElement("canvas");
-        const ctx = c.getContext("2d");
-        c.width = 800; c.height = 800 * (img.height/img.width);
-        ctx.drawImage(img,0,0,c.width,c.height);
-        res(c.toDataURL("image/jpeg", 0.8).split(",")[1]);
-      }
+    async function initLiff() {
+        try {
+            await liff.init({ liffId: LIFF_ID });
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            } else {
+                userProfile = await liff.getProfile();
+            }
+        } catch (err) { console.error("LIFF Init Error", err); }
     }
-  });
-}
 
-document.getElementById("repairForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const btn = document.getElementById("submitBtn");
-  btn.disabled = true; btn.innerText = "กำลังส่ง...";
+    function previewImage(event) {
+        const reader = new FileReader();
+        reader.onload = function() {
+            const output = document.getElementById('imagePreview');
+            output.src = reader.result;
+            output.style.display = 'block';
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    }
 
-  let imgBase64 = "";
-  const file = document.getElementById("imageFile").files[0];
-  if (file) imgBase64 = await resizeImg(file);
+    document.getElementById('repairForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const btn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+        btn.disabled = true;
+        loading.style.display = 'block';
 
-  const payload = {
-    uid: profile.userId, displayName: profile.displayName,
-    department: document.getElementById("department").value,
-    phone: document.getElementById("phone").value,
-    device: document.getElementById("device").value,
-    issue: document.getElementById("issue").value,
-    priority: document.getElementById("priority").value,
-    imageBase64: imgBase64
-  };
-
-  try {
-    const res = await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(payload) });
-    const result = await res.json();
-
-    if (result.result === "ok") {
-      const tid = result.ticketId;
-      const reviewUrl = `https://liff.line.me/${LIFF_ID_REVIEW}?row=${result.row}`;
-      
-      await liff.sendMessages([{
-        "type": "flex",
-        "altText": "แจ้งซ่อม " + tid,
-        "contents": {
-          "type": "bubble",
-          "header": { "type": "box", "layout": "vertical", "contents": [
-            { "type": "box", "layout": "horizontal", "contents": [
-                { "type": "text", "text": "รับเรื่องแจ้งซ่อมแล้ว", "color": "#ffffff", "weight": "bold", "flex": 4 },
-                { "type": "text", "text": tid, "color": "#ffffff", "size": "xs", "align": "end", "gravity": "center", "flex": 2 }
-            ]}
-          ], "backgroundColor": "#06C755" },
-          "body": { "type": "box", "layout": "vertical", "contents": [
-            { "type": "box", "layout": "vertical", "backgroundColor": "#f0f0f0", "paddingAll": "md", "cornerRadius": "md", "contents": [
-                { "type": "text", "text": "สถานะ: รอดำเนินการ", "weight": "bold", "color": "#0000FF", "size": "sm" },
-                { "type": "text", "text": "คิวรอขณะนี้: " + result.pending + " รายการ", "size": "xs", "color": "#666666" }
-            ]},
-            { "type": "text", "text": "รายละเอียด", "weight": "bold", "size": "sm", "margin": "lg" },
-            { "type": "box", "layout": "vertical", "margin": "md", "spacing": "sm", "contents": [
-                { "type": "box", "layout": "baseline", "contents": [{ "type": "text", "text": "อุปกรณ์", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": payload.device, "size": "xs", "flex": 5, "wrap": true }]},
-                { "type": "box", "layout": "baseline", "contents": [{ "type": "text", "text": "ปัญหา", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": payload.issue, "size": "xs", "flex": 5, "wrap": true }]}
-            ]},
-            { "type": "separator", "margin": "xl" },
-            { "type": "text", "text": "⭐ ประเมินความพึงพอใจ", "align": "center", "size": "xs", "margin": "md", "color": "#aaaaaa" },
-            { "type": "box", "layout": "horizontal", "margin": "md", "contents": [
-                { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "uri", "uri": reviewUrl + "&score=1" }},
-                { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "uri", "uri": reviewUrl + "&score=2" }},
-                { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "uri", "uri": reviewUrl + "&score=3" }},
-                { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "uri", "uri": reviewUrl + "&score=4" }},
-                { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "uri", "uri": reviewUrl + "&score=5" }}
-            ]}
-          ]}
+        let base64Image = "";
+        const fileInput = document.getElementById('imageFile');
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            base64Image = await toBase64(file);
         }
-      }]);
-      alert("ส่งข้อมูลสำเร็จ! รหัสคิวของคุณคือ " + tid);
-      liff.closeWindow();
-    }
-  } catch (err) { alert("Error: " + err); btn.disabled = false; btn.innerText = "ส่งแจ้งซ่อม"; }
-});
-init();
+
+        const formData = {
+            uid: userProfile.userId,
+            displayName: userProfile.displayName,
+            room: document.getElementById('room').value,
+            phone: document.getElementById('phone').value,
+            category: document.getElementById('category').value,
+            issue: document.getElementById('issue').value,
+            priority: document.getElementById('priority').value,
+            imageBase64: base64Image.split(',')[1] || ""
+        };
+
+        try {
+            const response = await fetch(WEB_APP_URL, {
+                method: "POST",
+                body: JSON.stringify(formData)
+            });
+            const result = await response.json();
+            if (result.result === "ok") {
+                alert(`แจ้งซ่อมสำเร็จ!\nรหัสคิวของคุณคือ: ${result.ticketId}`);
+                liff.closeWindow();
+            } else {
+                alert("เกิดข้อผิดพลาด: " + result.message);
+            }
+        } catch (err) {
+            alert("ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่");
+        } finally {
+            btn.disabled = false;
+            loading.style.display = 'none';
+        }
+    });
+
+    const toBase64 = file => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+
+    initLiff();
 </script>
 </body>
 </html>
