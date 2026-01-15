@@ -15,7 +15,7 @@
             const params = new URLSearchParams(window.location.search);
             const row = params.get('row');
             const score = params.get('score');
-            const webAppUrl = "https://script.google.com/macros/s/AKfycbxPhVjAlxrJHw1JKlvWfjVySd0IaM-PQNn4ljZIFbLJ0CndMeM6eNR4zhxSifLjdVcP/exec"; // Web App URL ตัวเดิม
+            const webAppUrl = "https://script.google.com/macros/s/AKfycbyyhFjRFLD8IHvfDw6-tmYKAHn8xSoHHdPUbcg8oHT3MFtIxV7KG_K72gMaYdjMbfzO/exec"; // Web App URL ตัวเดิม
 
             if (row && score) {
                 await fetch(`${webAppUrl}?row=${row}&score=${score}`);
