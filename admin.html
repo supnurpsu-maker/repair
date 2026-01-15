@@ -1,0 +1,43 @@
+// ... (ส่วน HTML/CSS เหมือนเดิม) ...
+
+async function loadJobs() {
+    document.getElementById("loading").style.display = "block";
+    const res = await fetch(`${WEB_APP_URL}?action=listPending`);
+    const jobs = await res.json();
+    document.getElementById("loading").style.display = "none";
+    
+    const listDiv = document.getElementById("jobList");
+    listDiv.innerHTML = "";
+
+    const profile = await liff.getProfile(); // ดึง Profile ของ Admin ปัจจุบัน
+    const myUid = profile.userId;
+
+    jobs.forEach(job => {
+        // เช็คว่าเคสนี้มีคนรับไปหรือยัง
+        const adminInfo = job.admin ? `(รับงานโดย: ${job.admin === myUid ? 'คุณ' : 'Admin ท่านอื่น'})` : '(ยังไม่มีผู้รับงาน)';
+        
+        listDiv.innerHTML += `
+            <div class="job-card" style="border-left: 5px solid ${job.admin === myUid ? '#06C755' : '#ccc'}">
+                <div style="display:flex; justify-content:space-between">
+                    <span class="ticket-id">${job.ticketId}</span>
+                    <span class="status-tag">${job.status}</span>
+                </div>
+                <p style="margin:5px 0"><b>ผู้แจ้ง:</b> ${job.name} <br> <small>${adminInfo}</small></p>
+                <p style="font-size:14px; color:#666">${job.issue}</p>
+                <div class="btn-group">
+                    <button class="btn-work" onclick="updateStatus(${job.row}, 'กำลังดำเนินการ', '${myUid}')">💻 รับงาน/เริ่มงาน</button>
+                    <button class="btn-done" onclick="updateStatus(${job.row}, 'ดำเนินการเรียบร้อยแล้ว', '${myUid}')">✅ ปิดงาน</button>
+                </div>
+            </div>
+        `;
+    });
+}
+
+async function updateStatus(row, status, adminUid) {
+    if (!confirm(`ยืนยันการเปลี่ยนสถานะเป็น: ${status}`)) return;
+    // ส่ง adminUid ไปบันทึกด้วย
+    await fetch(`${WEB_APP_URL}?action=updateStatus&row=${row}&status=${status}&adminUid=${adminUid}`);
+    loadJobs();
+}
+
+// ... (ส่วนที่เหลือเหมือนเดิม) ...
