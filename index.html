@@ -6,38 +6,34 @@
     <title>IT Service Request</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        :root { --primary: #000080; --accent: #FBCEB1; --bg: #f4f4f9; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); padding: 20px; color: #333; }
-        .card { background: white; max-width: 500px; margin: auto; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,128,0.1); overflow: hidden; border: 1px solid #ddd; }
-        .header { background: var(--primary); color: white; padding: 25px; text-align: center; }
-        .header h2 { margin: 0; font-weight: 500; letter-spacing: 1px; }
-        .profile-bar { display: flex; align-items: center; background: var(--accent); padding: 12px 20px; border-bottom: 2px solid var(--primary); }
-        .profile-bar img { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--primary); margin-right: 15px; }
-        .profile-bar b { color: var(--primary); font-size: 15px; }
-        .content { padding: 25px; }
-        label { display: block; margin-top: 15px; font-weight: 600; color: var(--primary); font-size: 14px; }
-        input, select, textarea { width: 100%; padding: 12px; margin-top: 6px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
-        .btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 6px; font-size: 17px; font-weight: bold; margin-top: 25px; cursor: pointer; transition: 0.3s; }
-        .btn:hover { opacity: 0.9; }
-        #loading { display: none; text-align: center; margin-top: 15px; color: var(--primary); font-weight: bold; }
-        .preview { width: 100%; border-radius: 6px; margin-top: 10px; display: none; border: 1px solid #ddd; }
+        :root { --primary: #000080; --accent: #FBCEB1; }
+        body { font-family: sans-serif; background: #f4f4f9; padding: 20px; }
+        .card { background: white; max-width: 500px; margin: auto; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: var(--primary); color: white; padding: 20px; text-align: center; }
+        .profile { display: flex; align-items: center; background: var(--accent); padding: 10px 20px; border-bottom: 2px solid var(--primary); }
+        #userImg { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--primary); margin-right: 15px; }
+        #userName { font-weight: bold; color: var(--primary); }
+        form { padding: 20px; }
+        label { display: block; margin-top: 15px; font-weight: bold; color: var(--primary); }
+        input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 5px; margin-top: 20px; font-weight: bold; cursor: pointer; }
+        #loading { display: none; text-align: center; color: var(--primary); font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
 <div class="card">
     <div class="header"><h2>แบบฟอร์มแจ้งซ่อม IT</h2></div>
-    <div class="profile-bar">
-        <img id="userImg" src="" alt="Profile">
-        <span id="userName">👤 กำลังโหลดข้อมูล...</span>
+    <div class="profile">
+        <img id="userImg" src=""><span id="userName">กำลังโหลด...</span>
     </div>
-    <form id="repairForm" class="content">
+    <form id="repairForm">
         <label>📍 ห้อง / สถานที่</label>
-        <input type="text" id="room" placeholder="เช่น แผนกบัญชี ชั้น 2" required>
+        <input type="text" id="room" required>
         <label>📞 เบอร์ติดต่อภายใน</label>
-        <input type="tel" id="phone" placeholder="ระบุเบอร์โทรศัพท์" required>
+        <input type="tel" id="phone" required>
         <label>🛠 ประเภทอุปกรณ์</label>
         <select id="category" required>
-            <option value="" disabled selected>กรุณาเลือกประเภท</option>
+            <option value="" disabled selected>เลือกประเภท</option>
             <option value="Computer AIO">Computer AIO</option>
             <option value="Laptop">Laptop</option>
             <option value="Network">Network</option>
@@ -47,22 +43,21 @@
             <option value="Others">Others</option>
         </select>
         <label>💡 รายละเอียดปัญหา</label>
-        <textarea id="issue" rows="3" placeholder="ระบุอาการเสียเบื้องต้น" required></textarea>
+        <textarea id="issue" rows="3" required></textarea>
         <label>🚨 ความเร่งด่วน</label>
         <select id="priority">
             <option value="ปกติ">ปกติ</option>
             <option value="ด่วน">ด่วน</option>
             <option value="ด่วนที่สุด">ด่วนที่สุด</option>
         </select>
-        <label>📸 รูปภาพประกอบ</label>
-        <input type="file" id="imageFile" accept="image/*" onchange="preview(event)">
-        <img id="imgPre" class="preview">
-        <button type="submit" id="btnSub" class="btn">ยืนยันการส่งข้อมูล</button>
-        <div id="loading">⌛ กำลังบันทึกข้อมูล...</div>
+        <label>📸 รูปภาพประกอบ (ถ้ามี)</label>
+        <input type="file" id="imageFile" accept="image/*">
+        <button type="submit" id="btnSub" class="btn">ส่งข้อมูล</button>
+        <div id="loading">⌛ กำลังส่งข้อมูล...</div>
     </form>
 </div>
 <script>
-    const LIFF_ID = "2008875334-eZXiyz43"; const URL = "https://script.google.com/macros/s/AKfycbw0gKLCAq2p2LZ39KQRazud5OZZSshDhfh-GoGr7i4oC3rw3DFC8v_geMrbrcSEVGQr/exec";
+    const LIFF_ID = "2008875334-eZXiyz43"; const URL_GAS = "https://script.google.com/macros/s/AKfycbwx34DQPx307XyZUJiLoKYlyZn5pHt3QKfPJZ39GF6m0inAxx6MU1YU4xwRlJROb7U3/exec";
     let u = {};
     async function init() {
         await liff.init({ liffId: LIFF_ID });
@@ -71,25 +66,27 @@
         document.getElementById('userName').innerText = u.displayName;
         document.getElementById('userImg').src = u.pictureUrl;
     }
-    function preview(e) {
-        const r = new FileReader();
-        r.onload = () => { const o = document.getElementById('imgPre'); o.src = r.result; o.style.display = 'block'; };
-        if(e.target.files[0]) r.readAsDataURL(e.target.files[0]);
-    }
     document.getElementById('repairForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         document.getElementById('btnSub').disabled = true;
         document.getElementById('loading').style.display = 'block';
+        
         let b64 = "";
         const f = document.getElementById('imageFile').files[0];
         if (f) {
-            const r = new FileReader();
-            b64 = await new Promise(res => { r.onload = () => res(r.result.split(',')[1]); r.readAsDataURL(f); });
+            b64 = await new Promise((res) => {
+                const r = new FileReader();
+                r.onload = () => res(r.result.split(',')[1]);
+                r.readAsDataURL(f);
+            });
         }
+
         const d = { uid: u.userId, displayName: u.displayName, room: document.getElementById('room').value, phone: document.getElementById('phone').value, category: document.getElementById('category').value, issue: document.getElementById('issue').value, priority: document.getElementById('priority').value, imageBase64: b64 };
-        const res = await fetch(URL, { method: "POST", body: JSON.stringify(d) });
+        
+        const res = await fetch(URL_GAS, { method: "POST", body: JSON.stringify(d) });
         const result = await res.json();
-        if (result.result === "ok") { alert("ส่งสำเร็จ! เลขที่: " + result.ticketId); liff.closeWindow(); }
+        if (result.result === "ok") { alert("สำเร็จ! เลขที่: " + result.ticketId); liff.closeWindow(); }
+        else { alert("Error: " + result.message); document.getElementById('btnSub').disabled = false; }
     });
     init();
 </script>
