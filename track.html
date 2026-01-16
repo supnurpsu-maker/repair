@@ -7,61 +7,83 @@
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         :root { --primary: #000080; --accent: #FBCEB1; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; }
-        .card { background: white; max-width: 400px; margin: auto; border-radius: 15px; border-top: 8px solid var(--primary); padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); padding: 20px; margin: 0; }
+        .card { background: white; max-width: 400px; margin: 10px auto; border-radius: 15px; border-top: 8px solid var(--primary); padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: var(--primary); margin-bottom: 20px; }
         .search-group { display: flex; gap: 8px; margin-bottom: 15px; }
-        select { padding: 12px; border: 2px solid #ddd; border-radius: 10px; background: white; font-weight: bold; color: var(--primary); }
-        input[type="number"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 10px; text-align: center; font-size: 18px; outline: none; }
+        select { padding: 12px; border: 2px solid #ddd; border-radius: 10px; background: white; font-weight: bold; color: var(--primary); flex: 1; }
+        input[type="number"] { flex: 1.2; padding: 12px; border: 2px solid #ddd; border-radius: 10px; text-align: center; font-size: 18px; outline: none; }
         .btn { padding: 12px 20px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .btn:disabled { background: #ccc; }
         #loader { display: none; text-align: center; margin: 20px 0; color: var(--primary); }
-        .res { display: none; margin-top: 25px; border-top: 2px solid #eee; padding-top: 20px; }
-        .badge { display: inline-block; background: var(--accent); color: var(--primary); padding: 5px 15px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-bottom: 15px; }
-        .row-item { margin-bottom: 12px; display: flex; flex-direction: column; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 25px; height: 25px; animation: spin 1s linear infinite; margin: 0 auto 5px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .res { display: none; margin-top: 25px; border-top: 2px solid #eee; padding-top: 20px; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .badge { display: inline-block; background: var(--accent); color: var(--primary); padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-bottom: 15px; }
+        .row-item { margin-bottom: 15px; display: flex; flex-direction: column; border-bottom: 1px solid #f9f9f9; padding-bottom: 8px; }
         .lbl { font-size: 11px; color: #888; text-transform: uppercase; }
-        .val { font-size: 15px; font-weight: bold; color: #333; }
+        .val { font-size: 15px; font-weight: bold; color: #333; margin-top: 2px; }
     </style>
 </head>
 <body>
+
 <div class="card">
-    <h2 style="text-align:center; color:var(--primary);">ติดตามสถานะ</h2>
+    <h2>ติดตามสถานะแจ้งซ่อม</h2>
     <div class="search-group">
-        <select id="prefix">
-            <option value="IT">IT</option>
-            <option value="NET">NET</option>
-            <option value="LT">LT</option>
-            <option value="ETC">ETC</option>
-        </select>
+        <select id="prefixSelect"><option value="">Loading...</option></select>
         <input type="number" id="tid" placeholder="001">
         <button id="btnTrack" class="btn" onclick="track()">ค้นหา</button>
     </div>
-    <div id="loader">⏳ กำลังค้นหาข้อมูล...</div>
+    <div id="loader"><div class="spinner"></div>ค้นหาข้อมูล...</div>
 
     <div id="result" class="res">
         <div style="text-align:center;"><span id="rStat" class="badge"></span></div>
         <div class="row-item"><span class="lbl">🆔 หมายเลขงาน:</span><span id="rId" class="val" style="color:var(--primary)"></span></div>
         <div class="row-item"><span class="lbl">📅 เวลาแจ้ง:</span><span id="rTime" class="val"></span></div>
         <div class="row-item"><span class="lbl">📍 สถานที่:</span><span id="rRoom" class="val"></span></div>
-        <div class="row-item"><span class="lbl">🛠 เจ้าหน้าที่:</span><span id="rAdmin" class="val"></span></div>
+        <div class="row-item"><span class="lbl">⚠️ รายละเอียดปัญหา:</span><span id="rIssue" class="val"></span></div>
+        <div class="row-item"><span class="lbl">🚨 ความเร่งด่วน:</span><span id="rPrio" class="val"></span></div>
+        <div class="row-item"><span class="lbl">🛠 เจ้าหน้าที่ผู้รับผิดชอบ:</span><span id="rAdmin" class="val" style="color: #d9534f;"></span></div>
     </div>
 </div>
 
 <script>
-    const URL_GAS = "https://script.google.com/macros/s/AKfycbw2Rbuxd_BEbormoI6ab7s3EQCETN9Ue79D3KH0X-lWbXrGcK6Jap3aMhbI8a36nwZO/exec"; 
-    const LIFF_ID = "2008875334-wOYUvNha";
+    const URL_GAS = "https://script.google.com/macros/s/AKfycbxt7pOzGz_xt3UXr2rdSJg8Dhae1RQaVGCVf17D5RIiok9Rn-xQ-M9nP8kZPMWNi2Ib/exec"; 
+    const LIFF_ID = "2008875334-wOYUvNha"; 
     let uId = "";
 
     async function init() {
-        await liff.init({ liffId: LIFF_ID });
-        if(!liff.isLoggedIn()) liff.login();
-        uId = (await liff.getProfile()).userId;
+        try {
+            await liff.init({ liffId: LIFF_ID });
+            if(!liff.isLoggedIn()) liff.login();
+            const profile = await liff.getProfile();
+            uId = profile.userId;
+            loadPrefixes();
+        } catch (err) { console.error(err); }
+    }
+
+    async function loadPrefixes() {
+        try {
+            const res = await fetch(`${URL_GAS}?action=getPrefixes`);
+            const prefixes = await res.json();
+            const select = document.getElementById('prefixSelect');
+            select.innerHTML = "";
+            prefixes.forEach(p => {
+                let opt = document.createElement('option');
+                opt.value = p; opt.innerText = p;
+                select.appendChild(opt);
+            });
+        } catch (e) { document.getElementById('prefixSelect').innerHTML = '<option value="IT">IT</option>'; }
     }
 
     async function track() {
-        const p = document.getElementById('prefix').value;
-        const v = document.getElementById('tid').value;
-        if(!v) return alert("กรุณากรอกเลขงาน");
+        const pref = document.getElementById('prefixSelect').value;
+        const num = document.getElementById('tid').value;
+        if(!num) { alert("กรุณากรอกเลขงาน"); return; }
         
-        const fullId = p + "#" + v.padStart(3, '0');
+        const fullId = pref + "#" + num.padStart(3, '0');
+        document.getElementById('btnTrack').disabled = true;
         document.getElementById('loader').style.display = 'block';
         document.getElementById('result').style.display = 'none';
 
@@ -70,13 +92,16 @@
             const d = await res.json();
             if(d.found) {
                 document.getElementById('rId').innerText = fullId;
-                document.getElementById('rStat').innerText = "สถานะ: " + d.status;
+                document.getElementById('rStat').innerText = d.status;
                 document.getElementById('rTime').innerText = d.time;
                 document.getElementById('rRoom').innerText = d.room;
-                document.getElementById('rAdmin').innerText = d.admin || "กำลังมอบหมาย";
+                document.getElementById('rIssue').innerText = d.issue;
+                document.getElementById('rPrio').innerText = d.priority;
+                document.getElementById('rAdmin').innerText = d.admin;
                 document.getElementById('result').style.display = 'block';
-            } else alert("ไม่พบข้อมูล หรือไม่มีสิทธิ์เข้าถึง");
-        } catch (e) { alert("เกิดข้อผิดพลาด"); }
+            } else { alert("ไม่พบข้อมูล หรือคุณไม่มีสิทธิ์เข้าถึง"); }
+        } catch (e) { alert("เกิดข้อผิดพลาดในการเชื่อมต่อ"); }
+        document.getElementById('btnTrack').disabled = false;
         document.getElementById('loader').style.display = 'none';
     }
     init();
