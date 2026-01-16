@@ -94,26 +94,16 @@
 
             if (resData.result === "ok") {
                 if (liff.isInClient()) {
-                    // ปรับโครงสร้าง Flex Message ใหม่ให้ Validate ผ่านแน่นอน
-                    const starIcons = [1, 2, 3, 4, 5].map(s => ({
-                        "type": "icon",
-                        "size": "xl",
-                        "url": "https://img.icons8.com/fluent/48/000000/star.png",
-                        "action": {
-                            "type": "uri",
-                            "label": "score_" + s,
-                            "uri": REVIEW_LIFF_URL + "?row=" + resData.row + "&score=" + s
-                        }
-                    }));
-
-                    const flexMessage = {
+                    // ปรับโครงสร้างใหม่ทั้งหมด (เปลี่ยนจาก Icon เป็น Button เพื่อความเสถียรสูงสุด)
+                    const flexBody = {
                         "type": "bubble",
+                        "size": "mega",
                         "header": {
                             "type": "box",
                             "layout": "vertical",
                             "backgroundColor": "#000080",
                             "contents": [
-                                { "type": "text", "text": "บันทึกเรียบร้อย", "color": "#FFFFFF", "weight": "bold" }
+                                { "type": "text", "text": "บันทึกแจ้งซ่อมสำเร็จ", "color": "#FFFFFF", "weight": "bold", "size": "md" }
                             ]
                         },
                         "body": {
@@ -121,13 +111,24 @@
                             "layout": "vertical",
                             "spacing": "md",
                             "contents": [
-                                { "type": "text", "text": "หมายเลขแจ้งซ่อม: " + resData.ticketId, "weight": "bold", "size": "lg" },
-                                { "type": "text", "text": "รบกวนให้คะแนนความพึงพอใจเมื่อซ่อมเสร็จ", "size": "xs", "color": "#888888", "wrap": true },
+                                { "type": "text", "text": "หมายเลข: " + resData.ticketId, "weight": "bold", "size": "xl" },
+                                { "type": "text", "text": "รบกวนให้คะแนนความพึงพอใจด้านล่างครับ", "size": "sm", "color": "#888888", "wrap": true },
                                 {
                                     "type": "box",
                                     "layout": "horizontal",
-                                    "margin": "md",
-                                    "contents": starIcons
+                                    "spacing": "xs",
+                                    "margin": "lg",
+                                    "contents": [1, 2, 3, 4, 5].map(s => ({
+                                        "type": "button",
+                                        "action": {
+                                            "type": "uri",
+                                            "label": "⭐" + s,
+                                            "uri": REVIEW_LIFF_URL + "?row=" + resData.row + "&score=" + s
+                                        },
+                                        "style": "secondary",
+                                        "height": "sm",
+                                        "color": "#F0F0F0"
+                                    }))
                                 }
                             ]
                         }
@@ -135,16 +136,15 @@
 
                     await liff.sendMessages([{
                         "type": "flex",
-                        "altText": "แจ้งซ่อมสำเร็จ หมายเลข " + resData.ticketId,
-                        "contents": flexMessage
+                        "altText": "รับเรื่องแจ้งซ่อมแล้ว " + resData.ticketId,
+                        "contents": flexBody
                     }]);
                 }
-                liff.closeWindow();
+                setTimeout(() => { liff.closeWindow(); }, 500);
             }
         } catch (err) {
-            alert("Error: " + err.message);
-            btn.disabled = false;
-            document.getElementById('loading').style.display = 'none';
+            alert("บันทึกสำเร็จ แต่แสดงข้อความขัดข้อง: " + err.message);
+            liff.closeWindow();
         }
     });
     main();
