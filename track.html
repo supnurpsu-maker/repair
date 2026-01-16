@@ -3,42 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ติดตามสถานะแจ้งซ่อม</title>
+    <title>ติดตามสถานะ</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #007bff; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 18px; text-align: center; }
-        .btn-search { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .result-card { display: none; margin-top: 20px; padding: 15px; border-radius: 10px; background: #f8f9fa; border-left: 5px solid #007bff; }
-        .status-badge { display: inline-block; padding: 3px 10px; border-radius: 10px; background: #ffc107; font-size: 14px; font-weight: bold; }
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; display: flex; justify-content: center; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { text-align: center; color: #007bff; margin-bottom: 20px; }
+        input { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 10px; font-size: 20px; text-align: center; box-sizing: border-box; transition: 0.3s; }
+        input:focus { border-color: #007bff; outline: none; }
+        .btn { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        .result-box { display: none; margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 5px solid #007bff; }
+        .status-tag { display: inline-block; padding: 4px 12px; border-radius: 20px; background: #007bff; color: white; font-size: 14px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>🔍 ติดตามสถานะ</h2>
-    <input type="text" id="ticketId" placeholder="ใส่เลขงาน เช่น SUP#001">
-    <button class="btn-search" onclick="trackJob()">ตรวจสอบสถานะ</button>
+<div class="card">
+    <h2>🔍 ติดตามงานซ่อม</h2>
+    <input type="number" id="jobNo" placeholder="กรอกเลขงาน เช่น 1 หรือ 001">
+    <button class="btn" onclick="trackJob()">ตรวจสอบสถานะ</button>
 
-    <div id="result" class="result-card">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <b id="resId"></b>
-            <span id="resStatus" class="status-badge"></span>
-        </div>
-        <p style="margin: 10px 0; font-size: 14px;">
+    <div id="result" class="result-box">
+        <div id="resId" style="font-weight:bold; color:#007bff; margin-bottom:5px;"></div>
+        <div id="resStatus" class="status-tag"></div>
+        <div style="font-size:14px; color:#555; line-height:1.6;">
             <b>หมวดหมู่:</b> <span id="resCat"></span><br>
             <b>ปัญหา:</b> <span id="resIssue"></span><br>
-            <b>ช่างผู้ดูแล:</b> <span id="resAdmin"></span>
-        </p>
+            <b>ช่างดูแล:</b> <span id="resAdmin"></span>
+        </div>
     </div>
 </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz86RG6_VraHFO3v0_M_DoAAnvAFOHRWkEZfkGavxxMmK4F5497aydEN3R92YeY1w27/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxCD3JJecR5AgR1Q5I8ObNoSu7lSnTNU9KC27SPT0QhU0Bgcwpe1tNkGudp9S8idvBm/exec";
     const LIFF_ID = "2008875334-wOYUvNha";
-    let myUid = "";
+    let userUid = "";
 
     async function init() {
         await liff.init({ liffId: LIFF_ID });
@@ -46,19 +45,20 @@
             liff.login();
         } else {
             const profile = await liff.getProfile();
-            myUid = profile.userId;
+            userUid = profile.userId;
         }
     }
 
     async function trackJob() {
-        const tid = document.getElementById('ticketId').value.trim().toUpperCase();
-        if (!tid) return alert("กรุณากรอกเลขงาน");
+        const val = document.getElementById('jobNo').value;
+        if (!val) return alert("กรุณากรอกเลขงาน");
 
         const resDiv = document.getElementById('result');
         resDiv.style.display = 'none';
 
         try {
-            const response = await fetch(`${WEB_APP_URL}?action=track&tid=${tid}&uid=${myUid}`);
+            // ส่งไปหา GAS พร้อม UID ของผู้ใช้
+            const response = await fetch(`${WEB_APP_URL}?action=track&tid=${val}&uid=${userUid}`);
             const data = await response.json();
 
             if (data.found) {
@@ -69,10 +69,10 @@
                 document.getElementById('resAdmin').innerText = data.admin;
                 resDiv.style.display = 'block';
             } else {
-                alert("ไม่พบข้อมูลเลขงานนี้ หรือคุณไม่มีสิทธิ์ดูรายการนี้");
+                alert("❌ ไม่พบเลขงานนี้ หรือคุณไม่ใช่ผู้แจ้งงานนี้");
             }
         } catch (err) {
-            alert("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่");
+            alert("⚠️ เชื่อมต่อล้มเหลว ตรวจสอบอินเทอร์เน็ตหรือ URL ของ Web App");
             console.error(err);
         }
     }
