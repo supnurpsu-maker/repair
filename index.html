@@ -36,10 +36,13 @@
         <input type="tel" id="phone" placeholder="ระบุเบอร์โทรศัพท์" required>
         <label>🛠 ประเภทอุปกรณ์</label>
         <select id="category" required>
-            <option value="" disabled selected>เลือกประเภทอุปกรณ์</option>
+            <option value="">-- เลือก --</option>
             <option value="Computer AIO">Computer AIO</option>
             <option value="Laptop">Laptop</option>
             <option value="Network">Network</option>
+            <option value="PSU Passport">PSU Passport</option>
+            <option value="ZOOM/UC-Phone">ZOOM/UC-Phone</option>
+            <option value="CCTV/FingerPrint Scan">CCTV/FingerPrint Scan</option>
             <option value="Others">Others</option>
         </select>
         <label>💡 รายละเอียดปัญหา</label>
@@ -60,8 +63,8 @@
 
 <script>
     const LIFF_ID = "2008875334-eZXiyz43"; 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby8xag5LF3xlF2koUxY1vnVXeMFl2WWLgM5npiAaW5Li7fxtgr7MBIvNnl5IdcazM4X/exec"; 
-    const REVIEW_LIFF_URL = "https://liff.line.me/2008875334-d6l72Uox"; // URL review.html
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyRGvz8X5sJyhgwtWLx2tUoUS5vVUqcnTzMPbMj1_u4my7tXq7659G2MABNc3jkxMr6/exec"; 
+    const REVIEW_LIFF_URL = "https://liff.line.me/2008875334-d6l72Uox"; 
 
     let profile = {};
 
@@ -120,49 +123,56 @@
                 const rowId = resData.row;
                 const starUrl = "https://cdn-icons-png.flaticon.com/512/1828/1828884.png";
 
-                await liff.sendMessages([{
-                    "type": "flex",
-                    "altText": "รายการแจ้งซ่อม " + resData.ticketId,
-                    "contents": {
-                        "type": "bubble",
-                        "header": {
-                            "type": "box", "layout": "vertical", "backgroundColor": "#FBCEB1",
-                            "contents": [
-                                {
-                                    "type": "box", "layout": "horizontal",
-                                    "contents": [
-                                        { "type": "text", "text": "รายการแจ้งซ่อม", "weight": "bold", "color": "#000080", "size": "lg", "flex": 1 },
-                                        { "type": "text", "text": resData.ticketId, "size": "xs", "color": "#000080", "align": "end", "gravity": "center" }
-                                    ]
-                                }
-                            ]
-                        },
-                        "body": {
-                            "type": "box", "layout": "vertical", "spacing": "md",
-                            "contents": [
-                                {
-                                    "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "paddingAll": "10px", "cornerRadius": "md",
-                                    "contents": [
-                                        { "type": "text", "text": "สถานะ : รอดำเนินการ", "size": "sm", "color": "#000080", "weight": "bold" },
-                                        { "type": "text", "text": "คิวรอขณะนี้ : " + resData.pendingCount + " รายการ", "size": "xs", "color": "#555555", "margin": "xs" }
-                                    ]
-                                },
-                                { "type": "text", "text": "ให้คะแนนความพึงพอใจการแจ้งซ่อม", "size": "xs", "margin": "lg", "color": "#888888", "align": "center" },
-                                {
-                                    "type": "box", "layout": "horizontal", "margin": "md", "justifyContent": "center",
-                                    "contents": [
-                                        { "type": "icon", "size": "xl", "url": starUrl, "action": { "type": "uri", "uri": REVIEW_LIFF_URL + "?row=" + rowId + "&score=1" } },
-                                        { "type": "icon", "size": "xl", "url": starUrl, "action": { "type": "uri", "uri": REVIEW_LIFF_URL + "?row=" + rowId + "&score=2" } },
-                                        { "type": "icon", "size": "xl", "url": starUrl, "action": { "type": "uri", "uri": REVIEW_LIFF_URL + "?row=" + rowId + "&score=3" } },
-                                        { "type": "icon", "size": "xl", "url": starUrl, "action": { "type": "uri", "uri": REVIEW_LIFF_URL + "?row=" + rowId + "&score=4" } },
-                                        { "type": "icon", "size": "xl", "url": starUrl, "action": { "type": "uri", "uri": REVIEW_LIFF_URL + "?row=" + rowId + "&score=5" } }
-                                    ]
-                                }
-                            ]
+                // ส่วนการส่ง Flex Message
+                if (liff.isInClient()) {
+                    await liff.sendMessages([{
+                        "type": "flex",
+                        "altText": "รายการแจ้งซ่อม " + resData.ticketId,
+                        "contents": {
+                            "type": "bubble",
+                            "header": {
+                                "type": "box", "layout": "vertical", "backgroundColor": "#FBCEB1",
+                                "contents": [
+                                    {
+                                        "type": "box", "layout": "horizontal",
+                                        "contents": [
+                                            { "type": "text", "text": "รายการแจ้งซ่อม", "weight": "bold", "color": "#000080", "size": "lg", "flex": 1 },
+                                            { "type": "text", "text": resData.ticketId, "size": "xs", "color": "#000080", "align": "end", "gravity": "center" }
+                                        ]
+                                    }
+                                ]
+                            },
+                            "body": {
+                                "type": "box", "layout": "vertical", "spacing": "md",
+                                "contents": [
+                                    {
+                                        "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "paddingAll": "10px", "cornerRadius": "md",
+                                        "contents": [
+                                            { "type": "text", "text": "สถานะ : รอดำเนินการ", "size": "sm", "color": "#000080", "weight": "bold" },
+                                            { "type": "text", "text": "คิวรอขณะนี้ : " + resData.pendingCount + " รายการ", "size": "xs", "color": "#555555", "margin": "xs" }
+                                        ]
+                                    },
+                                    { "type": "text", "text": "ให้คะแนนความพึงพอใจการแจ้งซ่อม", "size": "xs", "margin": "lg", "color": "#888888", "align": "center" },
+                                    {
+                                        "type": "box", "layout": "horizontal", "margin": "md", "justifyContent": "center",
+                                        "contents": [
+                                            { "type": "icon", "size": "xl", "url": starUrl, "action": { "type": "uri", "uri": REVIEW_LIFF_URL + "?row=" + rowId + "&score=1" } },
+                                            { "type": "icon", "size": "xl", "url": starUrl, "action": { "type": "uri", "uri": REVIEW_LIFF_URL + "?row=" + rowId + "&score=2" } },
+                                            { "type": "icon", "size": "xl", "url": starUrl, "action": { "type": "uri", "uri": REVIEW_LIFF_URL + "?row=" + rowId + "&score=3" } },
+                                            { "type": "icon", "size": "xl", "url": starUrl, "action": { "type": "uri", "uri": REVIEW_LIFF_URL + "?row=" + rowId + "&score=4" } },
+                                            { "type": "icon", "size": "xl", "url": starUrl, "action": { "type": "uri", "uri": REVIEW_LIFF_URL + "?row=" + rowId + "&score=5" } }
+                                        ]
+                                    }
+                                ]
+                            }
                         }
-                    }
-                }]);
-                liff.closeWindow();
+                    }]);
+                }
+                
+                // รอสักครู่เพื่อให้ส่งข้อมูลเสร็จก่อนปิดหน้าต่าง
+                setTimeout(() => {
+                    liff.closeWindow();
+                }, 500);
             }
         } catch (err) {
             console.error(err);
