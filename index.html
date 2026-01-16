@@ -77,13 +77,16 @@
             });
         }
 
+        const roomVal = document.getElementById('room').value;
+        const issueVal = document.getElementById('issue').value;
+
         const payload = {
             uid: profile.userId,
             displayName: profile.displayName,
-            room: document.getElementById('room').value,
+            room: roomVal,
             phone: document.getElementById('phone').value,
             category: document.getElementById('category').value,
-            issue: document.getElementById('issue').value,
+            issue: issueVal,
             priority: document.getElementById('priority').value,
             imageBase64: base64
         };
@@ -94,25 +97,39 @@
 
             if (resData.result === "ok") {
                 if (liff.isInClient()) {
-                    // ส่ง Flex Message แบบปุ่มดาว 5 ดวงที่ผ่านการทดสอบแล้ว
                     await liff.sendMessages([{
                         "type": "flex",
-                        "altText": "บันทึกแจ้งซ่อมหมายเลข " + resData.ticketId,
+                        "altText": "รับเรื่องแจ้งซ่อมแล้ว " + resData.ticketId,
                         "contents": {
                             "type": "bubble",
                             "header": {
-                                "type": "box", "layout": "vertical", "backgroundColor": "#000080",
+                                "type": "box", "layout": "horizontal", "backgroundColor": "#000080", "paddingAll": "lg",
                                 "contents": [
-                                    { "type": "text", "text": "แจ้งซ่อมสำเร็จ", "color": "#FFFFFF", "weight": "bold", "size": "md" }
+                                    { "type": "text", "text": "แจ้งซ่อมสำเร็จ", "color": "#FFFFFF", "weight": "bold", "size": "md", "flex": 1 },
+                                    { "type": "text", "text": resData.ticketId, "color": "#FBCEB1", "weight": "bold", "size": "md", "align": "end", "flex": 1 }
                                 ]
                             },
                             "body": {
-                                "type": "box", "layout": "vertical", "spacing": "md",
+                                "type": "box", "layout": "vertical", "spacing": "md", "paddingAll": "lg",
                                 "contents": [
-                                    { "type": "text", "text": "หมายเลข: " + resData.ticketId, "weight": "bold", "size": "xl", "color": "#000080" },
-                                    { "type": "text", "text": "เมื่อช่างซ่อมเสร็จแล้ว รบกวนให้คะแนนความพึงพอใจด้านล่างครับ", "size": "xs", "color": "#888888", "wrap": true },
                                     {
-                                        "type": "box", "layout": "horizontal", "margin": "lg", "spacing": "xs",
+                                        "type": "box", "layout": "vertical", "backgroundColor": "#E8F0FE", "paddingAll": "md", "cornerRadius": "md",
+                                        "contents": [
+                                            { "type": "text", "text": "สถานะ: รอดำเนินการ", "color": "#000080", "weight": "bold", "size": "sm" },
+                                            { "type": "text", "text": "คิวที่รอขณะนี้: " + (resData.pendingCount || "-") + " คิว", "color": "#444444", "size": "xs", "margin": "xs" }
+                                        ]
+                                    },
+                                    {
+                                        "type": "box", "layout": "vertical", "margin": "md", "spacing": "xs",
+                                        "contents": [
+                                            { "type": "text", "text": "📍 สถานที่: " + roomVal, "size": "sm", "color": "#333333", "wrap": true },
+                                            { "type": "text", "text": "🛠 ปัญหา: " + issueVal, "size": "sm", "color": "#333333", "wrap": true }
+                                        ]
+                                    },
+                                    { "type": "separator", "margin": "lg" },
+                                    { "type": "text", "text": "ให้คะแนนความพึงพอใจเมื่อบริการเสร็จสิ้น", "size": "xxs", "color": "#aaaaaa", "align": "center", "margin": "md" },
+                                    {
+                                        "type": "box", "layout": "horizontal", "margin": "md", "spacing": "xs",
                                         "contents": [1, 2, 3, 4, 5].map(s => ({
                                             "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "cornerRadius": "md", "paddingAll": "sm",
                                             "contents": [
