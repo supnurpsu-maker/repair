@@ -8,34 +8,36 @@
     <style>
         body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 20px; margin: 0; }
         .form-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
-        .profile-section { text-align: center; margin-bottom: 20px; }
-        #userImg { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #06C755; margin-bottom: 10px; }
-        #userName { font-weight: bold; color: #333; font-size: 1.1em; }
-        h2 { text-align: center; color: #06C755; margin-top: 0; }
+        h2 { text-align: center; color: #06C755; margin-top: 0; margin-bottom: 15px; }
+        
+        /* ปรับส่วนชื่อและรูปเป็นแนวนอน */
+        .profile-horizontal { display: flex; align-items: center; background: #f8f9fa; padding: 10px 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #eee; }
+        #userImg { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #06C755; margin-right: 15px; }
+        #userName { font-weight: bold; color: #333; font-size: 16px; }
+
         label { display: block; margin-top: 15px; font-weight: bold; color: #555; font-size: 14px; }
         input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; background: #fafafa; }
-        .btn-submit { width: 100%; padding: 15px; background: #06C755; color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; margin-top: 25px; cursor: pointer; transition: 0.3s; }
-        .btn-submit:active { transform: scale(0.98); background: #05b34c; }
-        .preview-img { width: 100%; border-radius: 10px; margin-top: 10px; display: none; border: 1px solid #ddd; }
+        .btn-submit { width: 100%; padding: 15px; background: #06C755; color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; margin-top: 25px; cursor: pointer; }
+        .preview-img { width: 100%; border-radius: 10px; margin-top: 10px; display: none; }
         #loading { display: none; text-align: center; color: #666; font-size: 14px; margin-top: 15px; }
     </style>
 </head>
 <body>
 
 <div class="form-card">
-    <div class="profile-section">
-        <img id="userImg" src="https://via.placeholder.com/80" alt="Profile">
-        <div id="userName">กำลังโหลดข้อมูล...</div>
+    <h2>📝 แบบฟอร์มแจ้งซ่อม</h2>
+    
+    <div class="profile-horizontal">
+        <img id="userImg" src="https://via.placeholder.com/50" alt="Profile">
+        <div id="userName">กำลังโหลดข้อมูลผู้แจ้ง...</div>
     </div>
 
-    <h2>📝 แจ้งซ่อม IT</h2>
-    
     <form id="repairForm">
         <label>📍 ห้อง/สถานที่</label>
-        <input type="text" id="room" placeholder="ระบุเลขห้องหรือชื่อสถานที่" required>
+        <input type="text" id="room" placeholder="ระบุเลขห้องหรือสถานที่" required>
 
         <label>📞 เบอร์ติดต่อภายใน</label>
-        <input type="tel" id="phone" placeholder="ระบุเบอร์โทรศัพท์ที่ติดต่อได้" required>
+        <input type="tel" id="phone" placeholder="ระบุเบอร์โทรศัพท์" required>
 
         <label>🛠 ประเภทอุปกรณ์ (Category)</label>
         <select id="category" required>
@@ -64,52 +66,51 @@
         <img id="imagePreview" class="preview-img">
 
         <button type="submit" class="btn-submit" id="submitBtn">ส่งข้อมูลแจ้งซ่อม</button>
-        <div id="loading">⏳ กำลังบันทึกข้อมูลและอัปโหลดรูปภาพ...</div>
+        <div id="loading">⏳ กำลังบันทึกข้อมูล...</div>
     </form>
 </div>
 
 <script>
     const LIFF_ID = "2008875334-eZXiyz43"; 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz86RG6_VraHFO3v0_M_DoAAnvAFOHRWkEZfkGavxxMmK4F5497aydEN3R92YeY1w27/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw--VKbuz97SHq7fDnNf6qg4oLNJPbYI31bS-XPvvRQwyrshnUoNetSBVKAJg9h6_Cy/exec"; 
     let userProfile = {};
 
     async function initLiff() {
         try {
             await liff.init({ liffId: LIFF_ID });
-            if (!liff.isLoggedIn()) {
-                liff.login();
-            } else {
+            if (!liff.isLoggedIn()) { liff.login(); } 
+            else {
                 userProfile = await liff.getProfile();
-                // แสดงชื่อและรูปจาก LINE
-                document.getElementById('userName').innerText = "สวัสดีคุณ " + userProfile.displayName;
-                document.getElementById('userImg').src = userProfile.pictureUrl || "https://via.placeholder.com/80";
+                document.getElementById('userName').innerText = userProfile.displayName;
+                document.getElementById('userImg').src = userProfile.pictureUrl || "https://via.placeholder.com/50";
             }
-        } catch (err) { console.error("LIFF Init Error", err); }
+        } catch (err) { console.error(err); }
     }
 
     function previewImage(event) {
         const reader = new FileReader();
-        reader.onload = function() {
-            const output = document.getElementById('imagePreview');
-            output.src = reader.result;
-            output.style.display = 'block';
+        reader.onload = () => {
+            const out = document.getElementById('imagePreview');
+            out.src = reader.result; out.style.display = 'block';
         };
         if(event.target.files[0]) reader.readAsDataURL(event.target.files[0]);
     }
 
     document.getElementById('repairForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
         const btn = document.getElementById('submitBtn');
         const loading = document.getElementById('loading');
-        btn.disabled = true;
-        loading.style.display = 'block';
+        btn.disabled = true; loading.style.display = 'block';
 
         let base64Image = "";
         const fileInput = document.getElementById('imageFile');
         if (fileInput.files.length > 0) {
             const file = fileInput.files[0];
-            base64Image = await toBase64(file);
+            const reader = new FileReader();
+            base64Image = await new Promise(r => {
+                reader.onload = () => r(reader.result.split(',')[1]);
+                reader.readAsDataURL(file);
+            });
         }
 
         const formData = {
@@ -120,35 +121,18 @@
             category: document.getElementById('category').value,
             issue: document.getElementById('issue').value,
             priority: document.getElementById('priority').value,
-            imageBase64: base64Image.split(',')[1] || ""
+            imageBase64: base64Image
         };
 
         try {
-            const response = await fetch(WEB_APP_URL, {
-                method: "POST",
-                body: JSON.stringify(formData)
-            });
-            const result = await response.json();
+            const res = await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(formData) });
+            const result = await res.json();
             if (result.result === "ok") {
-                alert(`✅ ส่งข้อมูลสำเร็จ!\nเลขที่รับแจ้ง: ${result.ticketId}`);
+                alert("ส่งแจ้งซ่อมสำเร็จ! เลขที่: " + result.ticketId);
                 liff.closeWindow();
-            } else {
-                alert("❌ เกิดข้อผิดพลาด: " + result.message);
-                btn.disabled = false;
-                loading.style.display = 'none';
             }
-        } catch (err) {
-            alert("❌ ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่อีกครั้ง");
-            btn.disabled = false;
-            loading.style.display = 'none';
-        }
-    });
-
-    const toBase64 = file => new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
+        } catch (err) { alert("เกิดข้อผิดพลาด"); }
+        finally { btn.disabled = false; loading.style.display = 'none'; }
     });
 
     initLiff();
