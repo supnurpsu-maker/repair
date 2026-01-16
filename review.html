@@ -3,26 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ขอบคุณครับ</title>
+    <title>บันทึกคะแนน</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; color: #000080; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #000080; border-radius: 50%; width: 30px; height: 30px; animation: spin 2s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
-<body style="text-align: center; padding-top: 50px; background: #f4f7fa;">
-    <h3>กำลังบันทึกคะแนนความพึงพอใจ...</h3>
+<body>
+    <div id="status">
+        <p>กำลังบันทึกคะแนนความพึงพอใจ...</p>
+        <div class="loader"></div>
+    </div>
+
     <script>
-        async function main() {
-            await liff.init({ liffId: "2008875334-d6l72Uox" });
-            const params = new URLSearchParams(window.location.search);
-            const row = params.get('row');
-            const score = params.get('score');
-            const webAppUrl = "https://script.google.com/macros/s/AKfycbwYgKGmjUTXFD4zE984NIuGwydvc9DJuEEdocN6RdqEszAkd6IE34VVs6iLE_kemZok/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz40JQzO7m6YauK-loL-m8fwiEa4YiJBCdj0-cDgZrELYqdtwbSfbLjJ4pfEVNG1aBv/exec";
+
+        async function submitReview() {
+            await liff.init({ liffId: "2008875334-d6l72Uox" }); // ใช้ LIFF ID ของหน้า Review
+            
+            // ดึงค่า row และ score จาก URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const row = urlParams.get('row');
+            const score = urlParams.get('score');
 
             if (row && score) {
-                await fetch(`${webAppUrl}?row=${row}&score=${score}`, {mode: 'no-cors'});
-                alert("บันทึก " + score + " ดาวเรียบร้อย ขอบคุณครับ");
-                liff.closeWindow();
+                try {
+                    // ส่งค่าไปที่ doGet ของ GAS
+                    await fetch(`${WEB_APP_URL}?row=${row}&score=${score}`, { method: 'GET', mode: 'no-cors' });
+                    
+                    document.getElementById('status').innerHTML = "<h2>✅ ขอบคุณที่ให้คะแนนครับ</h2><p>ปิดหน้านี้ได้เลย</p>";
+                    setTimeout(() => { liff.closeWindow(); }, 2000);
+                } catch (err) {
+                    document.getElementById('status').innerHTML = "เกิดข้อผิดพลาดในการบันทึก";
+                }
+            } else {
+                document.getElementById('status').innerHTML = "ไม่พบข้อมูลคะแนน";
             }
         }
-        main();
+        submitReview();
     </script>
 </body>
 </html>
