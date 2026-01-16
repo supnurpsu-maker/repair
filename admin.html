@@ -3,109 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Manage IT Jobs</title>
+    <title>IT Admin Dashboard</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 10px; margin: 0; }
-        .header { background: #1a1d20; color: white; padding: 15px; border-radius: 0 0 15px 15px; text-align: center; margin-bottom: 15px; }
-        .job-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-top: 6px solid #ccc; }
-        /* สีกรอบตามความด่วน */
-        .priority-ด่วนที่สุด { border-top-color: #dc3545; background: #fff5f5; }
+        body { font-family: sans-serif; background: #f0f2f5; padding: 10px; margin: 0; }
+        .header { background: #1a1d20; color: white; padding: 15px; border-radius: 0 0 15px 15px; text-align: center; }
+        .job-card { background: white; border-radius: 12px; padding: 15px; margin-top: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-top: 6px solid #ccc; }
+        .priority-ด่วนที่สุด { border-top-color: #dc3545; }
         .priority-ด่วน { border-top-color: #fd7e14; }
         .priority-ปกติ { border-top-color: #28a745; }
-        
-        .ticket-row { display: flex; justify-content: space-between; font-weight: bold; }
         .status-badge { font-size: 11px; background: #007bff; color: white; padding: 2px 8px; border-radius: 10px; }
-        .detail-box { background: #f8f9fa; padding: 10px; border-radius: 8px; font-size: 14px; margin: 10px 0; border-left: 3px solid #007bff; }
-        
-        .btn-group-main { display: flex; gap: 8px; margin-top: 10px; }
-        .btn-group-sub { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px; }
-        
-        button { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .detail { font-size: 14px; background: #f8f9fa; padding: 10px; border-radius: 8px; margin: 10px 0; }
+        .btn-main { display: flex; gap: 8px; margin-top: 10px; }
+        .btn-sub { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px; }
+        button { padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .b-take { background: #007bff; color: white; flex: 1; }
-        .b-close { background: #28a745; color: white; flex: 1; }
-        .b-external { background: #6c757d; color: white; font-size: 12px; }
-        
-        #loading { text-align: center; padding: 50px; color: #666; }
+        .b-done { background: #28a745; color: white; flex: 1; }
+        .b-ext { background: #6c757d; color: white; font-size: 12px; }
     </style>
 </head>
 <body>
-
-<div id="loading">กำลังยืนยันสิทธิ์...</div>
-
-<div id="adminApp" style="display:none;">
-    <div class="header">
-        <h3 style="margin:0">IT ADMIN DASHBOARD</h3>
-        <p id="adminInfo" style="margin:5px 0 0; font-size:12px; opacity:0.8;"></p>
-    </div>
-    <div id="jobList"></div>
+<div id="adminApp">
+    <div class="header"><h3>IT ADMIN DASHBOARD</h3><p id="adminInfo"></p></div>
+    <div id="jobList">กำลังโหลด...</div>
 </div>
-
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz86RG6_VraHFO3v0_M_DoAAnvAFOHRWkEZfkGavxxMmK4F5497aydEN3R92YeY1w27/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw--VKbuz97SHq7fDnNf6qg4oLNJPbYI31bS-XPvvRQwyrshnUoNetSBVKAJg9h6_Cy/exec";
     const LIFF_ID = "2008875334-VPUmuC8D";
     let myUid = "";
-
     async function init() {
-        try {
-            await liff.init({ liffId: LIFF_ID });
-            if (!liff.isLoggedIn()) { liff.login(); return; }
-            const profile = await liff.getProfile();
-            myUid = profile.userId;
-
-            const res = await fetch(`${WEB_APP_URL}?action=checkAdmin&uid=${myUid}`);
-            const auth = await res.json();
-
-            if (auth.isAdmin) {
-                document.getElementById("loading").style.display = "none";
-                document.getElementById("adminApp").style.display = "block";
-                document.getElementById("adminInfo").innerText = `คุณ ${auth.name} | แผนก ${auth.dept}`;
-                loadJobs();
-            } else {
-                document.getElementById("loading").innerHTML = "<h3>❌ ไม่มีสิทธิ์เข้าถึง</h3>";
-            }
-        } catch (e) { alert("Error: " + e); }
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) { liff.login(); return; }
+        const profile = await liff.getProfile(); myUid = profile.userId;
+        const res = await fetch(`${WEB_APP_URL}?action=checkAdmin&uid=${myUid}`);
+        const auth = await res.json();
+        if (auth.isAdmin) {
+            document.getElementById("adminInfo").innerText = `คุณ ${auth.name} (${auth.dept})`;
+            loadJobs();
+        } else { document.body.innerHTML = "❌ สิทธิ์ไม่ถูกต้อง"; }
     }
-
     async function loadJobs() {
-        const listDiv = document.getElementById("jobList");
-        listDiv.innerHTML = "<p style='text-align:center; color:#999;'>กำลังดึงข้อมูลงาน...</p>";
-        
         const res = await fetch(`${WEB_APP_URL}?action=listPending&uid=${myUid}`);
         const jobs = await res.json();
-        
-        listDiv.innerHTML = (jobs.length === 0) ? "<p style='text-align:center; padding-top:50px;'>ไม่มีงานค้างในความรับผิดชอบ</p>" : "";
-
+        const listDiv = document.getElementById("jobList");
+        listDiv.innerHTML = jobs.length === 0 ? "ไม่มีงานค้าง" : "";
         jobs.forEach(job => {
             listDiv.innerHTML += `
                 <div class="job-card priority-${job.priority}">
-                    <div class="ticket-row">
-                        <span>${job.ticketId} <span class="status-badge">${job.status}</span></span>
-                        <span style="color:${job.pWeight==1?'#dc3545':'#444'}">${job.priority}</span>
+                    <b>${job.ticketId}</b> <span class="status-badge">${job.status}</span>
+                    <div class="detail">📍 ${job.room} | 👤 ${job.name}<br><b>ปัญหา:</b> ${job.issue}</div>
+                    <div class="btn-main">
+                        <button class="b-take" onclick="update(${job.row}, 'กำลังดำเนินการ')">💻 รับงาน</button>
+                        <button class="b-done" onclick="update(${job.row}, 'ดำเนินการเรียบร้อยแล้ว')">✅ ปิดงาน</button>
                     </div>
-                    <div style="font-size:13px; margin-top:5px;">👤 ${job.name} | 📍 ${job.room}</div>
-                    <div class="detail-box"><b>ปัญหา:</b> ${job.issue}</div>
-                    <div style="font-size:11px; color:#999;">🛠 ${job.adminName ? 'รับผิดชอบโดย: ' + job.adminName : 'ยังไม่มีคนรับงาน'}</div>
-                    
-                    <div class="btn-group-main">
-                        <button class="b-take" onclick="updateStatus(${job.row}, 'กำลังดำเนินการ')">💻 รับงาน</button>
-                        <button class="b-close" onclick="updateStatus(${job.row}, 'ดำเนินการเรียบร้อยแล้ว')">✅ ปิดงาน</button>
+                    <div class="btn-sub">
+                        <button class="b-ext" onclick="update(${job.row}, 'รอร้านภายนอกดำเนินการ')">🏬 รอร้านนอก</button>
+                        <button class="b-ext" onclick="update(${job.row}, 'รอจัดจ้างร้านภายนอก')">📝 รอจัดจ้าง</button>
                     </div>
-                    <div class="btn-group-sub">
-                        <button class="b-external" onclick="updateStatus(${job.row}, 'รอร้านภายนอกดำเนินการ')">🏬 รอร้านนอก</button>
-                        <button class="b-external" onclick="updateStatus(${job.row}, 'รอจัดจ้างร้านภายนอก')">📝 รอจัดจ้าง</button>
-                    </div>
-                </div>
-            `;
+                </div>`;
         });
     }
-
-    async function updateStatus(row, status) {
-        if (!confirm(`ยืนยันเปลี่ยนสถานะเป็น: ${status}`)) return;
-        await fetch(`${WEB_APP_URL}?action=updateStatus&row=${row}&status=${status}&uid=${myUid}`);
-        loadJobs();
+    async function update(row, status) {
+        if(confirm("ยืนยันเปลี่ยนสถานะ?")) {
+            await fetch(`${WEB_APP_URL}?action=updateStatus&row=${row}&status=${status}&uid=${myUid}`);
+            loadJobs();
+        }
     }
-
     init();
 </script>
 </body>
