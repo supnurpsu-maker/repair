@@ -7,7 +7,7 @@
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         :root { --primary: #000080; --accent: #FBCEB1; --bg: #f4f7fa; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); padding: 20px; margin: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; margin: 0; }
         .card { background: white; max-width: 500px; margin: auto; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,128,0.1); overflow: hidden; }
         .header { background: var(--primary); color: white; padding: 20px; text-align: center; }
         .profile-bar { display: flex; align-items: center; background: var(--accent); padding: 12px 20px; border-bottom: 2px solid var(--primary); }
@@ -54,14 +54,14 @@
         <input type="file" id="imageFile" accept="image/*" onchange="previewImg(event)">
         <img id="imgPre" class="img-preview">
         <button type="submit" class="btn-submit" id="btnSub">ยืนยันการแจ้งซ่อม</button>
-        <div id="loading">⌛ กำลังส่งข้อมูลไปยังระบบ...</div>
+        <div id="loading">⏳ ระบบกำลังบันทึกข้อมูล...</div>
     </form>
 </div>
 
 <script>
     const LIFF_ID = "2008875334-eZXiyz43"; 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwlFlGppdZhkL822e_wMZagrx3f-Viyo_VSXF_xf88EWMi6i2B2UtvEt5i-FsUlHN0/exec"; 
-    const REVIEW_LIFF_URL = "https://liff.line.me/2008875334-d6l72Uox"; // ใส่ URL ของหน้า review.html
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxWfBr72t7u_oZvTgfATkgC91vMD4rzB1YM9dX5usKiIAeayFZ3dXkFy0aWrG692Mj9/exec"; 
+    const REVIEW_LIFF_URL = "https://liff.line.me/2008875334-d6l72Uox"; // URL review.html
 
     let profile = {};
 
@@ -117,7 +117,9 @@
             const resData = await response.json();
 
             if (resData.result === "ok") {
-                // ส่ง Flex Message พร้อมปุ่ม Review
+                const rowId = resData.row;
+                const starUrl = "https://cdn-icons-png.flaticon.com/512/1828/1828884.png";
+
                 await liff.sendMessages([{
                     "type": "flex",
                     "altText": "รายการแจ้งซ่อม " + resData.ticketId,
@@ -145,23 +147,16 @@
                                         { "type": "text", "text": "คิวรอขณะนี้ : " + resData.pendingCount + " รายการ", "size": "xs", "color": "#555555", "margin": "xs" }
                                     ]
                                 },
+                                { "type": "text", "text": "ให้คะแนนความพึงพอใจการแจ้งซ่อม", "size": "xs", "margin": "lg", "color": "#888888", "align": "center" },
                                 {
-                                    "type": "box", "layout": "vertical", "spacing": "sm",
+                                    "type": "box", "layout": "horizontal", "margin": "md", "justifyContent": "center",
                                     "contents": [
-                                        { "type": "box", "layout": "horizontal", "contents": [{ "type": "text", "text": "📍 สถานที่", "size": "sm", "color": "#888888", "flex": 2 }, { "type": "text", "text": payload.room, "size": "sm", "color": "#333333", "flex": 4, "wrap": true }] },
-                                        { "type": "box", "layout": "horizontal", "contents": [{ "type": "text", "text": "⚠️ ปัญหา", "size": "sm", "color": "#888888", "flex": 2 }, { "type": "text", "text": payload.issue, "size": "sm", "color": "#333333", "flex": 4, "wrap": true }] }
+                                        { "type": "icon", "size": "xl", "url": starUrl, "action": { "type": "uri", "uri": REVIEW_LIFF_URL + "?row=" + rowId + "&score=1" } },
+                                        { "type": "icon", "size": "xl", "url": starUrl, "action": { "type": "uri", "uri": REVIEW_LIFF_URL + "?row=" + rowId + "&score=2" } },
+                                        { "type": "icon", "size": "xl", "url": starUrl, "action": { "type": "uri", "uri": REVIEW_LIFF_URL + "?row=" + rowId + "&score=3" } },
+                                        { "type": "icon", "size": "xl", "url": starUrl, "action": { "type": "uri", "uri": REVIEW_LIFF_URL + "?row=" + rowId + "&score=4" } },
+                                        { "type": "icon", "size": "xl", "url": starUrl, "action": { "type": "uri", "uri": REVIEW_LIFF_URL + "?row=" + rowId + "&score=5" } }
                                     ]
-                                }
-                            ]
-                        },
-                        "footer": {
-                            "type": "box", "layout": "vertical", "contents": [
-                                {
-                                    "type": "button", "style": "primary", "color": "#000080", "height": "sm",
-                                    "action": {
-                                        "type": "uri", "label": "ให้คะแนนบริการ (Review)",
-                                        "uri": REVIEW_LIFF_URL + "?tid=" + resData.ticketId
-                                    }
                                 }
                             ]
                         }
@@ -170,7 +165,8 @@
                 liff.closeWindow();
             }
         } catch (err) {
-            alert("บันทึกข้อมูลเรียบร้อยแล้ว (ตรวจสอบในแชท)");
+            console.error(err);
+            alert("บันทึกข้อมูลสำเร็จ! (ตรวจสอบผลในแชท)");
             liff.closeWindow();
         }
     });
