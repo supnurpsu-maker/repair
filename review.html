@@ -3,30 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>บันทึกคะแนน</title>
+    <title>ขอบคุณครับ</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
-<body style="text-align: center; font-family: sans-serif; padding-top: 100px; background-color: #f4f7fa;">
-    <div id="status">
-        <h3>กำลังบันทึกคะแนนความพึงพอใจ...</h3>
-    </div>
+<body style="text-align: center; padding-top: 50px; background: #f4f7fa;">
+    <h3>กำลังบันทึกคะแนนความพึงพอใจ...</h3>
     <script>
         async function main() {
-            try {
-                await liff.init({ liffId: "2008875334-d6l72Uox" });
-                const params = new URLSearchParams(window.location.search);
-                const row = params.get('row');
-                const score = params.get('score');
-                const webAppUrl = "https://script.google.com/macros/s/AKfycbwwxyjACKLmEJ-OHtvX9sfCJ9Yu5Pd36XD9zG31On4bCfN7jNkcPC9GkIm7UExLSc3Y/exec";
+            await liff.init({ liffId: "2008875334-d6l72Uox" });
+            const params = new URLSearchParams(window.location.search);
+            const row = params.get('row');
+            const score = params.get('score');
+            const webAppUrl = "https://script.google.com/macros/s/AKfycbyqlgJPDHt5PuYodrhuXaRJ_y20DgoDlBxAlT4B4l_bZ1n_B2YSWz24LZ8SxEep2R4g/exec";
 
-                if (row && score) {
-                    // ส่งข้อมูลไปที่ doGet
-                    await fetch(`${webAppUrl}?row=${row}&score=${score}`, { mode: 'no-cors' });
-                    document.getElementById('status').innerHTML = "<h2>ขอบคุณที่ให้คะแนน " + score + " ดาวครับ!</h2>";
-                    setTimeout(() => { liff.closeWindow(); }, 2000);
-                }
-            } catch (e) {
-                document.getElementById('status').innerHTML = "<h3>เกิดข้อผิดพลาดในการบันทึก</h3>";
+            if (row && score) {
+                await fetch(`${webAppUrl}?row=${row}&score=${score}`, {mode: 'no-cors'});
+                alert("บันทึก " + score + " ดาวเรียบร้อย ขอบคุณครับ");
+                liff.closeWindow();
             }
         }
         main();
