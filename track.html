@@ -3,90 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ติดตามสถานะ (เฉพาะรายการของคุณ)</title>
+    <title>ติดตามสถานะแจ้งซ่อม</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; text-align: center; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 20px; text-align: center; }
-        button { width: 100%; padding: 15px; background: #06C755; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        button:disabled { background: #ccc; }
-        #result { margin-top: 25px; display: none; text-align: left; border-top: 1px solid #eee; padding-top: 20px; }
-        .badge { background: #007bff; color: white; padding: 5px 15px; border-radius: 20px; font-size: 14px; }
+        body { font-family: -apple-system, sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #007bff; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 18px; text-align: center; }
+        .btn-search { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .result-card { display: none; margin-top: 20px; padding: 15px; border-radius: 10px; background: #f8f9fa; border-left: 5px solid #007bff; }
+        .status-badge { display: inline-block; padding: 3px 10px; border-radius: 10px; background: #ffc107; font-size: 14px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h3>🔍 ติดตามสถานะของคุณ</h3>
-        <p id="loadingMsg" style="font-size: 12px; color: #888;">กำลังโหลดข้อมูลผู้ใช้...</p>
-        
-        <div id="searchBox" style="display:none;">
-            <p style="color: #666; font-size: 14px;">กรอกเฉพาะตัวเลขคิว (เช่น 1 หรือ 001)</p>
-            <input type="number" id="ticketNo" placeholder="000">
-            <button id="searchBtn" onclick="trackStatus()">ตรวจสอบสถานะ</button>
 
-            <div id="result">
-                <p><strong>รหัสคิว:</strong> <span id="resId"></span></p>
-                <p><strong>อุปกรณ์:</strong> <span id="resDevice"></span></p>
-                <p><strong>สถานะ:</strong> <span id="resStatus" class="badge"></span></p>
-                <p><strong>ปัญหา:</strong> <span id="resIssue" style="font-size: 14px; color: #555;"></span></p>
-            </div>
+<div class="container">
+    <h2>🔍 ติดตามสถานะ</h2>
+    <input type="text" id="ticketId" placeholder="ใส่เลขงาน เช่น SUP#001">
+    <button class="btn-search" onclick="trackJob()">ตรวจสอบสถานะ</button>
+
+    <div id="result" class="result-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <b id="resId"></b>
+            <span id="resStatus" class="status-badge"></span>
         </div>
+        <p style="margin: 10px 0; font-size: 14px;">
+            <b>หมวดหมู่:</b> <span id="resCat"></span><br>
+            <b>ปัญหา:</b> <span id="resIssue"></span><br>
+            <b>ช่างผู้ดูแล:</b> <span id="resAdmin"></span>
+        </p>
     </div>
+</div>
 
-    <script>
-        const LIFF_ID_TRACK = "2008875334-wOYUvNha";
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz86RG6_VraHFO3v0_M_DoAAnvAFOHRWkEZfkGavxxMmK4F5497aydEN3R92YeY1w27/exec";
-        let userUid = "";
+<script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz86RG6_VraHFO3v0_M_DoAAnvAFOHRWkEZfkGavxxMmK4F5497aydEN3R92YeY1w27/exec";
+    const LIFF_ID = "2008875334-wOYUvNha";
+    let myUid = "";
 
-        async function init() {
-            try {
-                await liff.init({ liffId: LIFF_ID_TRACK });
-                if (!liff.isLoggedIn()) {
-                    liff.login();
-                } else {
-                    const profile = await liff.getProfile();
-                    userUid = profile.userId;
-                    document.getElementById("loadingMsg").style.display = "none";
-                    document.getElementById("searchBox").style.display = "block";
-                }
-            } catch (err) {
-                alert("LIFF Error: " + err);
-            }
+    async function init() {
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) {
+            liff.login();
+        } else {
+            const profile = await liff.getProfile();
+            myUid = profile.userId;
         }
+    }
 
-        async function trackStatus() {
-            const tid = document.getElementById("ticketNo").value;
-            if(!tid) return alert("กรุณากรอกตัวเลขคิว");
-            
-            const btn = document.getElementById("searchBtn");
-            btn.disabled = true;
-            btn.innerText = "กำลังค้นหา...";
-            
-            try {
-                // ส่งทั้ง tid (เลขคิว) และ uid (userId ของคนเปิด)
-                const res = await fetch(`${WEB_APP_URL}?action=track&tid=${tid}&uid=${userUid}`);
-                const data = await res.json();
+    async function trackJob() {
+        const tid = document.getElementById('ticketId').value.trim().toUpperCase();
+        if (!tid) return alert("กรุณากรอกเลขงาน");
 
-                if(data.found) {
-                    document.getElementById("result").style.display = "block";
-                    document.getElementById("resId").innerText = data.ticketId;
-                    document.getElementById("resDevice").innerText = data.device;
-                    document.getElementById("resStatus").innerText = data.status;
-                    document.getElementById("resIssue").innerText = data.issue;
-                } else {
-                    alert(data.message || "ไม่พบข้อมูล");
-                    document.getElementById("result").style.display = "none";
-                }
-            } catch (e) { 
-                alert("เกิดข้อผิดพลาดในการเชื่อมต่อ"); 
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "ตรวจสอบสถานะ";
+        const resDiv = document.getElementById('result');
+        resDiv.style.display = 'none';
+
+        try {
+            const response = await fetch(`${WEB_APP_URL}?action=track&tid=${tid}&uid=${myUid}`);
+            const data = await response.json();
+
+            if (data.found) {
+                document.getElementById('resId').innerText = data.ticketId;
+                document.getElementById('resStatus').innerText = data.status;
+                document.getElementById('resCat').innerText = data.category;
+                document.getElementById('resIssue').innerText = data.issue;
+                document.getElementById('resAdmin').innerText = data.admin;
+                resDiv.style.display = 'block';
+            } else {
+                alert("ไม่พบข้อมูลเลขงานนี้ หรือคุณไม่มีสิทธิ์ดูรายการนี้");
             }
+        } catch (err) {
+            alert("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่");
+            console.error(err);
         }
+    }
 
-        init();
-    </script>
+    init();
+</script>
 </body>
 </html>
