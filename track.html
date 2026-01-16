@@ -7,55 +7,91 @@
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         :root { --primary: #000080; --accent: #FBCEB1; }
-        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
-        .card { background: white; max-width: 400px; margin: auto; border-radius: 12px; border-top: 8px solid var(--primary); padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; text-align: center; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; margin-top: 10px; cursor: pointer; }
-        .res { display: none; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
-        .row-item { margin-bottom: 10px; display: flex; flex-direction: column; border-bottom: 1px solid #f9f9f9; padding-bottom: 5px; }
-        .lbl { font-size: 11px; color: #888; }
-        .val { font-size: 14px; font-weight: bold; color: #333; }
-        .badge { display: inline-block; background: var(--accent); color: var(--primary); padding: 2px 10px; border-radius: 10px; font-size: 12px; margin-right: 5px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
+        .card { background: white; max-width: 400px; margin: auto; border-radius: 12px; border-top: 8px solid var(--primary); padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .search-group { display: flex; gap: 5px; margin-bottom: 15px; }
+        input { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; text-align: center; font-size: 16px; }
+        .btn { padding: 12px 20px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn:disabled { background: #ccc; }
+        .res { display: none; margin-top: 20px; border-top: 2px solid #eee; padding-top: 15px; animation: fadeIn 0.5s; }
+        .row-item { margin-bottom: 12px; display: flex; flex-direction: column; }
+        .lbl { font-size: 11px; color: #888; text-transform: uppercase; }
+        .val { font-size: 15px; font-weight: bold; color: #333; }
+        .badge-group { text-align: center; margin-bottom: 20px; }
+        .badge { display: inline-block; background: var(--accent); color: var(--primary); padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        #loader { display: none; text-align: center; margin-top: 10px; font-size: 14px; color: var(--primary); }
     </style>
 </head>
 <body>
 <div class="card">
-    <h2 style="text-align:center; color:var(--primary)">ติดตามสถานะ</h2>
-    <input type="number" id="tid" placeholder="กรอกเลขงาน เช่น 1">
-    <button class="btn" onclick="track()">ตรวจสอบ</button>
+    <h2 style="text-align:center; color:var(--primary); margin-top: 0;">ติดตามสถานะแจ้งซ่อม</h2>
+    <div class="search-group">
+        <input type="number" id="tid" placeholder="กรอกเลขงาน เช่น 1">
+        <button id="btnTrack" class="btn" onclick="track()">ตรวจสอบ</button>
+    </div>
+    <div id="loader">⏳ กำลังค้นหาข้อมูล...</div>
 
     <div id="result" class="res">
-        <div style="text-align:center; margin-bottom:15px;">
+        <div class="badge-group">
             <span id="rStat" class="badge"></span>
             <span id="rPrio" class="badge" style="background:var(--primary); color:white;"></span>
         </div>
+        <div class="row-item"><span class="lbl">🆔 หมายเลขงาน:</span><span id="rId" class="val" style="color:var(--primary)"></span></div>
         <div class="row-item"><span class="lbl">📅 เวลาแจ้ง:</span><span id="rTime" class="val"></span></div>
         <div class="row-item"><span class="lbl">📍 สถานที่:</span><span id="rRoom" class="val"></span></div>
-        <div class="row-item"><span class="lbl">⚠️ ปัญหา:</span><span id="rIssue" class="val"></span></div>
+        <div class="row-item"><span class="lbl">⚠️ รายละเอียด:</span><span id="rIssue" class="val"></span></div>
         <div class="row-item"><span class="lbl">🛠 เจ้าหน้าที่ดูแล:</span><span id="rAdmin" class="val"></span></div>
     </div>
 </div>
+
 <script>
-    const URL_GAS = "https://script.google.com/macros/s/AKfycbwx34DQPx307XyZUJiLoKYlyZn5pHt3QKfPJZ39GF6m0inAxx6MU1YU4xwRlJROb7U3/exec"; const LIFF_ID = "2008875334-wOYUvNha";
+    // ใช้ URL เดียวกับไฟล์ index.html
+    const URL_GAS = "https://script.google.com/macros/s/AKfycbwlsocXsFuEaYDAn8pkigCZr0PXD1eHLYNbBGky3fmj4Mci4iQv2o82uTuvhE8gWIN4/exec"; 
+    const LIFF_ID = "2008875334-wOYUvNha";
     let uId = "";
+
     async function init() {
         await liff.init({ liffId: LIFF_ID });
         if(!liff.isLoggedIn()) liff.login();
-        uId = (await liff.getProfile()).userId;
+        const profile = await liff.getProfile();
+        uId = profile.userId;
     }
+
     async function track() {
-        const v = document.getElementById('tid').value;
-        const res = await fetch(`${URL_GAS}?action=track&tid=${v}&uid=${uId}`);
-        const d = await res.json();
-        if(d.found) {
-            document.getElementById('rStat').innerText = d.status;
-            document.getElementById('rPrio').innerText = d.priority;
-            document.getElementById('rTime').innerText = d.time;
-            document.getElementById('rRoom').innerText = d.room;
-            document.getElementById('rIssue').innerText = d.issue;
-            document.getElementById('rAdmin').innerText = d.admin;
-            document.getElementById('result').style.display = 'block';
-        } else alert("ไม่พบข้อมูล");
+        const tidInput = document.getElementById('tid');
+        const btn = document.getElementById('btnTrack');
+        const val = tidInput.value;
+
+        if(!val) { alert("กรุณากรอกเลขงาน"); return; }
+
+        // UI State: Loading
+        btn.disabled = true;
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('result').style.display = 'none';
+
+        try {
+            const res = await fetch(`${URL_GAS}?action=track&tid=${val}&uid=${uId}`);
+            const d = await res.json();
+
+            if(d.found) {
+                document.getElementById('rId').innerText = "SUP#" + val.padStart(3, '0');
+                document.getElementById('rStat').innerText = "สถานะ: " + d.status;
+                document.getElementById('rPrio').innerText = "ความเร่งด่วน: " + d.priority;
+                document.getElementById('rTime').innerText = d.time;
+                document.getElementById('rRoom').innerText = d.room;
+                document.getElementById('rIssue').innerText = d.issue;
+                document.getElementById('rAdmin').innerText = d.admin || "กำลังจัดหาเจ้าหน้าที่";
+                document.getElementById('result').style.display = 'block';
+            } else {
+                alert("ไม่พบข้อมูล หรือคุณไม่มีสิทธิ์ดูเลขงานนี้");
+            }
+        } catch (e) {
+            alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+        } finally {
+            btn.disabled = false;
+            document.getElementById('loader').style.display = 'none';
+        }
     }
     init();
 </script>
