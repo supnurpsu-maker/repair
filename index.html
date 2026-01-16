@@ -6,26 +6,36 @@
     <title>แจ้งซ่อม IT Support</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f8f9fa; padding: 20px; }
-        .form-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
-        h2 { text-align: center; color: #06C755; }
-        label { display: block; margin-top: 15px; font-weight: bold; color: #444; }
-        input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        .btn-submit { width: 100%; padding: 15px; background: #06C755; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 25px; cursor: pointer; }
-        .preview-img { width: 100%; border-radius: 8px; margin-top: 10px; display: none; }
-        #loading { display: none; text-align: center; color: #666; font-size: 14px; margin-top: 10px; }
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 20px; margin: 0; }
+        .form-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
+        .profile-section { text-align: center; margin-bottom: 20px; }
+        #userImg { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #06C755; margin-bottom: 10px; }
+        #userName { font-weight: bold; color: #333; font-size: 1.1em; }
+        h2 { text-align: center; color: #06C755; margin-top: 0; }
+        label { display: block; margin-top: 15px; font-weight: bold; color: #555; font-size: 14px; }
+        input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; background: #fafafa; }
+        .btn-submit { width: 100%; padding: 15px; background: #06C755; color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; margin-top: 25px; cursor: pointer; transition: 0.3s; }
+        .btn-submit:active { transform: scale(0.98); background: #05b34c; }
+        .preview-img { width: 100%; border-radius: 10px; margin-top: 10px; display: none; border: 1px solid #ddd; }
+        #loading { display: none; text-align: center; color: #666; font-size: 14px; margin-top: 15px; }
     </style>
 </head>
 <body>
 
 <div class="form-card">
+    <div class="profile-section">
+        <img id="userImg" src="https://via.placeholder.com/80" alt="Profile">
+        <div id="userName">กำลังโหลดข้อมูล...</div>
+    </div>
+
     <h2>📝 แจ้งซ่อม IT</h2>
+    
     <form id="repairForm">
         <label>📍 ห้อง/สถานที่</label>
-        <input type="text" id="room" placeholder="เช่น ห้องประชุม 1 ชั้น 2" required>
+        <input type="text" id="room" placeholder="ระบุเลขห้องหรือชื่อสถานที่" required>
 
         <label>📞 เบอร์ติดต่อภายใน</label>
-        <input type="tel" id="phone" placeholder="เช่น 1234 หรือ 081-xxxxxxx" required>
+        <input type="tel" id="phone" placeholder="ระบุเบอร์โทรศัพท์ที่ติดต่อได้" required>
 
         <label>🛠 ประเภทอุปกรณ์ (Category)</label>
         <select id="category" required>
@@ -40,7 +50,7 @@
         </select>
 
         <label>💡 รายละเอียดปัญหา</label>
-        <textarea id="issue" rows="3" placeholder="ระบุอาการเสียเบื้องต้น" required></textarea>
+        <textarea id="issue" rows="3" placeholder="แจ้งอาการเสียเบื้องต้น" required></textarea>
 
         <label>🚨 ความเร่งด่วน</label>
         <select id="priority">
@@ -49,12 +59,12 @@
             <option value="ด่วนที่สุด">ด่วนที่สุด (งานหยุดชะงัก)</option>
         </select>
 
-        <label>📸 แนบรูปภาพ (ถ้ามี)</label>
+        <label>📸 ถ่ายรูปอาการเสีย</label>
         <input type="file" id="imageFile" accept="image/*" onchange="previewImage(event)">
         <img id="imagePreview" class="preview-img">
 
         <button type="submit" class="btn-submit" id="submitBtn">ส่งข้อมูลแจ้งซ่อม</button>
-        <div id="loading">กำลังประมวลผล กรุณารอครู่เดียว...</div>
+        <div id="loading">⏳ กำลังบันทึกข้อมูลและอัปโหลดรูปภาพ...</div>
     </form>
 </div>
 
@@ -70,6 +80,9 @@
                 liff.login();
             } else {
                 userProfile = await liff.getProfile();
+                // แสดงชื่อและรูปจาก LINE
+                document.getElementById('userName').innerText = "สวัสดีคุณ " + userProfile.displayName;
+                document.getElementById('userImg').src = userProfile.pictureUrl || "https://via.placeholder.com/80";
             }
         } catch (err) { console.error("LIFF Init Error", err); }
     }
@@ -81,7 +94,7 @@
             output.src = reader.result;
             output.style.display = 'block';
         };
-        reader.readAsDataURL(event.target.files[0]);
+        if(event.target.files[0]) reader.readAsDataURL(event.target.files[0]);
     }
 
     document.getElementById('repairForm').addEventListener('submit', async (e) => {
@@ -117,14 +130,15 @@
             });
             const result = await response.json();
             if (result.result === "ok") {
-                alert(`แจ้งซ่อมสำเร็จ!\nรหัสคิวของคุณคือ: ${result.ticketId}`);
+                alert(`✅ ส่งข้อมูลสำเร็จ!\nเลขที่รับแจ้ง: ${result.ticketId}`);
                 liff.closeWindow();
             } else {
-                alert("เกิดข้อผิดพลาด: " + result.message);
+                alert("❌ เกิดข้อผิดพลาด: " + result.message);
+                btn.disabled = false;
+                loading.style.display = 'none';
             }
         } catch (err) {
-            alert("ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่");
-        } finally {
+            alert("❌ ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่อีกครั้ง");
             btn.disabled = false;
             loading.style.display = 'none';
         }
