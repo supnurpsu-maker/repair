@@ -3,26 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ขอบคุณครับ</title>
+    <title>บันทึกคะแนน</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
-<body style="text-align: center; font-family: sans-serif; padding-top: 50px; background: #f4f7fa;">
+<body style="text-align: center; font-family: sans-serif; padding-top: 100px; background-color: #f4f7fa;">
     <div id="status">
-        <h3>กำลังบันทึกคะแนน...</h3>
+        <h3>กำลังบันทึกคะแนนความพึงพอใจ...</h3>
     </div>
     <script>
         async function main() {
-            await liff.init({ liffId: "2008875334-d6l72Uox" });
-            const params = new URLSearchParams(window.location.search);
-            const row = params.get('row');
-            const score = params.get('score');
-            const webAppUrl = "https://script.google.com/macros/s/AKfycbyEUuzx5wGy8B78jt73IYJBbtRHgscQ8jyDi5DoJB9zFAK_Ts5Gq2Mma9d1jHHF11uL/exec";
+            try {
+                await liff.init({ liffId: "2008875334-d6l72Uox" });
+                const params = new URLSearchParams(window.location.search);
+                const row = params.get('row');
+                const score = params.get('score');
+                const webAppUrl = "https://script.google.com/macros/s/AKfycbwwxyjACKLmEJ-OHtvX9sfCJ9Yu5Pd36XD9zG31On4bCfN7jNkcPC9GkIm7UExLSc3Y/exec";
 
-            if (row && score) {
-                // ใช้โหมด no-cors เพื่อลดปัญหาการบล็อกจาก Browser บางตัว
-                await fetch(`${webAppUrl}?row=${row}&score=${score}`, { mode: 'no-cors' });
-                document.getElementById('status').innerHTML = "<h2>ขอบคุณที่ให้คะแนน " + score + " ดาวครับ</h2>";
-                setTimeout(() => liff.closeWindow(), 2000);
+                if (row && score) {
+                    // ส่งข้อมูลไปที่ doGet
+                    await fetch(`${webAppUrl}?row=${row}&score=${score}`, { mode: 'no-cors' });
+                    document.getElementById('status').innerHTML = "<h2>ขอบคุณที่ให้คะแนน " + score + " ดาวครับ!</h2>";
+                    setTimeout(() => { liff.closeWindow(); }, 2000);
+                }
+            } catch (e) {
+                document.getElementById('status').innerHTML = "<h3>เกิดข้อผิดพลาดในการบันทึก</h3>";
             }
         }
         main();
