@@ -3,39 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT Support Admin Dashboard</title>
+    <title>Admin - Manage IT Jobs</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f4f7f9; margin: 0; padding: 15px; }
-        .header { background: #007bff; color: white; padding: 20px; border-radius: 0 0 15px 15px; margin: -15px -15px 20px -15px; text-align: center; }
-        .job-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 6px solid #ccc; position: relative; }
-        .job-card.ongoing { border-left-color: #ffc107; }
-        .ticket-id { font-weight: bold; color: #007bff; font-size: 1.1em; }
-        .status-badge { position: absolute; top: 15px; right: 15px; font-size: 11px; background: #eee; padding: 3px 10px; border-radius: 12px; }
-        .info { font-size: 14px; margin: 8px 0; color: #333; }
-        .issue-box { background: #f8f9fa; padding: 10px; border-radius: 8px; font-size: 14px; border: 1px solid #eee; margin: 10px 0; }
-        .admin-name { font-size: 12px; color: #999; }
-        .btn-group { display: flex; gap: 8px; margin-top: 15px; }
-        button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-start { background: #007bff; color: white; }
-        .btn-done { background: #28a745; color: white; }
-        #loading { text-align: center; padding-top: 50px; color: #666; }
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 10px; margin: 0; }
+        .header { background: #1a1d20; color: white; padding: 15px; border-radius: 0 0 15px 15px; text-align: center; margin-bottom: 15px; }
+        .job-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-top: 6px solid #ccc; }
+        /* สีกรอบตามความด่วน */
+        .priority-ด่วนที่สุด { border-top-color: #dc3545; background: #fff5f5; }
+        .priority-ด่วน { border-top-color: #fd7e14; }
+        .priority-ปกติ { border-top-color: #28a745; }
+        
+        .ticket-row { display: flex; justify-content: space-between; font-weight: bold; }
+        .status-badge { font-size: 11px; background: #007bff; color: white; padding: 2px 8px; border-radius: 10px; }
+        .detail-box { background: #f8f9fa; padding: 10px; border-radius: 8px; font-size: 14px; margin: 10px 0; border-left: 3px solid #007bff; }
+        
+        .btn-group-main { display: flex; gap: 8px; margin-top: 10px; }
+        .btn-group-sub { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px; }
+        
+        button { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .b-take { background: #007bff; color: white; flex: 1; }
+        .b-close { background: #28a745; color: white; flex: 1; }
+        .b-external { background: #6c757d; color: white; font-size: 12px; }
+        
+        #loading { text-align: center; padding: 50px; color: #666; }
     </style>
 </head>
 <body>
 
-<div id="loading">🚀 กำลังยืนยันสิทธิ์เจ้าหน้าที่...</div>
+<div id="loading">กำลังยืนยันสิทธิ์...</div>
 
 <div id="adminApp" style="display:none;">
     <div class="header">
-        <h2 style="margin:0">Admin IT Dashboard</h2>
-        <p id="adminInfo" style="margin:5px 0 0; opacity:0.9; font-size:14px;"></p>
+        <h3 style="margin:0">IT ADMIN DASHBOARD</h3>
+        <p id="adminInfo" style="margin:5px 0 0; font-size:12px; opacity:0.8;"></p>
     </div>
     <div id="jobList"></div>
 </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyyhFjRFLD8IHvfDw6-tmYKAHn8xSoHHdPUbcg8oHT3MFtIxV7KG_K72gMaYdjMbfzO/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz86RG6_VraHFO3v0_M_DoAAnvAFOHRWkEZfkGavxxMmK4F5497aydEN3R92YeY1w27/exec";
     const LIFF_ID = "2008875334-VPUmuC8D";
     let myUid = "";
 
@@ -52,38 +59,41 @@
             if (auth.isAdmin) {
                 document.getElementById("loading").style.display = "none";
                 document.getElementById("adminApp").style.display = "block";
-                document.getElementById("adminInfo").innerText = `คุณ ${auth.name} | แผนก: ${auth.dept}`;
+                document.getElementById("adminInfo").innerText = `คุณ ${auth.name} | แผนก ${auth.dept}`;
                 loadJobs();
             } else {
-                document.getElementById("loading").innerHTML = "<h3>❌ สงวนสิทธิ์สำหรับเจ้าหน้าที่เท่านั้น</h3>";
+                document.getElementById("loading").innerHTML = "<h3>❌ ไม่มีสิทธิ์เข้าถึง</h3>";
             }
         } catch (e) { alert("Error: " + e); }
     }
 
     async function loadJobs() {
         const listDiv = document.getElementById("jobList");
-        listDiv.innerHTML = "<p style='text-align:center; color:#999;'>กำลังดึงรายการงาน...</p>";
+        listDiv.innerHTML = "<p style='text-align:center; color:#999;'>กำลังดึงข้อมูลงาน...</p>";
         
         const res = await fetch(`${WEB_APP_URL}?action=listPending&uid=${myUid}`);
         const jobs = await res.json();
         
-        listDiv.innerHTML = jobs.length === 0 ? "<p style='text-align:center; padding:50px; color:#999;'>ไม่มีงานค้างในความรับผิดชอบของคุณ</p>" : "";
+        listDiv.innerHTML = (jobs.length === 0) ? "<p style='text-align:center; padding-top:50px;'>ไม่มีงานค้างในความรับผิดชอบ</p>" : "";
 
         jobs.forEach(job => {
-            const isOngoing = job.status === "กำลังดำเนินการ";
             listDiv.innerHTML += `
-                <div class="job-card ${isOngoing ? 'ongoing' : ''}">
-                    <span class="status-badge">${job.status}</span>
-                    <span class="ticket-id">${job.ticketId}</span>
-                    <div class="info">
-                        <b>ผู้แจ้ง:</b> ${job.name} | <b>ห้อง:</b> ${job.room}<br>
-                        <b>หมวดหมู่:</b> ${job.category} | <b>ความเร่งด่วน:</b> ${job.priority}
+                <div class="job-card priority-${job.priority}">
+                    <div class="ticket-row">
+                        <span>${job.ticketId} <span class="status-badge">${job.status}</span></span>
+                        <span style="color:${job.pWeight==1?'#dc3545':'#444'}">${job.priority}</span>
                     </div>
-                    <div class="issue-box"><b>ปัญหา:</b> ${job.issue}</div>
-                    <div class="admin-name">${job.adminName ? '🛠 รับผิดชอบโดย: ' + job.adminName : '⏳ ยังไม่มีผู้รับงาน'}</div>
-                    <div class="btn-group">
-                        <button class="btn-start" onclick="updateStatus(${job.row}, 'กำลังดำเนินการ')">รับงาน</button>
-                        <button class="btn-done" onclick="updateStatus(${job.row}, 'ดำเนินการเรียบร้อยแล้ว')">ปิดงาน</button>
+                    <div style="font-size:13px; margin-top:5px;">👤 ${job.name} | 📍 ${job.room}</div>
+                    <div class="detail-box"><b>ปัญหา:</b> ${job.issue}</div>
+                    <div style="font-size:11px; color:#999;">🛠 ${job.adminName ? 'รับผิดชอบโดย: ' + job.adminName : 'ยังไม่มีคนรับงาน'}</div>
+                    
+                    <div class="btn-group-main">
+                        <button class="b-take" onclick="updateStatus(${job.row}, 'กำลังดำเนินการ')">💻 รับงาน</button>
+                        <button class="b-close" onclick="updateStatus(${job.row}, 'ดำเนินการเรียบร้อยแล้ว')">✅ ปิดงาน</button>
+                    </div>
+                    <div class="btn-group-sub">
+                        <button class="b-external" onclick="updateStatus(${job.row}, 'รอร้านภายนอกดำเนินการ')">🏬 รอร้านนอก</button>
+                        <button class="b-external" onclick="updateStatus(${job.row}, 'รอจัดจ้างร้านภายนอก')">📝 รอจัดจ้าง</button>
                     </div>
                 </div>
             `;
@@ -91,9 +101,9 @@
     }
 
     async function updateStatus(row, status) {
-        if (!confirm(`ต้องการเปลี่ยนสถานะเป็น "${status}" ใช่หรือไม่?`)) return;
-        const res = await fetch(`${WEB_APP_URL}?action=updateStatus&row=${row}&status=${status}&uid=${myUid}`);
-        if (await res.text() === "OK") loadJobs();
+        if (!confirm(`ยืนยันเปลี่ยนสถานะเป็น: ${status}`)) return;
+        await fetch(`${WEB_APP_URL}?action=updateStatus&row=${row}&status=${status}&uid=${myUid}`);
+        loadJobs();
     }
 
     init();
