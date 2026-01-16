@@ -6,40 +6,51 @@
     <title>บันทึกคะแนน</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; padding-top: 50px; color: #000080; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #000080; border-radius: 50%; width: 30px; height: 30px; animation: spin 2s linear infinite; margin: 20px auto; }
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; padding-top: 80px; color: #000080; background: #f4f7fa; }
+        .card { background: white; padding: 30px; border-radius: 20px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #000080; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div id="status">
-        <p>กำลังบันทึกคะแนนความพึงพอใจ...</p>
-        <div class="loader"></div>
+    <div class="card" id="main-box">
+        <div id="status">
+            <p style="font-size: 18px;">กำลังบันทึกคะแนนความพึงพอใจ...</p>
+            <div class="loader"></div>
+        </div>
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz40JQzO7m6YauK-loL-m8fwiEa4YiJBCdj0-cDgZrELYqdtwbSfbLjJ4pfEVNG1aBv/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzH2WVdxDTQuXFUs0bXflSFsuINNxXUTApaA9PnXO3L2hQOUyoLpJx1ZkjYFhr9LUZ0/exec";
 
         async function submitReview() {
-            await liff.init({ liffId: "2008875334-d6l72Uox" }); // ใช้ LIFF ID ของหน้า Review
-            
-            // ดึงค่า row และ score จาก URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const row = urlParams.get('row');
-            const score = urlParams.get('score');
+            try {
+                await liff.init({ liffId: "2008875334-d6l72Uox" });
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                const row = urlParams.get('row');
+                const score = urlParams.get('score');
 
-            if (row && score) {
-                try {
-                    // ส่งค่าไปที่ doGet ของ GAS
-                    await fetch(`${WEB_APP_URL}?row=${row}&score=${score}`, { method: 'GET', mode: 'no-cors' });
+                if (row && score) {
+                    // ส่งข้อมูลไปยัง doGet ของ GAS
+                    const finalUrl = `${WEB_APP_URL}?row=${row}&score=${score}`;
                     
-                    document.getElementById('status').innerHTML = "<h2>✅ ขอบคุณที่ให้คะแนนครับ</h2><p>ปิดหน้านี้ได้เลย</p>";
+                    // ใช้ fetch แบบเรียบง่ายที่สุด
+                    await fetch(finalUrl, { method: 'GET', mode: 'no-cors' });
+                    
+                    // แสดงข้อความสำเร็จ
+                    document.getElementById('status').innerHTML = `
+                        <h2 style="color: #28a745;">✅ บันทึกสำเร็จ</h2>
+                        <p>ขอบคุณที่ใช้บริการครับ</p>
+                    `;
+                    
+                    // ปิดหน้าต่างหลังจาก 2 วินาที
                     setTimeout(() => { liff.closeWindow(); }, 2000);
-                } catch (err) {
-                    document.getElementById('status').innerHTML = "เกิดข้อผิดพลาดในการบันทึก";
+                } else {
+                    document.getElementById('status').innerHTML = "❌ ข้อมูลไม่ถูกต้อง";
                 }
-            } else {
-                document.getElementById('status').innerHTML = "ไม่พบข้อมูลคะแนน";
+            } catch (err) {
+                document.getElementById('status').innerHTML = "❌ เกิดข้อผิดพลาด: " + err.message;
             }
         }
         submitReview();
