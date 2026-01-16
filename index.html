@@ -23,7 +23,7 @@
 </head>
 <body>
 <div class="card">
-    <div class="header"><h2>แบบฟอร์มแจ้งซ่อม IT</h2></div>
+    <div class="header"><h2 style="margin:0">แบบฟอร์มแจ้งซ่อม IT</h2></div>
     <div class="profile-bar"><img id="userImg" src=""><div id="userName">Loading...</div></div>
     <form id="repairForm">
         <label>📍 ห้อง / สถานที่</label><input type="text" id="room" required>
@@ -41,7 +41,11 @@
         </select>
         <label>💡 รายละเอียดปัญหา</label><textarea id="issue" rows="3" required></textarea>
         <label>🚨 ความเร่งด่วน</label>
-        <select id="priority"><option value="ปกติ">ปกติ</option><option value="ด่วน">ด่วน</option><option value="ด่วนที่สุด">ด่วนที่สุด</option></select>
+        <select id="priority">
+            <option value="ปกติ">ปกติ</option>
+            <option value="ด่วน">ด่วน</option>
+            <option value="ด่วนที่สุด">ด่วนที่สุด</option>
+        </select>
         <label>📸 รูปภาพประกอบ</label><input type="file" id="imageFile" accept="image/*" onchange="previewImg(event)">
         <img id="imgPre" class="img-preview">
         <button type="submit" class="btn-submit" id="btnSub">ยืนยันการแจ้งซ่อม</button>
@@ -51,22 +55,25 @@
 
 <script>
     const LIFF_ID = "2008875334-eZXiyz43"; 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyEUuzx5wGy8B78jt73IYJBbtRHgscQ8jyDi5DoJB9zFAK_Ts5Gq2Mma9d1jHHF11uL/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwwxyjACKLmEJ-OHtvX9sfCJ9Yu5Pd36XD9zG31On4bCfN7jNkcPC9GkIm7UExLSc3Y/exec"; 
     const REVIEW_LIFF_URL = "https://liff.line.me/2008875334-d6l72Uox"; 
+
+    let userProfile = {};
 
     async function main() {
         await liff.init({ liffId: LIFF_ID });
-        if (!liff.isLoggedIn()) { liff.login(); } 
-        else {
-            const profile = await liff.getProfile();
-            document.getElementById('userName').innerText = profile.displayName;
-            document.getElementById('userImg').src = profile.pictureUrl;
-            
-            // เช็คและขอสิทธิ์ Scope ทันทีที่เข้าแอป
+        if (!liff.isLoggedIn()) {
+            liff.login();
+        } else {
+            userProfile = await liff.getProfile();
+            document.getElementById('userName').innerText = userProfile.displayName;
+            document.getElementById('userImg').src = userProfile.pictureUrl;
+
+            // ตรวจสอบและขอสิทธิ์แบบ Force
             if (liff.isInClient()) {
-                const permission = await liff.permission.query("chat_message.write");
-                if (permission.state !== "granted") {
-                    await liff.permission.requestAll();
+                const perms = await liff.permission.query("chat_message.write");
+                if (perms.state !== "granted") {
+                    liff.permission.requestAll();
                 }
             }
         }
@@ -93,12 +100,15 @@
             });
         }
 
-        const profile = await liff.getProfile();
         const payload = {
-            uid: profile.userId, displayName: profile.displayName,
-            room: document.getElementById('room').value, phone: document.getElementById('phone').value,
-            category: document.getElementById('category').value, issue: document.getElementById('issue').value,
-            priority: document.getElementById('priority').value, imageBase64: base64
+            uid: userProfile.userId,
+            displayName: userProfile.displayName,
+            room: document.getElementById('room').value,
+            phone: document.getElementById('phone').value,
+            category: document.getElementById('category').value,
+            issue: document.getElementById('issue').value,
+            priority: document.getElementById('priority').value,
+            imageBase64: base64
         };
 
         try {
@@ -109,18 +119,21 @@
                 if (liff.isInClient()) {
                     await liff.sendMessages([{
                         "type": "flex",
-                        "altText": "แจ้งซ่อมสำเร็จ " + resData.ticketId,
+                        "altText": "แจ้งซ่อมใหม่: " + resData.ticketId,
                         "contents": {
                             "type": "bubble",
-                            "header": { "type": "box", "layout": "vertical", "backgroundColor": "#FBCEB1", "contents": [{ "type": "text", "text": "แจ้งซ่อมสำเร็จ " + resData.ticketId, "weight": "bold", "color": "#000080" }] },
                             "body": {
                                 "type": "box", "layout": "vertical", "spacing": "md",
                                 "contents": [
-                                    { "type": "text", "text": "สถานะ: " + "รอดำเนินการ", "size": "sm", "weight": "bold" },
-                                    { "type": "text", "text": "คิวรอ: " + resData.pendingCount, "size": "xs" },
-                                    { "type": "box", "layout": "horizontal", "margin": "lg", "justifyContent": "center",
+                                    { "type": "text", "text": "แจ้งซ่อมสำเร็จ", "weight": "bold", "size": "xl", "color": "#000080" },
+                                    { "type": "text", "text": "เลขที่รายการ: " + resData.ticketId, "size": "sm" },
+                                    { "type": "separator" },
+                                    { "type": "text", "text": "กรุณาให้คะแนนความพึงพอใจ", "size": "xs", "align": "center", "color": "#aaaaaa" },
+                                    {
+                                        "type": "box", "layout": "horizontal", "justifyContent": "center",
                                         "contents": [1, 2, 3, 4, 5].map(s => ({
-                                            "type": "icon", "size": "xl", "url": "https://cdn-icons-png.flaticon.com/512/1828/1828884.png",
+                                            "type": "icon", "size": "xl", 
+                                            "url": "https://cdn-icons-png.flaticon.com/512/1828/1828884.png",
                                             "action": { "type": "uri", "uri": `${REVIEW_LIFF_URL}?row=${resData.row}&score=${s}` }
                                         }))
                                     }
@@ -129,13 +142,14 @@
                         }
                     }]);
                 }
-                setTimeout(() => liff.closeWindow(), 1500);
+                setTimeout(() => { liff.closeWindow(); }, 1500);
             }
         } catch (err) {
-            alert("บันทึกสำเร็จ (Error Message Send)");
+            alert("บันทึกสำเร็จ (Permission Error)");
             liff.closeWindow();
         }
     });
+
     main();
 </script>
 </body>
