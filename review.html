@@ -3,80 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>บันทึกคะแนนการบริการ</title>
+    <title>ขอบคุณครับ</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            text-align: center;
-            padding-top: 100px;
-            background-color: #f4f7fa;
-            color: #000080;
-        }
-        .loader {
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #000080;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 2s linear infinite;
-            margin: 20px auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
 </head>
-<body>
-    <div id="status-container">
-        <div class="loader"></div>
-        <h3>กำลังบันทึกคะแนนความพึงพอใจ...</h3>
-        <p>กรุณารอสักครู่</p>
+<body style="text-align: center; font-family: sans-serif; padding-top: 50px; background: #f4f7fa;">
+    <div id="status">
+        <h3>กำลังบันทึกคะแนน...</h3>
     </div>
-
     <script>
         async function main() {
-            try {
-                // 1. Initial LIFF (ใช้ LIFF ID ตัวที่ 2 สำหรับ Review)
-                await liff.init({ liffId: "2008875334-d6l72Uox" });
+            await liff.init({ liffId: "2008875334-d6l72Uox" });
+            const params = new URLSearchParams(window.location.search);
+            const row = params.get('row');
+            const score = params.get('score');
+            const webAppUrl = "https://script.google.com/macros/s/AKfycbyEUuzx5wGy8B78jt73IYJBbtRHgscQ8jyDi5DoJB9zFAK_Ts5Gq2Mma9d1jHHF11uL/exec";
 
-                // 2. ดึงค่า row และ score จาก URL parameters
-                const params = new URLSearchParams(window.location.search);
-                const row = params.get('row');
-                const score = params.get('score');
-
-                // 3. ระบุ URL ของ Web App (ต้องเป็น URL เดียวกับที่ใช้ใน index.html)
-                const webAppUrl = "https://script.google.com/macros/s/AKfycbyf6gTuTQikcE5okXoMW6Bc6eimob5-leVt10qrPp1HWJjFkb9Q1qfHGWqEZq-CbFa6/exec";
-
-                if (row && score) {
-                    // ส่งข้อมูลไปที่ doGet ของ GAS
-                    const finalUrl = `${webAppUrl}?row=${row}&score=${score}`;
-                    
-                    await fetch(finalUrl, { method: 'GET', mode: 'no-cors' });
-
-                    // แสดงข้อความสำเร็จ
-                    document.getElementById('status-container').innerHTML = `
-                        <h2 style="color: #4CAF50;">⭐ บันทึกสำเร็จ ⭐</h2>
-                        <p>ได้รับคะแนน ${score} ดาวเรียบร้อยแล้ว</p>
-                        <p>ขอบคุณที่ใช้บริการครับ</p>
-                    `;
-
-                    // ปิดหน้าต่าง LIFF หลังจาก 2 วินาที
-                    setTimeout(() => {
-                        liff.closeWindow();
-                    }, 2000);
-
-                } else {
-                    document.getElementById('status-container').innerHTML = "<h3>ไม่พบข้อมูลการรีวิว</h3>";
-                }
-
-            } catch (err) {
-                console.error(err);
-                document.getElementById('status-container').innerHTML = "<h3>เกิดข้อผิดพลาดในการบันทึก</h3>";
+            if (row && score) {
+                // ใช้โหมด no-cors เพื่อลดปัญหาการบล็อกจาก Browser บางตัว
+                await fetch(`${webAppUrl}?row=${row}&score=${score}`, { mode: 'no-cors' });
+                document.getElementById('status').innerHTML = "<h2>ขอบคุณที่ให้คะแนน " + score + " ดาวครับ</h2>";
+                setTimeout(() => liff.closeWindow(), 2000);
             }
         }
-
         main();
     </script>
 </body>
