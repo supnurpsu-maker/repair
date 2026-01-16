@@ -48,7 +48,7 @@
 <script>
     const LIFF_ID = "2008875334-eZXiyz43"; 
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwYgKGmjUTXFD4zE984NIuGwydvc9DJuEEdocN6RdqEszAkd6IE34VVs6iLE_kemZok/exec"; 
-    const REVIEW_LIFF_URL = "https://liff.me/2008875334-d6l72Uox"; 
+    const REVIEW_LIFF_URL = "https://liff.line.me/2008875334-d6l72Uox"; 
 
     async function main() {
         await liff.init({ liffId: LIFF_ID });
@@ -94,50 +94,32 @@
 
             if (resData.result === "ok") {
                 if (liff.isInClient()) {
-                    // ปรับโครงสร้างใหม่ทั้งหมด (เปลี่ยนจาก Icon เป็น Button เพื่อความเสถียรสูงสุด)
-                    const flexBody = {
-                        "type": "bubble",
-                        "size": "mega",
-                        "header": {
-                            "type": "box",
-                            "layout": "vertical",
-                            "backgroundColor": "#000080",
-                            "contents": [
-                                { "type": "text", "text": "บันทึกแจ้งซ่อมสำเร็จ", "color": "#FFFFFF", "weight": "bold", "size": "md" }
-                            ]
-                        },
-                        "body": {
-                            "type": "box",
-                            "layout": "vertical",
-                            "spacing": "md",
-                            "contents": [
-                                { "type": "text", "text": "หมายเลข: " + resData.ticketId, "weight": "bold", "size": "xl" },
-                                { "type": "text", "text": "รบกวนให้คะแนนความพึงพอใจด้านล่างครับ", "size": "sm", "color": "#888888", "wrap": true },
-                                {
-                                    "type": "box",
-                                    "layout": "horizontal",
-                                    "spacing": "xs",
-                                    "margin": "lg",
-                                    "contents": [1, 2, 3, 4, 5].map(s => ({
-                                        "type": "button",
-                                        "action": {
-                                            "type": "uri",
-                                            "label": "⭐" + s,
-                                            "uri": REVIEW_LIFF_URL + "?row=" + resData.row + "&score=" + s
-                                        },
-                                        "style": "secondary",
-                                        "height": "sm",
-                                        "color": "#F0F0F0"
-                                    }))
-                                }
-                            ]
-                        }
-                    };
-
+                    // ใช้โครงสร้างที่ Simple ที่สุดเท่าที่เป็นไปได้
                     await liff.sendMessages([{
                         "type": "flex",
-                        "altText": "รับเรื่องแจ้งซ่อมแล้ว " + resData.ticketId,
-                        "contents": flexBody
+                        "altText": "แจ้งซ่อมสำเร็จ",
+                        "contents": {
+                            "type": "bubble",
+                            "body": {
+                                "type": "box",
+                                "layout": "vertical",
+                                "contents": [
+                                    { "type": "text", "text": "✅ บันทึกสำเร็จ", "weight": "bold", "size": "lg" },
+                                    { "type": "text", "text": "หมายเลข: " + resData.ticketId, "margin": "md" },
+                                    {
+                                        "type": "button",
+                                        "style": "primary",
+                                        "margin": "xl",
+                                        "color": "#000080",
+                                        "action": {
+                                            "type": "uri",
+                                            "label": "กดให้คะแนนบริการ",
+                                            "uri": REVIEW_LIFF_URL + "?row=" + resData.row + "&score=5"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
                     }]);
                 }
                 setTimeout(() => { liff.closeWindow(); }, 500);
