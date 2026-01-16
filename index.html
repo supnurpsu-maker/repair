@@ -95,20 +95,48 @@
             if (resData.result === "ok") {
                 if (liff.isInClient()) {
                     try {
-                        // ทดสอบส่งข้อความ Text สั้นๆ เพื่อเช็ค Scope
+                        // ส่ง Flex Message แบบรูปดาว 5 ดวง
                         await liff.sendMessages([{
-                            "type": "text",
-                            "text": "✅ บันทึกสำเร็จ!\nหมายเลข: " + resData.ticketId + "\nให้คะแนนที่นี่: " + REVIEW_LIFF_URL + "?row=" + resData.row + "&score=5"
+                            "type": "flex",
+                            "altText": "รับเรื่องแจ้งซ่อมแล้ว " + resData.ticketId,
+                            "contents": {
+                                "type": "bubble",
+                                "header": {
+                                    "type": "box", "layout": "vertical", "backgroundColor": "#000080",
+                                    "contents": [
+                                        { "type": "text", "text": "✅ แจ้งซ่อมสำเร็จ", "color": "#FFFFFF", "weight": "bold", "size": "md" }
+                                    ]
+                                },
+                                "body": {
+                                    "type": "box", "layout": "vertical", "spacing": "md",
+                                    "contents": [
+                                        { "type": "text", "text": "หมายเลข: " + resData.ticketId, "weight": "bold", "size": "xl" },
+                                        { "type": "separator", "margin": "md" },
+                                        { "type": "text", "text": "กรุณาให้คะแนนความพึงพอใจเมื่อบริการเสร็จสิ้น", "size": "xs", "color": "#888888", "wrap": true },
+                                        {
+                                            "type": "box", "layout": "horizontal", "margin": "lg", "justifyContent": "center", "spacing": "md",
+                                            "contents": [1, 2, 3, 4, 5].map(s => ({
+                                                "type": "icon", "size": "xl",
+                                                "url": "https://cdn-icons-png.flaticon.com/512/1828/1828884.png",
+                                                "action": {
+                                                    "type": "uri",
+                                                    "label": s + " stars",
+                                                    "uri": `${REVIEW_LIFF_URL}?row=${resData.row}&score=${s}`
+                                                }
+                                            }))
+                                        }
+                                    ]
+                                }
+                            }
                         }]);
                     } catch (err) {
-                        // ถ้าติดสิทธิ์ Scope จะ Alert บอกที่นี่
-                        alert("LINE Error: " + err.message);
+                        console.error("Flex Error:", err);
                     }
                 }
                 setTimeout(() => { liff.closeWindow(); }, 500);
             }
         } catch (err) {
-            alert("บันทึกข้อมูลเรียบร้อยแล้ว แต่ไม่สามารถส่งข้อความยืนยันได้");
+            alert("บันทึกสำเร็จ แต่ระบบส่งข้อความขัดข้อง");
             liff.closeWindow();
         }
     });
