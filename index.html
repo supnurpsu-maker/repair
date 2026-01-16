@@ -7,36 +7,25 @@
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         :root { --primary: #000080; --accent: #FBCEB1; --bg: #f4f7fa; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; margin: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; }
         .card { background: white; max-width: 500px; margin: auto; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,128,0.1); overflow: hidden; }
         .header { background: var(--primary); color: white; padding: 20px; text-align: center; }
-        .profile-bar { display: flex; align-items: center; background: var(--accent); padding: 12px 20px; border-bottom: 2px solid var(--primary); }
+        .profile-bar { display: flex; align-items: center; background: var(--accent); padding: 12px 20px; }
         #userImg { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--primary); margin-right: 15px; }
-        #userName { font-weight: bold; color: var(--primary); font-size: 15px; }
         form { padding: 20px; }
-        label { display: block; margin-top: 15px; font-weight: bold; color: var(--primary); font-size: 13px; }
-        input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        .btn-submit { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 25px; cursor: pointer; transition: 0.3s; }
-        .btn-submit:disabled { background: #ccc; }
-        #loading { display: none; text-align: center; color: var(--primary); font-weight: bold; margin-top: 15px; }
-        .img-preview { width: 100%; border-radius: 8px; margin-top: 10px; display: none; border: 1px solid #ddd; }
+        label { display: block; margin-top: 15px; font-weight: bold; color: var(--primary); }
+        input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-submit { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 18px; margin-top: 25px; cursor: pointer; }
+        #loading { display: none; text-align: center; color: var(--primary); margin-top: 15px; }
     </style>
 </head>
 <body>
-
 <div class="card">
-    <div class="header"><h2 style="margin:0">แบบฟอร์มแจ้งซ่อม IT</h2></div>
-    <div class="profile-bar">
-        <img id="userImg" src="">
-        <div id="userName">Loading...</div>
-    </div>
+    <div class="header"><h2>แบบฟอร์มแจ้งซ่อม IT</h2></div>
+    <div class="profile-bar"><img id="userImg" src=""><div id="userName">Loading...</div></div>
     <form id="repairForm">
-        <label>📍 ห้อง / สถานที่</label>
-        <input type="text" id="room" placeholder="ระบุเลขห้องหรือแผนก" required>
-        
-        <label>📞 เบอร์ติดต่อ</label>
-        <input type="tel" id="phone" placeholder="ระบุเบอร์โทรศัพท์" required>
-        
+        <label>📍 ห้อง / สถานที่</label><input type="text" id="room" required>
+        <label>📞 เบอร์ติดต่อ</label><input type="tel" id="phone" required>
         <label>🛠 ประเภท</label>
         <select id="category" required>
             <option value="Computer AIO">Computer AIO</option>
@@ -47,21 +36,10 @@
             <option value="CCTV/FingerPrint Scan">CCTV/FingerPrint Scan</option>
             <option value="Others">Others</option>
         </select>
-        
-        <label>💡 รายละเอียด</label>
-        <textarea id="issue" rows="3" placeholder="ระบุอาการเสีย" required></textarea>
-        
+        <label>💡 รายละเอียด</label><textarea id="issue" rows="3" required></textarea>
         <label>🚨 ความเร่งด่วน</label>
-        <select id="priority">
-            <option value="ปกติ">ปกติ</option>
-            <option value="ด่วน">ด่วน</option>
-            <option value="ด่วนที่สุด">ด่วนที่สุด</option>
-        </select>
-        
-        <label>📸 รูปภาพ</label>
-        <input type="file" id="imageFile" accept="image/*" onchange="previewImg(event)">
-        <img id="imgPre" class="img-preview">
-        
+        <select id="priority"><option value="ปกติ">ปกติ</option><option value="ด่วน">ด่วน</option><option value="ด่วนที่สุด">ด่วนที่สุด</option></select>
+        <label>📸 รูปภาพ</label><input type="file" id="imageFile" accept="image/*">
         <button type="submit" class="btn-submit" id="btnSub">ยืนยันการแจ้งซ่อม</button>
         <div id="loading">⏳ กำลังส่งข้อมูล...</div>
     </form>
@@ -72,22 +50,10 @@
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwYgKGmjUTXFD4zE984NIuGwydvc9DJuEEdocN6RdqEszAkd6IE34VVs6iLE_kemZok/exec"; 
     const REVIEW_LIFF_URL = "https://liff.line.me/2008875334-d6l72Uox"; 
 
-    // ฟังก์ชันแสดงตัวอย่างรูปภาพ
-    function previewImg(event) {
-        const reader = new FileReader();
-        reader.onload = () => {
-            const out = document.getElementById('imgPre');
-            out.src = reader.result;
-            out.style.display = 'block';
-        };
-        if(event.target.files[0]) reader.readAsDataURL(event.target.files[0]);
-    }
-
     async function main() {
         await liff.init({ liffId: LIFF_ID });
-        if (!liff.isLoggedIn()) {
-            liff.login();
-        } else {
+        if (!liff.isLoggedIn()) { liff.login(); } 
+        else {
             const profile = await liff.getProfile();
             document.getElementById('userName').innerText = profile.displayName;
             document.getElementById('userImg').src = profile.pictureUrl;
@@ -103,7 +69,6 @@
         const profile = await liff.getProfile();
         let base64 = "";
         const file = document.getElementById('imageFile').files[0];
-        
         if (file) {
             base64 = await new Promise((res) => {
                 const r = new FileReader();
@@ -124,59 +89,29 @@
         };
 
         try {
-            const response = await fetch(WEB_APP_URL, { 
-                method: "POST", 
-                body: JSON.stringify(payload) 
-            });
+            const response = await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(payload) });
             const resData = await response.json();
 
             if (resData.result === "ok") {
-                // ตรวจสอบว่าเปิดใน LINE เพื่อส่ง Flex Message
                 if (liff.isInClient()) {
-                    await liff.sendMessages([{
-                        "type": "flex",
-                        "altText": "แจ้งซ่อมสำเร็จ หมายเลข: " + resData.ticketId,
-                        "contents": {
-                            "type": "bubble",
-                            "header": {
-                                "type": "box", "layout": "vertical", "backgroundColor": "#000080",
-                                "contents": [{ "type": "text", "text": "บันทึกข้อมูลเรียบร้อย", "color": "#ffffff", "weight": "bold", "size": "md" }]
-                            },
-                            "body": {
-                                "type": "box", "layout": "vertical", "spacing": "md",
-                                "contents": [
-                                    { "type": "text", "text": "หมายเลข: " + resData.ticketId, "weight": "bold", "size": "xl" },
-                                    { "type": "text", "text": "รอกดให้คะแนนเมื่อช่างซ่อมเสร็จสิ้น:", "size": "xs", "color": "#888888", "margin": "lg" },
-                                    {
-                                        "type": "box", "layout": "horizontal", "margin": "md", "justifyContent": "center",
-                                        "contents": [1, 2, 3, 4, 5].map(s => ({
-                                            "type": "icon", "size": "xl",
-                                            "url": "https://cdn-icons-png.flaticon.com/512/1828/1828884.png",
-                                            "action": { 
-                                                "type": "uri", 
-                                                "label": s + " stars", 
-                                                "uri": `${REVIEW_LIFF_URL}?row=${resData.row}&score=${s}` 
-                                            }
-                                        }))
-                                    }
-                                ]
-                            }
-                        }
-                    }]);
+                    try {
+                        // ทดสอบส่งข้อความ Text สั้นๆ เพื่อเช็ค Scope
+                        await liff.sendMessages([{
+                            "type": "text",
+                            "text": "✅ บันทึกสำเร็จ!\nหมายเลข: " + resData.ticketId + "\nให้คะแนนที่นี่: " + REVIEW_LIFF_URL + "?row=" + resData.row + "&score=5"
+                        }]);
+                    } catch (err) {
+                        // ถ้าติดสิทธิ์ Scope จะ Alert บอกที่นี่
+                        alert("LINE Error: " + err.message);
+                    }
                 }
-                liff.closeWindow();
-            } else {
-                alert("เกิดข้อผิดพลาดจาก Server: " + resData.message);
-                btn.disabled = false;
-                document.getElementById('loading').style.display = 'none';
+                setTimeout(() => { liff.closeWindow(); }, 500);
             }
         } catch (err) {
-            console.error(err);
-            alert("บันทึกข้อมูลแล้ว แต่ไม่สามารถส่ง Flex Message ได้ (โปรดเช็คสิทธิ์ chat_message.write)");
+            alert("บันทึกข้อมูลเรียบร้อยแล้ว แต่ไม่สามารถส่งข้อความยืนยันได้");
             liff.closeWindow();
         }
     });
-
     main();
 </script>
 </body>
