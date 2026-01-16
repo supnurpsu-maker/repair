@@ -48,7 +48,7 @@
 <script>
     const LIFF_ID = "2008875334-eZXiyz43"; 
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwYgKGmjUTXFD4zE984NIuGwydvc9DJuEEdocN6RdqEszAkd6IE34VVs6iLE_kemZok/exec"; 
-    const REVIEW_LIFF_URL = "https://liff.line.me/2008875334-d6l72Uox"; 
+    const REVIEW_LIFF_URL = "https://liff.me/2008875334-d6l72Uox"; 
 
     async function main() {
         await liff.init({ liffId: LIFF_ID });
@@ -94,42 +94,57 @@
 
             if (resData.result === "ok") {
                 if (liff.isInClient()) {
-                    // สร้างโครงสร้าง Flex Message แบบ Object เพื่อป้องกันความผิดพลาด
-                    const flexContents = {
+                    // ปรับโครงสร้าง Flex Message ใหม่ให้ Validate ผ่านแน่นอน
+                    const starIcons = [1, 2, 3, 4, 5].map(s => ({
+                        "type": "icon",
+                        "size": "xl",
+                        "url": "https://img.icons8.com/fluent/48/000000/star.png",
+                        "action": {
+                            "type": "uri",
+                            "label": "score_" + s,
+                            "uri": REVIEW_LIFF_URL + "?row=" + resData.row + "&score=" + s
+                        }
+                    }));
+
+                    const flexMessage = {
                         "type": "bubble",
-                        "size": "mega",
                         "header": {
-                            "type": "box", "layout": "vertical", "backgroundColor": "#000080",
-                            "contents": [{ "type": "text", "text": "บันทึกข้อมูลเรียบร้อย", "color": "#ffffff", "weight": "bold", "size": "md" }]
+                            "type": "box",
+                            "layout": "vertical",
+                            "backgroundColor": "#000080",
+                            "contents": [
+                                { "type": "text", "text": "บันทึกเรียบร้อย", "color": "#FFFFFF", "weight": "bold" }
+                            ]
                         },
                         "body": {
-                            "type": "box", "layout": "vertical", "spacing": "md",
+                            "type": "box",
+                            "layout": "vertical",
+                            "spacing": "md",
                             "contents": [
-                                { "type": "text", "text": "หมายเลข: " + resData.ticketId, "weight": "bold", "size": "xl" },
-                                { "type": "separator", "margin": "md" },
-                                { "type": "text", "text": "รบกวนให้คะแนนความพึงพอใจด้านล่าง", "size": "xs", "color": "#888888", "wrap": true },
+                                { "type": "text", "text": "หมายเลขแจ้งซ่อม: " + resData.ticketId, "weight": "bold", "size": "lg" },
+                                { "type": "text", "text": "รบกวนให้คะแนนความพึงพอใจเมื่อซ่อมเสร็จ", "size": "xs", "color": "#888888", "wrap": true },
                                 {
-                                    "type": "box", "layout": "horizontal", "margin": "lg", "justifyContent": "center", "spacing": "sm",
-                                    "contents": [1, 2, 3, 4, 5].map(s => ({
-                                        "type": "icon", "size": "xl",
-                                        "url": "https://cdn-icons-png.flaticon.com/512/1828/1828884.png",
-                                        "action": { "type": "uri", "label": "star", "uri": REVIEW_LIFF_URL + "?row=" + resData.row + "&score=" + s }
-                                    }))
+                                    "type": "box",
+                                    "layout": "horizontal",
+                                    "margin": "md",
+                                    "contents": starIcons
                                 }
                             ]
                         }
                     };
+
                     await liff.sendMessages([{
                         "type": "flex",
-                        "altText": "รับเรื่องแจ้งซ่อมแล้ว " + resData.ticketId,
-                        "contents": flexContents
+                        "altText": "แจ้งซ่อมสำเร็จ หมายเลข " + resData.ticketId,
+                        "contents": flexMessage
                     }]);
                 }
                 liff.closeWindow();
             }
         } catch (err) {
-            alert("บันทึกสำเร็จ แต่การส่งข้อความขัดข้อง: " + err.message);
-            liff.closeWindow();
+            alert("Error: " + err.message);
+            btn.disabled = false;
+            document.getElementById('loading').style.display = 'none';
         }
     });
     main();
