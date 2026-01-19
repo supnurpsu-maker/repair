@@ -44,7 +44,7 @@
 <div id="jobContainer"></div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxDPUYZTT0uy0xr9qKX-srfdEnRXAVS2AwQf1aEr_tq4VCeigOohPNAyKGppWjy9g-z/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx1GalQrQlPR2uhUNvfBg--VWFqr1zxh1sYK2eE3df4h5-JECDCy8UO3sp0lYnf73A/exec";
     const LIFF_ID = "2008875334-VPUmuC8D";
 
     let allJobs = [];
@@ -102,60 +102,63 @@
         finally { document.getElementById('loading').style.display = 'none'; }
     }
 
-    function renderJobs(jobs) {
-        const container = document.getElementById('jobContainer');
-        container.innerHTML = jobs.length === 0 ? "<p style='text-align:center; color:#999; margin-top:50px;'>ไม่พบรายการงาน</p>" : "";
+   // เพิ่มฟังก์ชันสำหรับวาดรายการงาน (มีการเก็บ data-admin-uid ไว้ที่การ์ดเพื่อใช้เทียบ)
+function renderJobs(jobs) {
+    const container = document.getElementById('jobContainer');
+    container.innerHTML = jobs.length === 0 ? "<p style='text-align:center; color:#999; margin-top:50px;'>ไม่พบรายการงาน</p>" : "";
 
-        jobs.forEach(job => {
-            const card = document.createElement('div');
-            card.className = `job-card priority-${job.priority}`;
-            const badgeClass = job.status === 'รอดำเนินการ' ? 'badge-pending' : 'badge-process';
-            
-            card.innerHTML = `
-                <span class="ticket-id">#${job.ticketId}</span>
-                <span class="status-badge ${badgeClass}">${job.status}</span>
-                <div class="job-detail"><strong>${job.issue}</strong></div>
-                <div class="job-info">
-                    📍 สถานที่: ${job.room}<br>👤 ผู้แจ้ง: ${job.name}<br>
-                    ⏰ เวลา: ${job.timeStr}<br>🛠 ช่างดูแล: ${job.adminName}
-                </div>
-                <select class="action-select" onchange="updateJobStatus(${job.row}, this.value)">
-                    <option value="">-- เลือกดำเนินการ --</option>
-                    <option value="กำลังดำเนินการ">✅ รับงาน/กำลังดำเนินการ</option>
-                    <option value="จัดจ้างร้านภายนอก">🚚 จัดจ้างภายนอก</option>
-                    <option value="ดำเนินการเรียบร้อยแล้ว">🏁 ปิดงาน/เสร็จสิ้น</option>
-                    <option value="รอดำเนินการ">🔄 ยกเลิก/กลับไปรอดำเนินการ</option>
-                </select>
-            `;
-            container.appendChild(card);
-        });
-    }
+    jobs.forEach(job => {
+        const card = document.createElement('div');
+        card.className = `job-card priority-${job.priority}`;
+        // เก็บ UID ของเจ้าหน้าที่ผู้รับผิดชอบไว้ใน attribute (ถ้ามี)
+        card.setAttribute('data-responsible-uid', job.responsibleUid || ""); 
+        
+        const badgeClass = job.status === 'รอดำเนินการ' ? 'badge-pending' : 'badge-process';
+        
+        card.innerHTML = `
+            <span class="ticket-id">#${job.ticketId}</span>
+            <span class="status-badge ${badgeClass}">${job.status}</span>
+            <div class="job-detail"><strong>${job.issue}</strong></div>
+            <div class="job-info">
+                📍 สถานที่: ${job.room}<br>👤 ผู้แจ้ง: ${job.name}<br>
+                ⏰ เวลา: ${job.timeStr}<br>🛠 ช่างดูแล: ${job.adminName}
+            </div>
+            <select class="action-select" onchange="updateJobStatus(${job.row}, this.value)">
+                <option value="">-- เลือกดำเนินการ --</option>
+                <option value="กำลังดำเนินการ">✅ รับงาน/กำลังดำเนินการ</option>
+                <option value="จัดจ้างร้านภายนอก">🚚 จัดจ้างภายนอก</option>
+                <option value="ดำเนินการเรียบร้อยแล้ว">🏁 ปิดงาน/เสร็จสิ้น</option>
+                <option value="รอดำเนินการ">🔄 ยกเลิก/กลับไปรอดำเนินการ</option>
+            </select>
+        `;
+        container.appendChild(card);
+    });
+}
 
-    function filterJobs() {
-    // 1. ตรวจสอบก่อนว่าเลือกแผนกอะไร (ถ้าเป็น admin ให้ดูจาก dropdown ถ้าไม่ใช่ให้ดูจากสิทธิ์ตัวเอง)
+// ฟังก์ชันกรองงานตามแผนก และล็อคงานตาม UID
+function filterJobs() {
     const prefix = (adminDept.toLowerCase() === "admin") 
                    ? document.getElementById('prefixFilter').value 
                    : adminDept;
 
     let filtered = allJobs;
 
-    // 2. กรองตามแผนก (Prefix)
+    // 1. กรองตามแผนก (Prefix)
     if (prefix !== "ALL") {
         filtered = filtered.filter(j => j.ticketId.split('#')[0] === prefix);
     }
 
-    // 3. กรองตามเจ้าหน้าที่ (Logic: ซ่อนงานที่มีคนรับแล้ว ยกเว้นคนรับจะเป็นเราเอง)
+    // 2. กรองตามเจ้าหน้าที่ (UID Lock)
     filtered = filtered.filter(job => {
-        // ถ้าสถานะเป็น "รอดำเนินการ" ทุกคนต้องมองเห็นเพื่อกดรับงาน
-        if (job.status === "รอดำเนินการ") {
-            return true;
-        } 
-        
-        // ถ้าสถานะไม่ใช่ "รอดำเนินการ" (เช่น กำลังดำเนินการ/จัดจ้างภายนอก)
-        // จะแสดงให้เห็นเฉพาะเจ้าหน้าที่ที่ "ชื่อตรงกับคนรับผิดชอบ" เท่านั้น
-        // หมายเหตุ: job.adminName คือชื่อจาก Sheet admin ที่เราดึงมาแสดง
-        const myDisplayName = document.getElementById('adminName').innerText.split('(')[0].replace('ผู้ดูแล: ', '').trim();
-        return job.adminName === myDisplayName;
+        // กฎข้อที่ 1: ถ้าสถานะคือ "รอดำเนินการ" ทุกคนในแผนกต้องเห็น
+        if (job.status === "รอดำเนินการ") return true;
+
+        // กฎข้อที่ 2: ถ้าเป็น Super Admin (แผนก admin) ให้เห็นงานของทุกคนเสมอ
+        if (adminDept.toLowerCase() === "admin") return true;
+
+        // กฎข้อที่ 3: ถ้างานถูกรับไปแล้ว (job.responsibleUid มีค่า) 
+        // จะแสดงให้เห็นเฉพาะเจ้าหน้าที่ที่มี UID ตรงกับคนรับงานเท่านั้น
+        return job.responsibleUid === currentAdminUid;
     });
 
     renderJobs(filtered);
