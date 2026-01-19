@@ -13,7 +13,7 @@
 </head>
 <body>
     <div id="status">
-        <h2>กำลังบันทึกคะแนน...</h2>
+        <h2>กำลังบันทึกคะแนนความพึงพอใจ...</h2>
         <div class="loader"></div>
     </div>
 
@@ -33,7 +33,7 @@
                         method: 'GET', 
                         mode: 'no-cors' 
                     });
-                    document.getElementById('status').innerHTML = "<h2>✅ ขอบคุณที่ให้คะแนนครับ</h2>";
+                    document.getElementById('status').innerHTML = "<h2>✅ ขอบคุณสำหรับการประเมินความพึงพอใจครับ</h2>";
                     setTimeout(() => liff.closeWindow(), 2000);
                 } catch (e) { document.getElementById('status').innerHTML = "เกิดข้อผิดพลาด"; }
             }
