@@ -12,13 +12,14 @@
         .container { max-width: 500px; margin: auto; }
         .header { background: var(--primary); color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 15px; }
         .job-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; border-left: 6px solid #ddd; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .prio-ด่วนที่สุด { border-left-color: var(--urgent); background: #fff5f5; }
+        .prio-ด่วนที่สุด { border-left-color: var(--urgent); background: #fff8f8; }
         .prio-ด่วน { border-left-color: #f39c12; }
-        .status-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #eee; color: #666; }
+        .prio-ปกติ { border-left-color: #3498db; }
+        .status-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #eee; color: #666; margin-top: 5px; display: inline-block; }
         .filter-section { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px; }
         .chip { padding: 6px 15px; background: white; border-radius: 20px; border: 1px solid #ddd; font-size: 13px; cursor: pointer; white-space: nowrap; }
         .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .btn-update { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; margin-top: 10px; font-weight: 600; }
+        .btn-update { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; margin-top: 10px; font-weight: 600; cursor: pointer; }
         #loader { text-align: center; padding: 30px; }
     </style>
 </head>
@@ -27,7 +28,7 @@
 <div class="container">
     <div class="header">
         <h2 style="margin:0">Admin Dashboard</h2>
-        <small id="adminDeptInfo">Checking Permission...</small>
+        <small id="adminDeptInfo">ตรวจสอบสิทธิ์...</small>
     </div>
 
     <div id="superAdminTools" style="display:none;">
@@ -41,7 +42,8 @@
 </div>
 
 <script>
-    const URL_GAS = "https://script.google.com/macros/s/AKfycbweRBQCynTIY9etsQThAOXpZDlSr4q7wnme3gWi3F7tgk-958wwdHKiYFLCfkik1ozV/exec";
+    // ** เปลี่ยน URL_GAS เป็น Web App URL ล่าสุดของคุณ **
+    const URL_GAS = "https://script.google.com/macros/s/AKfycby7gaRKVcrfqxhHQTchgOn4tgqno6UJjXZPv23A-d7xE6CgSUDWfmF_T3-xvitCzDxW/exec";
     const LIFF_ID = "2008875334-VPUmuC8D";
     let allJobs = [];
     let myRole = ""; 
@@ -59,7 +61,7 @@
             const data = await res.json();
             
             if (data.role === "GUEST") {
-                document.body.innerHTML = "<div style='text-align:center; padding:50px;'><h3>ขออภัย คุณไม่มีสิทธิ์เข้าถึง</h3></div>";
+                document.body.innerHTML = "<div style='text-align:center; padding:50px;'><h3>❌ คุณไม่มีสิทธิ์เข้าถึงหน้านี้</h3></div>";
                 return;
             }
 
@@ -73,37 +75,41 @@
             }
 
             await loadAllJobs();
-        } catch (e) { console.error(e); }
+        } catch (e) { alert("เกิดข้อผิดพลาดในการเริ่มต้น: " + e); }
     }
 
     async function loadPrefixes() {
-        const res = await fetch(`${URL_GAS}?action=getPrefixes`);
-        const prefixes = await res.json();
-        const area = document.getElementById('filterArea');
-        prefixes.forEach(p => {
-            const div = document.createElement('div');
-            div.className = 'chip'; div.innerText = p;
-            div.onclick = (e) => filterJobs(p, e.target);
-            area.appendChild(div);
-        });
+        try {
+            const res = await fetch(`${URL_GAS}?action=getPrefixes`);
+            const prefixes = await res.json();
+            const area = document.getElementById('filterArea');
+            prefixes.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'chip'; div.innerText = p;
+                div.onclick = (e) => filterJobs(p, e.target);
+                area.appendChild(div);
+            });
+        } catch (e) { console.error(e); }
     }
 
     async function loadAllJobs() {
         document.getElementById('loader').style.display = 'block';
-        const res = await fetch(`${URL_GAS}?action=getAllJobs`);
-        allJobs = await res.json();
-        
-        let displayJobs = (myRole === "DEPT_ADMIN") 
-            ? allJobs.filter(j => j.ticketId.startsWith(myDept + "#")) 
-            : allJobs;
-        
-        renderJobs(displayJobs);
+        try {
+            const res = await fetch(`${URL_GAS}?action=getAllJobs`);
+            allJobs = await res.json();
+            
+            let displayJobs = (myRole === "DEPT_ADMIN") 
+                ? allJobs.filter(j => j.ticketId.startsWith(myDept + "#")) 
+                : allJobs;
+            
+            renderJobs(displayJobs);
+        } catch (e) { document.getElementById('jobList').innerHTML = "โหลดข้อมูลไม่สำเร็จ"; }
         document.getElementById('loader').style.display = 'none';
     }
 
     function renderJobs(jobs) {
         const container = document.getElementById('jobList');
-        container.innerHTML = jobs.length === 0 ? "<p style='text-align:center; color:#999;'>ไม่มีงานค้างในขณะนี้</p>" : "";
+        container.innerHTML = jobs.length === 0 ? "<p style='text-align:center; color:#999;'>ไม่มีรายการงานค้าง</p>" : "";
         
         jobs.forEach(job => {
             const card = document.createElement('div');
@@ -111,22 +117,23 @@
             card.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                     <div>
-                        <strong style="color:var(--primary); font-size:16px;">${job.ticketId}</strong>
+                        <strong style="color:var(--primary); font-size:16px;">${job.ticketId}</strong><br>
                         <div class="status-badge">${job.priority}</div>
                     </div>
                     <small style="color:#999">${job.timeStr}</small>
                 </div>
-                <div style="margin:10px 0; font-size:14px;">
-                    📍 ${job.room} | 👤 ${job.name}<br>
-                    🔧 ${job.issue}<br>
-                    <span style="color:blue; font-size:12px;">เจ้าหน้าที่: ${job.adminName}</span>
+                <div style="margin:10px 0; font-size:14px; line-height:1.6;">
+                    📍 <b>สถานที่:</b> ${job.room}<br>
+                    👤 <b>ผู้แจ้ง:</b> ${job.name}<br>
+                    🔧 <b>อาการ:</b> ${job.issue}<br>
+                    <span style="color:blue; font-size:12px;">👤 ผู้ดูแล: ${job.adminName}</span>
                 </div>
                 <div style="display:flex; gap:5px;">
-                    <select id="stat-${job.row}" style="flex:1.2; padding:8px; border-radius:8px; border:1px solid #ddd;">
-                        <option value="รอดำเนินการ" ${job.status == 'รอดำเนินการ' ? 'selected' : ''}>รอดำเนินการ (Reset)</option>
-                        <option value="กำลังดำเนินการ" ${job.status == 'กำลังดำเนินการ' ? 'selected' : ''}>กำลังดำเนินการ</option>
-                        <option value="จัดจ้างร้านภายนอก" ${job.status == 'จัดจ้างร้านภายนอก' ? 'selected' : ''}>จัดจ้างร้านภายนอก</option>
-                        <option value="ดำเนินการเสร็จสิ้น">ดำเนินการเสร็จสิ้น (ปิดงาน)</option>
+                    <select id="stat-${job.row}" style="flex:1.5; padding:8px; border-radius:8px; border:1px solid #ddd; font-size:13px;">
+                        <option value="รอดำเนินการ" ${job.status == 'รอดำเนินการ' ? 'selected' : ''}>1. รอดำเนินการ</option>
+                        <option value="กำลังดำเนินการ" ${job.status == 'กำลังดำเนินการ' ? 'selected' : ''}>2. กำลังดำเนินการ</option>
+                        <option value="จัดจ้างร้านภายนอก" ${job.status == 'จัดจ้างร้านภายนอก' ? 'selected' : ''}>3. จัดจ้างร้านภายนอก</option>
+                        <option value="ดำเนินการเรียบร้อยแล้ว">4. ดำเนินการเรียบร้อยแล้ว</option>
                     </select>
                     <button class="btn-update" style="flex:0.8; margin-top:0;" onclick="updateJob(${job.row})">อัปเดต</button>
                 </div>
@@ -137,21 +144,25 @@
 
     async function updateJob(row) {
         const status = document.getElementById(`stat-${row}`).value;
-        if(!confirm(`ยืนยันการเปลี่ยนสถานะเป็น ${status}?`)) return;
+        if(!confirm(`ยืนยันการเปลี่ยนสถานะเป็น "${status}"?`)) return;
 
         try {
             const res = await fetch(`${URL_GAS}?action=adminUpdate&row=${row}&status=${encodeURIComponent(status)}&adminUid=${myUid}`);
-            if (await res.text() === "SUCCESS") {
+            const result = await res.text();
+            if (result === "SUCCESS") {
                 alert("บันทึกสำเร็จ ✅");
-                loadAllJobs();
+                await loadAllJobs(); // รีโหลดงาน (งานที่เสร็จจะหายไปจากรายการ)
+            } else {
+                alert("เกิดข้อผิดพลาด: " + result);
             }
-        } catch (e) { alert("เกิดข้อผิดพลาด"); }
+        } catch (e) { alert("ไม่สามารถติดต่อ Server ได้"); }
     }
 
     function filterJobs(p, el) {
         document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
         el.classList.add('active');
-        renderJobs((p === 'ALL') ? allJobs : allJobs.filter(j => j.ticketId.startsWith(p + "#")));
+        const filtered = (p === 'ALL') ? allJobs : allJobs.filter(j => j.ticketId.startsWith(p + "#"));
+        renderJobs(filtered);
     }
 
     init();
