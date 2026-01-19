@@ -3,19 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Admin Management</title>
+    <title>Admin Panel - IT Service</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #000080; --bg: #f4f7f9; }
+        :root { --primary: #000080; --bg: #f4f7f9; --urgent: #e74c3c; }
         body { font-family: 'Prompt', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
         .container { max-width: 500px; margin: auto; }
         .header { background: var(--primary); color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 15px; }
-        .role-badge { background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 10px; font-size: 11px; }
         .job-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; border-left: 6px solid #ddd; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .status-pending { border-left-color: #f1c40f; }
-        .status-process { border-left-color: #000080; }
-        .status-done { border-left-color: #28a745; }
+        .prio-ด่วนที่สุด { border-left-color: var(--urgent); background: #fff5f5; }
+        .prio-ด่วน { border-left-color: #f39c12; }
+        .status-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #eee; color: #666; }
         .filter-section { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px; }
         .chip { padding: 6px 15px; background: white; border-radius: 20px; border: 1px solid #ddd; font-size: 13px; cursor: pointer; white-space: nowrap; }
         .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
@@ -27,52 +26,54 @@
 
 <div class="container">
     <div class="header">
-        <h2 style="margin:0">ระบบจัดการงานซ่อม</h2>
-        <span id="adminInfo" class="role-badge">กำลังโหลดสิทธิ์...</span>
+        <h2 style="margin:0">Admin Dashboard</h2>
+        <small id="adminDeptInfo">Checking Permission...</small>
     </div>
 
-    <div id="filterWrapper" style="display:none;">
+    <div id="superAdminTools" style="display:none;">
         <div class="filter-section" id="filterArea">
-            <div class="chip active" onclick="filterJobs('ALL', this)">ทั้งหมด</div>
+            <div class="chip active" onclick="filterJobs('ALL', this)">ทั้งหมด (All)</div>
         </div>
     </div>
 
-    <div id="loader">⏳ กำลังโหลดข้อมูล...</div>
+    <div id="loader">⏳ กำลังโหลดรายการงาน...</div>
     <div id="jobList"></div>
 </div>
 
 <script>
-    const URL_GAS = "https://script.google.com/macros/s/AKfycbwpkvMh9TOKYooLX63iFqafzYROH3N0zxWMl-q5xWoDZCj2K-brBacuuD9AE5lCwrYq/exec";
+    const URL_GAS = "https://script.google.com/macros/s/AKfycbweRBQCynTIY9etsQThAOXpZDlSr4q7wnme3gWi3F7tgk-958wwdHKiYFLCfkik1ozV/exec";
     const LIFF_ID = "2008875334-VPUmuC8D";
     let allJobs = [];
     let myRole = ""; 
     let myDept = "";
+    let myUid = "";
 
     async function init() {
         try {
             await liff.init({ liffId: LIFF_ID });
             if (!liff.isLoggedIn()) liff.login();
             const profile = await liff.getProfile();
+            myUid = profile.userId;
             
-            // 1. เช็คสิทธิ์ Admin
-            const roleRes = await fetch(`${URL_GAS}?action=getAdminRole&uid=${profile.userId}`);
-            const roleData = await roleRes.json();
-            myRole = roleData.role;
-            myDept = roleData.dept;
+            const res = await fetch(`${URL_GAS}?action=getAdminRole&uid=${myUid}`);
+            const data = await res.json();
+            
+            if (data.role === "GUEST") {
+                document.body.innerHTML = "<div style='text-align:center; padding:50px;'><h3>ขออภัย คุณไม่มีสิทธิ์เข้าถึง</h3></div>";
+                return;
+            }
 
-            document.getElementById('adminInfo').innerText = `สิทธิ์: ${myRole} (${myDept || 'ทุกแผนก'})`;
+            myRole = data.role;
+            myDept = data.dept;
+            document.getElementById('adminDeptInfo').innerText = `Admin: ${data.dept}`;
 
-            // 2. ถ้าเป็น Super Admin ให้แสดงปุ่มกรองแผนก
             if (myRole === "SUPER_ADMIN") {
-                document.getElementById('filterWrapper').style.display = 'block';
+                document.getElementById('superAdminTools').style.display = 'block';
                 await loadPrefixes();
             }
 
-            // 3. โหลดงาน
             await loadAllJobs();
-        } catch (e) {
-            alert("ไม่สามารถเริ่มต้นระบบได้: " + e);
-        }
+        } catch (e) { console.error(e); }
     }
 
     async function loadPrefixes() {
@@ -81,8 +82,7 @@
         const area = document.getElementById('filterArea');
         prefixes.forEach(p => {
             const div = document.createElement('div');
-            div.className = 'chip';
-            div.innerText = p;
+            div.className = 'chip'; div.innerText = p;
             div.onclick = (e) => filterJobs(p, e.target);
             area.appendChild(div);
         });
@@ -93,67 +93,65 @@
         const res = await fetch(`${URL_GAS}?action=getAllJobs`);
         allJobs = await res.json();
         
-        // กรองข้อมูลตามสิทธิ์ทันที
-        if (myRole === "DEPT_ADMIN") {
-            const deptJobs = allJobs.filter(j => j.ticketId.startsWith(myDept + "#"));
-            renderJobs(deptJobs);
-        } else {
-            renderJobs(allJobs); // Super Admin เห็นทั้งหมดเป็น Default
-        }
+        let displayJobs = (myRole === "DEPT_ADMIN") 
+            ? allJobs.filter(j => j.ticketId.startsWith(myDept + "#")) 
+            : allJobs;
+        
+        renderJobs(displayJobs);
         document.getElementById('loader').style.display = 'none';
     }
 
     function renderJobs(jobs) {
         const container = document.getElementById('jobList');
-        container.innerHTML = "";
-        if(jobs.length === 0) {
-            container.innerHTML = "<p style='text-align:center; color:#999;'>ไม่พบรายการงาน</p>";
-            return;
-        }
-
-        jobs.reverse().forEach(job => {
-            let sClass = job.status === "เสร็จสิ้น" ? "status-done" : (job.status === "กำลังดำเนินการ" ? "status-process" : "status-pending");
+        container.innerHTML = jobs.length === 0 ? "<p style='text-align:center; color:#999;'>ไม่มีงานค้างในขณะนี้</p>" : "";
+        
+        jobs.forEach(job => {
             const card = document.createElement('div');
-            card.className = `job-card ${sClass}`;
+            card.className = `job-card prio-${job.priority}`;
             card.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong style="color:var(--primary); font-size:18px;">${job.ticketId}</strong>
-                    <span style="font-size:12px; color:#999;">${job.time}</span>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <strong style="color:var(--primary); font-size:16px;">${job.ticketId}</strong>
+                        <div class="status-badge">${job.priority}</div>
+                    </div>
+                    <small style="color:#999">${job.timeStr}</small>
                 </div>
                 <div style="margin:10px 0; font-size:14px;">
-                    📍 <b>สถานที่:</b> ${job.room}<br>
-                    👤 <b>ผู้แจ้ง:</b> ${job.name}<br>
-                    🔧 <b>อาการ:</b> ${job.issue}
+                    📍 ${job.room} | 👤 ${job.name}<br>
+                    🔧 ${job.issue}<br>
+                    <span style="color:blue; font-size:12px;">เจ้าหน้าที่: ${job.adminName}</span>
                 </div>
-                <div style="display:flex; gap:8px;">
-                    <select id="stat-${job.row}" style="flex:1; padding:8px; border-radius:5px; border:1px solid #ddd;">
-                        <option value="รอดำเนินการ" ${job.status == 'รอดำเนินการ' ? 'selected' : ''}>รอดำเนินการ</option>
+                <div style="display:flex; gap:5px;">
+                    <select id="stat-${job.row}" style="flex:1.2; padding:8px; border-radius:8px; border:1px solid #ddd;">
+                        <option value="รอดำเนินการ" ${job.status == 'รอดำเนินการ' ? 'selected' : ''}>รอดำเนินการ (Reset)</option>
                         <option value="กำลังดำเนินการ" ${job.status == 'กำลังดำเนินการ' ? 'selected' : ''}>กำลังดำเนินการ</option>
-                        <option value="เสร็จสิ้น" ${job.status == 'เสร็จสิ้น' ? 'selected' : ''}>เสร็จสิ้น</option>
+                        <option value="จัดจ้างร้านภายนอก" ${job.status == 'จัดจ้างร้านภายนอก' ? 'selected' : ''}>จัดจ้างร้านภายนอก</option>
+                        <option value="ดำเนินการเสร็จสิ้น">ดำเนินการเสร็จสิ้น (ปิดงาน)</option>
                     </select>
-                    <input type="text" id="admin-${job.row}" style="flex:1; padding:8px; border-radius:5px; border:1px solid #ddd;" placeholder="ชื่อช่าง" value="${job.admin || ''}">
+                    <button class="btn-update" style="flex:0.8; margin-top:0;" onclick="updateJob(${job.row})">อัปเดต</button>
                 </div>
-                <button class="btn-update" onclick="updateJob(${job.row})">บันทึกการอัปเดต</button>
             `;
             container.appendChild(card);
         });
     }
 
+    async function updateJob(row) {
+        const status = document.getElementById(`stat-${row}`).value;
+        if(!confirm(`ยืนยันการเปลี่ยนสถานะเป็น ${status}?`)) return;
+
+        try {
+            const res = await fetch(`${URL_GAS}?action=adminUpdate&row=${row}&status=${encodeURIComponent(status)}&adminUid=${myUid}`);
+            if (await res.text() === "SUCCESS") {
+                alert("บันทึกสำเร็จ ✅");
+                loadAllJobs();
+            }
+        } catch (e) { alert("เกิดข้อผิดพลาด"); }
+    }
+
     function filterJobs(p, el) {
         document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
         el.classList.add('active');
-        const filtered = (p === 'ALL') ? allJobs : allJobs.filter(j => j.ticketId.startsWith(p + "#"));
-        renderJobs(filtered);
-    }
-
-    async function updateJob(row) {
-        const s = document.getElementById(`stat-${row}`).value;
-        const a = document.getElementById(`admin-${row}`).value;
-        const res = await fetch(`${URL_GAS}?action=adminUpdate&row=${row}&status=${encodeURIComponent(s)}&admin=${encodeURIComponent(a)}`);
-        if (await res.text() === "SUCCESS") {
-            alert("บันทึกข้อมูลเรียบร้อย ✅");
-            loadAllJobs();
-        }
+        renderJobs((p === 'ALL') ? allJobs : allJobs.filter(j => j.ticketId.startsWith(p + "#")));
     }
 
     init();
