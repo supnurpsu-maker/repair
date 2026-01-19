@@ -9,106 +9,61 @@
     <style>
         :root { --primary: #000080; --bg: #f8f9fa; }
         * { box-sizing: border-box; font-family: 'Prompt', sans-serif; }
+        body { background-color: var(--bg); margin: 0; padding: 15px; overflow-x: hidden; }
+        .container { max-width: 100%; margin: auto; }
         
-        body { 
-            background-color: var(--bg); 
-            margin: 0; 
-            padding: 15px; 
-            overflow-x: hidden; /* ป้องกันการเลื่อนออกนอกจอ */
-        }
-
-        .container { 
-            max-width: 100%; 
-            margin: auto; 
-        }
-
         .header-box {
-            background: var(--primary);
-            color: white;
-            padding: 20px 15px;
-            border-radius: 15px;
-            text-align: center;
-            margin-bottom: 20px;
+            background: var(--primary); color: white;
+            padding: 20px 15px; border-radius: 15px;
+            text-align: center; margin-bottom: 20px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        /* ส่วนค้นหา */
         .search-card {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
+            background: white; padding: 20px; border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px;
         }
 
         .input-group { margin-bottom: 15px; }
         .input-group label { display: block; font-size: 14px; margin-bottom: 8px; color: #555; }
         
+        /* จัดวาง Dropdown คู่กับ Input เลข */
+        .search-row { display: flex; gap: 10px; }
+        select { 
+            width: 100px; padding: 12px; border: 1.5px solid #eee; 
+            border-radius: 10px; font-size: 16px; background: #fafafa;
+        }
         input { 
-            width: 100%; 
-            padding: 12px; 
-            border: 1.5px solid #eee; 
-            border-radius: 10px; 
-            font-size: 16px; 
-            background: #fafafa;
-            -webkit-appearance: none; /* ลบสไตล์เดิมของ iOS */
+            flex: 1; padding: 12px; border: 1.5px solid #eee; 
+            border-radius: 10px; font-size: 16px; background: #fafafa;
+            -webkit-appearance: none;
         }
 
         .btn-search {
-            width: 100%;
-            padding: 14px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
+            width: 100%; padding: 14px; background: var(--primary);
+            color: white; border: none; border-radius: 10px;
+            font-size: 16px; font-weight: 600; cursor: pointer;
         }
 
-        /* การแสดงผลลัพธ์แบบพอดีจอ */
-        #result { display: none; }
+        #result { display: none; margin-top: 10px; }
         .result-card {
-            background: white;
-            border-radius: 15px;
-            padding: 0;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            background: white; border-radius: 15px;
+            overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-
         .res-header {
-            background: #f0f0ff;
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: #f0f0ff; padding: 15px;
+            display: flex; justify-content: space-between; align-items: center;
         }
-
         .res-body { padding: 15px; }
+        .info-item { display: flex; margin-bottom: 12px; font-size: 14px; line-height: 1.4; }
+        .info-label { width: 90px; color: #888; flex-shrink: 0; }
+        .info-value { color: #333; font-weight: 400; word-break: break-word; }
 
-        .info-item {
-            display: flex;
-            margin-bottom: 12px;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-
-        .info-label { width: 85px; color: #888; flex-shrink: 0; }
-        .info-value { color: #333; font-weight: 400; word-break: break-word; } /* ตัดคำถ้าข้อความยาว */
-
-        /*Badge สถานะ */
-        .badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        .st-1 { background: #fff3cd; color: #856404; } /* รอดำเนินการ */
-        .st-2 { background: #cfe2ff; color: #084298; } /* กำลังดำเนินการ */
-        .st-3 { background: #e2e3e5; color: #41464b; } /* จัดจ้างร้านภายนอก */
-        .st-4 { background: #d1e7dd; color: #0f5132; } /* ดำเนินการเรียบร้อยแล้ว */
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .st-1 { background: #fff3cd; color: #856404; }
+        .st-2 { background: #cfe2ff; color: #084298; }
+        .st-3 { background: #e2e3e5; color: #41464b; }
+        .st-4 { background: #d1e7dd; color: #0f5132; }
 
         #loader { display: none; text-align: center; padding: 20px; }
     </style>
@@ -118,13 +73,18 @@
 <div class="container">
     <div class="header-box">
         <h2 style="margin:0; font-size: 20px;">ติดตามงานซ่อม</h2>
-        <p style="margin:5px 0 0; font-size: 13px; opacity: 0.9;">ค้นหาสถานะล่าสุดของคุณ</p>
+        <p style="margin:5px 0 0; font-size: 12px; opacity: 0.9;">เลือกแผนกและระบุหมายเลขงาน</p>
     </div>
 
     <div class="search-card">
         <div class="input-group">
-            <label>หมายเลข Ticket</label>
-            <input type="text" id="ticketInput" placeholder="ตัวอย่าง: IT#001" autocomplete="off">
+            <label>ระบุหมายเลข Ticket</label>
+            <div class="search-row">
+                <select id="deptSelect">
+                    <option value="">เลือก</option>
+                </select>
+                <input type="number" id="numInput" placeholder="เช่น 1 หรือ 001" pattern="\d*">
+            </div>
         </div>
         <button class="btn-search" onclick="searchTicket()">ตรวจสอบสถานะ</button>
     </div>
@@ -148,14 +108,14 @@
                 </div>
                 <div class="info-item">
                     <div class="info-label">👤 ช่างดูแล:</div>
-                    <div class="info-value" id="dispAdmin" style="color:blue;"></div>
+                    <div class="info-value" id="dispAdmin" style="color:blue; font-weight:600;"></div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">⚠️ ความเร่งด่วน:</div>
                     <div class="info-value" id="dispPrio"></div>
                 </div>
                 <div class="info-item" style="margin-bottom:0;">
-                    <div class="info-label">🕒 วันที่แจ้ง:</div>
+                    <div class="info-label">🕒 แจ้งเมื่อ:</div>
                     <div class="info-value" id="dispTime"></div>
                 </div>
             </div>
@@ -174,22 +134,46 @@
             if (!liff.isLoggedIn()) liff.login();
             const profile = await liff.getProfile();
             myUid = profile.userId;
+            await loadDepts();
+        } catch (e) { console.error(e); }
+    }
+
+    // โหลดรายชื่อ Prefix แผนกเข้า Dropdown
+    async function loadDepts() {
+        try {
+            const res = await fetch(`${URL_GAS}?action=getPrefixes`);
+            const prefixes = await res.json();
+            const select = document.getElementById('deptSelect');
+            prefixes.forEach(p => {
+                let opt = document.createElement('option');
+                opt.value = p;
+                opt.innerText = p;
+                select.appendChild(opt);
+            });
         } catch (e) { console.error(e); }
     }
 
     async function searchTicket() {
-        const tid = document.getElementById('ticketInput').value.trim();
-        if (!tid) return alert("กรุณาระบุหมายเลข Ticket");
+        const dept = document.getElementById('deptSelect').value;
+        const num = document.getElementById('numInput').value.trim();
+
+        if (!dept || !num) {
+            return alert("กรุณาเลือกแผนกและระบุตัวเลขหมายเลขงาน");
+        }
+
+        // แปลงตัวเลขให้เป็น Format 001 (padStart 3 หลัก)
+        const formattedNum = num.padStart(3, '0');
+        const fullTicketId = `${dept}#${formattedNum}`;
 
         document.getElementById('loader').style.display = 'block';
         document.getElementById('result').style.display = 'none';
 
         try {
-            const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(tid)}&uid=${myUid}`);
+            const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(fullTicketId)}&uid=${myUid}`);
             const data = await res.json();
 
             if (data.found) {
-                document.getElementById('dispId').innerText = tid;
+                document.getElementById('dispId').innerText = fullTicketId;
                 document.getElementById('dispRoom').innerText = data.room;
                 document.getElementById('dispIssue').innerText = data.issue;
                 document.getElementById('dispAdmin').innerText = data.admin;
@@ -202,7 +186,7 @@
 
                 document.getElementById('result').style.display = 'block';
             } else {
-                alert("ไม่พบข้อมูล หรือคุณไม่มีสิทธิ์เข้าถึงงานนี้");
+                alert(`ไม่พบเลขที่ ${fullTicketId} ในระบบ หรือคุณไม่ใช่เจ้าของรายการนี้`);
             }
         } catch (e) { alert("เกิดข้อผิดพลาดในการโหลดข้อมูล"); }
         document.getElementById('loader').style.display = 'none';
