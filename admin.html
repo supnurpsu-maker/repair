@@ -9,25 +9,19 @@
         :root { --primary: #000080; --accent: #FBCEB1; --bg: #f4f7fa; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
         .header { background: var(--primary); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        
-        /* ซ่อนส่วน Filter ไว้ก่อนจนกว่าจะเช็กสิทธิ์เสร็จ */
         #filterArea { display: none; background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; align-items: center; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         #prefixFilter { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
-        
         .job-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); border-left: 6px solid #ccc; }
         .priority-ด่วนที่สุด { border-left-color: #ff4d4d; }
         .priority-ด่วน { border-left-color: #ffa500; }
         .priority-ปกติ { border-left-color: #2ecc71; }
-        
         .ticket-id { font-weight: bold; color: var(--primary); }
         .status-badge { float: right; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
         .badge-pending { background: #fff5f5; color: #ff4d4d; border: 1px solid #ff4d4d; }
         .badge-process { background: #e8f0fe; color: #000080; border: 1px solid #000080; }
-        
         .job-detail { margin-top: 10px; font-size: 14px; color: #333; }
         .job-info { font-size: 12px; color: #666; margin-top: 8px; line-height: 1.6; }
-        .action-select { width: 100%; margin-top: 12px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fafafa; }
-        
+        .action-select { width: 100%; margin-top: 12px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fafafa; font-family: inherit; }
         #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -35,7 +29,7 @@
 </head>
 <body>
 
-<div id="loading"><div class="spinner"></div><p>กำลังตรวจสอบสิทธิ์...</p></div>
+<div id="loading"><div class="spinner"></div><p id="loadingText">กำลังตรวจสอบสิทธิ์...</p></div>
 
 <div class="header">
     <h2 style="margin:0;">ระบบจัดการงานซ่อม</h2>
@@ -43,7 +37,7 @@
 </div>
 
 <div id="filterArea">
-    <label style="font-size:14px; font-weight:bold;">แผนก:</label>
+    <label style="font-size:14px; font-weight:bold;">เลือกแผนก:</label>
     <select id="prefixFilter" onchange="filterJobs()"><option value="ALL">แสดงทั้งหมด</option></select>
 </div>
 
@@ -65,22 +59,20 @@
             const profile = await liff.getProfile();
             currentAdminUid = profile.userId;
             
-            // 1. ตรวจสอบสิทธิ์และแผนกจาก GAS
             const authRes = await fetch(`${WEB_APP_URL}?action=getAdminRole&uid=${currentAdminUid}`);
             const authData = await authRes.json();
             
             if (authData.role === "GUEST") {
-                document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>คุณไม่มีสิทธิ์เข้าถึงหน้านี้</h2>";
+                document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>คุณไม่มีสิทธิ์เข้าถึง</h2>";
                 return;
             }
 
-            adminDept = authData.dept; // แผนกจาก Sheet admin (เช่น admin, IT, MTN)
+            adminDept = authData.dept; 
             document.getElementById('adminName').innerText = `ผู้ดูแล: ${profile.displayName} (${adminDept})`;
 
-            // 2. จัดการหน้าจอตามสิทธิ์
             if (adminDept.toLowerCase() === "admin") {
                 document.getElementById('filterArea').style.display = 'flex';
-                await loadPrefixes(); // โหลดตัวเลือกแผนกทั้งหมด
+                await loadPrefixes(); 
             }
 
             await loadJobs();
@@ -96,16 +88,15 @@
                 const opt = document.createElement('option');
                 opt.value = p; opt.innerText = p; select.appendChild(opt);
             });
-        } catch (e) { console.error("Prefix error"); }
+        } catch (e) { console.error(e); }
     }
 
     async function loadJobs() {
+        document.getElementById('loadingText').innerText = "กำลังโหลดข้อมูลงาน...";
         document.getElementById('loading').style.display = 'flex';
         try {
             const res = await fetch(`${WEB_APP_URL}?action=getAllJobs`);
             allJobs = await res.json();
-            
-            // 3. กรองข้อมูลเบื้องต้นตามแผนก (ถ้าไม่ใช่ Super Admin)
             filterJobs(); 
         } catch (err) { alert("โหลดข้อมูลไม่สำเร็จ"); }
         finally { document.getElementById('loading').style.display = 'none'; }
@@ -130,8 +121,10 @@
                 </div>
                 <select class="action-select" onchange="updateJobStatus(${job.row}, this.value)">
                     <option value="">-- เลือกดำเนินการ --</option>
-                    <option value="กำลังดำเนินการ">✅ รับงาน</option>
-                    <option value="ดำเนินการเรียบร้อยแล้ว">🏁 ปิดงาน</option>
+                    <option value="กำลังดำเนินการ">✅ รับงาน/กำลังดำเนินการ</option>
+                    <option value="จัดจ้างร้านภายนอก">🚚 จัดจ้างภายนอก</option>
+                    <option value="ดำเนินการเรียบร้อยแล้ว">🏁 ปิดงาน/เสร็จสิ้น</option>
+                    <option value="รอดำเนินการ">🔄 ยกเลิก/กลับไปรอดำเนินการ</option>
                 </select>
             `;
             container.appendChild(card);
@@ -139,7 +132,6 @@
     }
 
     function filterJobs() {
-        // ถ้าเป็น admin ให้ดึงค่าจาก Dropdown | ถ้าเป็นแผนกอื่น ให้กรองด้วย adminDept
         const prefix = (adminDept.toLowerCase() === "admin") 
                        ? document.getElementById('prefixFilter').value 
                        : adminDept;
@@ -147,7 +139,6 @@
         if (prefix === "ALL") {
             renderJobs(allJobs);
         } else {
-            // กรองเฉพาะงานที่มี Ticket ID ขึ้นต้นด้วยชื่อแผนก (เช่น IT#001)
             const filtered = allJobs.filter(j => j.ticketId.split('#')[0] === prefix);
             renderJobs(filtered);
         }
@@ -155,6 +146,11 @@
 
     async function updateJobStatus(row, newStatus) {
         if (!newStatus) return;
+        if (!confirm(`ยืนยันการเปลี่ยนสถานะเป็น "${newStatus}" ?`)) {
+            loadJobs();
+            return;
+        }
+        document.getElementById('loadingText').innerText = "กำลังอัปเดตสถานะ...";
         document.getElementById('loading').style.display = 'flex';
         try {
             const res = await fetch(`${WEB_APP_URL}?action=adminUpdate&row=${row}&status=${encodeURIComponent(newStatus)}&adminUid=${currentAdminUid}`);
