@@ -18,7 +18,7 @@
     </div>
 
     <script>
-        const URL_GAS = "https://script.google.com/macros/s/AKfycbydR31ndsEr8L0E9gyn4ilcwQ835qHr__8VAyVaAd_39YuAcwuS_D09qwW6RDqEUNU9/exec";
+        const URL_GAS = "https://script.google.com/macros/s/AKfycbzwsFNi_iku3c2L9NRsk2ZTInu8ojuUf8HX06zqMn_Ab8SqmPs02fVesWMQAsC8SnEa/exec";
         
         async function submitReview() {
             await liff.init({ liffId: "2008875334-d6l72Uox" });
@@ -28,7 +28,11 @@
 
             if (row && score) {
                 try {
-                    await fetch(`${URL_GAS}?row=${row}&score=${score}`, { method: 'GET', mode: 'no-cors' });
+                    // แก้ไขบรรทัด fetch ในไฟล์ review.html ของคุณเป็นดังนี้:
+                    await fetch(`${URL_GAS}?action=submitReview&row=${row}&score=${score}`, { 
+                        method: 'GET', 
+                        mode: 'no-cors' 
+                    });
                     document.getElementById('status').innerHTML = "<h2>✅ ขอบคุณที่ให้คะแนนครับ</h2>";
                     setTimeout(() => liff.closeWindow(), 2000);
                 } catch (e) { document.getElementById('status').innerHTML = "เกิดข้อผิดพลาด"; }
