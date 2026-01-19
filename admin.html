@@ -130,10 +130,10 @@
                 </div>
                 <div style="display:flex; gap:5px;">
                     <select id="stat-${job.row}" style="flex:1.5; padding:8px; border-radius:8px; border:1px solid #ddd; font-size:13px;">
-                        <option value="รอดำเนินการ" ${job.status == 'รอดำเนินการ' ? 'selected' : ''}>1. รอดำเนินการ</option>
-                        <option value="กำลังดำเนินการ" ${job.status == 'กำลังดำเนินการ' ? 'selected' : ''}>2. กำลังดำเนินการ</option>
-                        <option value="จัดจ้างร้านภายนอก" ${job.status == 'จัดจ้างร้านภายนอก' ? 'selected' : ''}>3. จัดจ้างร้านภายนอก</option>
-                        <option value="ดำเนินการเรียบร้อยแล้ว">4. ดำเนินการเรียบร้อยแล้ว</option>
+                        <option value="รอดำเนินการ" ${job.status == 'รอดำเนินการ' ? 'selected' : ''}>รอดำเนินการ</option>
+                        <option value="กำลังดำเนินการ" ${job.status == 'กำลังดำเนินการ' ? 'selected' : ''}>กำลังดำเนินการ</option>
+                        <option value="จัดจ้างร้านภายนอก" ${job.status == 'จัดจ้างร้านภายนอก' ? 'selected' : ''}>จัดจ้างร้านภายนอก</option>
+                        <option value="ดำเนินการเรียบร้อยแล้ว">ดำเนินการเรียบร้อยแล้ว</option>
                     </select>
                     <button class="btn-update" style="flex:0.8; margin-top:0;" onclick="updateJob(${job.row})">อัปเดต</button>
                 </div>
