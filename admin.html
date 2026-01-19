@@ -2,62 +2,152 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Admin Dashboard - IT Service</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        :root { --primary: #000080; --accent: #FBCEB1; }
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 15px; }
-        .header { background: var(--primary); color: white; padding: 15px; border-radius: 10px; text-align: center; }
-        .card { background: white; border-radius: 10px; padding: 15px; margin-top: 15px; border-left: 6px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .p-ด่วนที่สุด { border-left-color: #d9534f; }
-        .p-ด่วน { border-left-color: #f0ad4e; }
-        .p-ปกติ { border-left-color: #5cb85c; }
-        .btn-row { display: flex; gap: 5px; margin-top: 10px; flex-wrap: wrap; }
-        button { border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
-        .b-blue { background: var(--primary); color: white; }
-        .b-green { background: #28a745; color: white; }
-        .b-grey { background: #6c757d; color: white; }
+        :root { 
+            --primary: #000080; 
+            --accent: #FBCEB1; 
+            --bg: #f8fafc;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+        }
+
+        body { font-family: 'Prompt', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .container { max-width: 600px; margin: auto; }
+        
+        /* Header & Filter Area */
+        .admin-header { background: var(--primary); color: white; padding: 20px; border-radius: 20px; margin-bottom: 20px; text-align: center; }
+        .filter-section { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+        .chip { background: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; white-space: nowrap; cursor: pointer; border: 1.5px solid #ddd; }
+        .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* Job Card */
+        .job-card { background: white; border-radius: 16px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); position: relative; border-left: 6px solid #ccc; }
+        .job-card.status-pending { border-left-color: var(--warning); }
+        .job-card.status-process { border-left-color: var(--primary); }
+        .job-card.status-done { border-left-color: var(--success); }
+
+        .job-id { font-weight: 800; color: var(--primary); font-size: 18px; display: block; }
+        .job-info { font-size: 14px; color: #555; margin-top: 5px; }
+        .job-issue { background: #f0f4f8; padding: 10px; border-radius: 8px; margin: 10px 0; font-size: 14px; }
+        
+        /* Action Area */
+        .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+        select.status-select { padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-size: 13px; }
+        input.admin-input { padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-size: 13px; }
+        .btn-update { grid-column: span 2; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; }
+
+        #loader { text-align: center; padding: 50px; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div class="header"><h3>ระบบจัดการงาน IT</h3><p id="adminInfo"></p></div>
+
+<div class="container">
+    <div class="admin-header">
+        <h2 style="margin:0">Admin Dashboard</h2>
+        <p style="margin:5px 0 0; opacity:0.8; font-size:14px">จัดการคิวงานและสถานะแจ้งซ่อม</p>
+    </div>
+
+    <div class="filter-section" id="filterArea">
+        <div class="chip active" onclick="filterJobs('ALL')">ทั้งหมด</div>
+    </div>
+
+    <div id="loader"><div class="spinner"></div></div>
     <div id="jobList"></div>
+</div>
+
 <script>
-    const URL_GAS = "https://script.google.com/macros/s/AKfycbwx34DQPx307XyZUJiLoKYlyZn5pHt3QKfPJZ39GF6m0inAxx6MU1YU4xwRlJROb7U3/exec"; const LIFF_ID = "2008875334-VPUmuC8D";
-    let myUid = "";
+    const URL_GAS = "https://script.google.com/macros/s/AKfycbxkKq2Atl12geh2n2fivz1X1yY4IO8K2JPtm6dg8SrzX2Jm9NSU1MyxiiWyhS9EwR89/exec";
+    let allJobs = [];
+
     async function init() {
-        await liff.init({ liffId: LIFF_ID });
-        if (!liff.isLoggedIn()) liff.login();
-        const p = await liff.getProfile(); myUid = p.userId;
-        const res = await fetch(`${URL_GAS}?action=checkAdmin&uid=${myUid}`);
-        const auth = await res.json();
-        if (auth.isAdmin) {
-            document.getElementById("adminInfo").innerText = auth.name;
-            load();
-        } else alert("คุณไม่มีสิทธิ์ Admin");
+        // LIFF สำหรับ Admin (อาจต้องทำเงื่อนไขเช็คสิทธิ์เพิ่มภายหลัง)
+        await liff.init({ liffId: "2008875334-wOYUvNha" }); 
+        loadPrefixes();
+        loadAllJobs();
     }
-    async function load() {
-        const res = await fetch(`${URL_GAS}?action=listPending&uid=${myUid}`);
-        const jobs = await res.json();
-        const div = document.getElementById("jobList");
-        div.innerHTML = "";
-        jobs.forEach(j => {
-            div.innerHTML += `
-                <div class="card p-${j.priority}">
-                    <b>${j.ticketId}</b> [${j.status}]<br>
-                    📍 ${j.room} | 👤 ${j.name}<br>
-                    ⚠️ ${j.issue}<br>
-                    <div class="btn-row">
-                        <button class="b-blue" onclick="up(${j.row}, 'กำลังดำเนินการ')">รับงาน</button>
-                        <button class="b-green" onclick="up(${j.row}, 'ดำเนินการเรียบร้อยแล้ว')">ปิดงาน</button>
-                        <button class="b-grey" onclick="up(${j.row}, 'รอร้านภายนอกดำเนินการ')">รอร้านนอก</button>
-                        <button class="b-grey" onclick="up(${j.row}, 'รอจัดจ้างร้านภายนอก')">รอจัดจ้าง</button>
-                    </div>
-                </div>`;
+
+    // ดึงแผนกมาทำปุ่มกรอง
+    async function loadPrefixes() {
+        const res = await fetch(`${URL_GAS}?action=getPrefixes`);
+        const prefixes = await res.json();
+        const area = document.getElementById('filterArea');
+        prefixes.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'chip';
+            div.innerText = p;
+            div.onclick = () => filterJobs(p);
+            area.appendChild(div);
         });
     }
-    async function up(r, s) { if(confirm("ยืนยัน?")) { await fetch(`${URL_GAS}?action=updateStatus&row=${r}&status=${s}&uid=${myUid}`); load(); } }
+
+    // ดึงงานทั้งหมด (ต้องเพิ่มฟังก์ชัน getAllJobs ใน Code.gs ด้วย)
+    async function loadAllJobs() {
+        document.getElementById('loader').style.display = 'block';
+        const res = await fetch(`${URL_GAS}?action=getAllJobs`);
+        allJobs = await res.json();
+        renderJobs(allJobs);
+        document.getElementById('loader').style.display = 'none';
+    }
+
+    function renderJobs(jobs) {
+        const container = document.getElementById('jobList');
+        container.innerHTML = "";
+        
+        jobs.reverse().forEach(job => {
+            const statusClass = job.status === "รอดำเนินการ" ? "status-pending" : (job.status === "กำลังดำเนินการ" ? "status-process" : "status-done");
+            const card = document.createElement('div');
+            card.className = `job-card ${statusClass}`;
+            card.innerHTML = `
+                <span class="job-id">${job.ticketId}</span>
+                <div class="job-info">📍 ${job.room} | 👤 ${job.name}</div>
+                <div class="job-info">📅 ${job.time} | 📞 ${job.phone}</div>
+                <div class="job-issue"><strong>ปัญหา:</strong> ${job.issue}</div>
+                <div class="action-row">
+                    <select id="stat-${job.row}" class="status-select">
+                        <option value="รอดำเนินการ" ${job.status == 'รอดำเนินการ' ? 'selected' : ''}>รอดำเนินการ</option>
+                        <option value="กำลังดำเนินการ" ${job.status == 'กำลังดำเนินการ' ? 'selected' : ''}>กำลังดำเนินการ</option>
+                        <option value="เสร็จสิ้น" ${job.status == 'เสร็จสิ้น' ? 'selected' : ''}>เสร็จสิ้น</option>
+                    </select>
+                    <input type="text" id="admin-${job.row}" class="admin-input" placeholder="ระบุชื่อช่าง" value="${job.admin || ''}">
+                    <button class="btn-update" onclick="updateJob(${job.row})">อัปเดตข้อมูล</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function filterJobs(prefix) {
+        // อัปเดต UI ปุ่มกรอง
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        event.target.classList.add('active');
+
+        if(prefix === 'ALL') return renderJobs(allJobs);
+        const filtered = allJobs.filter(j => j.ticketId.startsWith(prefix + "#"));
+        renderJobs(filtered);
+    }
+
+    async function updateJob(row) {
+        const status = document.getElementById(`stat-${row}`).value;
+        const admin = document.getElementById(`admin-${row}`).value;
+        
+        const ok = confirm("ยืนยันการบันทึกสถานะ?");
+        if(!ok) return;
+
+        try {
+            const res = await fetch(`${URL_GAS}?action=adminUpdate&row=${row}&status=${encodeURIComponent(status)}&admin=${encodeURIComponent(admin)}`);
+            if(await res.text() === "SUCCESS") {
+                alert("อัปเดตสำเร็จ!");
+                loadAllJobs();
+            }
+        } catch (e) { alert("ล้มเหลว"); }
+    }
+
     init();
 </script>
 </body>
