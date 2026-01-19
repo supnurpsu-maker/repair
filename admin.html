@@ -9,79 +9,84 @@
         :root { --primary: #000080; --accent: #FBCEB1; --bg: #f4f7fa; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
         .header { background: var(--primary); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .filter-section { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: flex; gap: 10px; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        select#prefixFilter { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
         
-        .job-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); position: relative; border-left: 6px solid #ccc; }
+        /* ซ่อนส่วน Filter ไว้ก่อนจนกว่าจะเช็กสิทธิ์เสร็จ */
+        #filterArea { display: none; background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; align-items: center; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        #prefixFilter { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
+        
+        .job-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); border-left: 6px solid #ccc; }
         .priority-ด่วนที่สุด { border-left-color: #ff4d4d; }
         .priority-ด่วน { border-left-color: #ffa500; }
         .priority-ปกติ { border-left-color: #2ecc71; }
         
-        .ticket-id { font-weight: bold; color: var(--primary); font-size: 0.9em; }
+        .ticket-id { font-weight: bold; color: var(--primary); }
         .status-badge { float: right; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
         .badge-pending { background: #fff5f5; color: #ff4d4d; border: 1px solid #ff4d4d; }
         .badge-process { background: #e8f0fe; color: #000080; border: 1px solid #000080; }
         
         .job-detail { margin-top: 10px; font-size: 14px; color: #333; }
         .job-info { font-size: 12px; color: #666; margin-top: 8px; line-height: 1.6; }
+        .action-select { width: 100%; margin-top: 12px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fafafa; }
         
-        .action-select { width: 100%; margin-top: 12px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fafafa; font-family: inherit; }
-        
-        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); 
-                    display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div id="loading">
-    <div class="spinner"></div>
-    <p style="margin-top:10px; color:var(--primary); font-weight:bold;">กำลังดำเนินการ...</p>
-</div>
+<div id="loading"><div class="spinner"></div><p>กำลังตรวจสอบสิทธิ์...</p></div>
 
 <div class="header">
     <h2 style="margin:0;">ระบบจัดการงานซ่อม</h2>
-    <p id="adminName" style="margin:5px 0 0; font-size:14px; opacity:0.9;">กำลังโหลดข้อมูลผู้ดูแล...</p>
+    <p id="adminName" style="margin:5px 0 0; font-size:14px; opacity:0.9;">Loading...</p>
 </div>
 
-<div class="filter-section">
-    <label style="font-size:14px; font-weight:bold;">กรองแผนก:</label>
-    <select id="prefixFilter" onchange="filterJobs()">
-        <option value="ALL">แสดงทั้งหมด</option>
-    </select>
+<div id="filterArea">
+    <label style="font-size:14px; font-weight:bold;">แผนก:</label>
+    <select id="prefixFilter" onchange="filterJobs()"><option value="ALL">แสดงทั้งหมด</option></select>
 </div>
 
-<div id="jobContainer">
-    </div>
+<div id="jobContainer"></div>
 
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJetfL-YG4QMZtk6SVaWoGQpelo7QX3WcAr302FTf6Xr438UdBQR6GonEBjP9o4Wi-/exec";
-    const LIFF_ID = "2008875334-VPUmuC8D"; // เปลี่ยนเป็น LIFF ID ของ Admin ของคุณ
+    const LIFF_ID = "2008875334-VPUmuC8D";
 
     let allJobs = [];
     let currentAdminUid = "";
+    let adminDept = "";
 
     async function main() {
         try {
             await liff.init({ liffId: LIFF_ID });
-            if (!liff.isLoggedIn()) {
-                liff.login();
-            } else {
-                const profile = await liff.getProfile();
-                currentAdminUid = profile.userId;
-                document.getElementById('adminName').innerText = "ผู้ดูแล: " + profile.displayName;
-                
-                await loadPrefixes();
-                await loadJobs();
+            if (!liff.isLoggedIn()) { liff.login(); return; }
+            
+            const profile = await liff.getProfile();
+            currentAdminUid = profile.userId;
+            
+            // 1. ตรวจสอบสิทธิ์และแผนกจาก GAS
+            const authRes = await fetch(`${WEB_APP_URL}?action=getAdminRole&uid=${currentAdminUid}`);
+            const authData = await authRes.json();
+            
+            if (authData.role === "GUEST") {
+                document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>คุณไม่มีสิทธิ์เข้าถึงหน้านี้</h2>";
+                return;
             }
-        } catch (err) {
-            console.error(err);
-            alert("Error: " + err.message);
-        }
+
+            adminDept = authData.dept; // แผนกจาก Sheet admin (เช่น admin, IT, MTN)
+            document.getElementById('adminName').innerText = `ผู้ดูแล: ${profile.displayName} (${adminDept})`;
+
+            // 2. จัดการหน้าจอตามสิทธิ์
+            if (adminDept.toLowerCase() === "admin") {
+                document.getElementById('filterArea').style.display = 'flex';
+                await loadPrefixes(); // โหลดตัวเลือกแผนกทั้งหมด
+            }
+
+            await loadJobs();
+        } catch (err) { alert("Error: " + err.message); }
     }
 
-    // โหลด Prefix เพื่อสร้างตัวกรอง
     async function loadPrefixes() {
         try {
             const res = await fetch(`${WEB_APP_URL}?action=getPrefixes`);
@@ -89,40 +94,30 @@
             const select = document.getElementById('prefixFilter');
             prefixes.forEach(p => {
                 const opt = document.createElement('option');
-                opt.value = p;
-                opt.innerText = p;
-                select.appendChild(opt);
+                opt.value = p; opt.innerText = p; select.appendChild(opt);
             });
-        } catch (e) { console.error("Load Prefixes failed"); }
+        } catch (e) { console.error("Prefix error"); }
     }
 
-    // โหลดรายการงานซ่อม
     async function loadJobs() {
         document.getElementById('loading').style.display = 'flex';
         try {
             const res = await fetch(`${WEB_APP_URL}?action=getAllJobs`);
             allJobs = await res.json();
-            renderJobs(allJobs);
-        } catch (err) {
-            alert("โหลดข้อมูลไม่สำเร็จ");
-        } finally {
-            document.getElementById('loading').style.display = 'none';
-        }
+            
+            // 3. กรองข้อมูลเบื้องต้นตามแผนก (ถ้าไม่ใช่ Super Admin)
+            filterJobs(); 
+        } catch (err) { alert("โหลดข้อมูลไม่สำเร็จ"); }
+        finally { document.getElementById('loading').style.display = 'none'; }
     }
 
     function renderJobs(jobs) {
         const container = document.getElementById('jobContainer');
-        container.innerHTML = "";
-
-        if (jobs.length === 0) {
-            container.innerHTML = "<p style='text-align:center; color:#999; margin-top:50px;'>ไม่พบรายการงานค้าง</p>";
-            return;
-        }
+        container.innerHTML = jobs.length === 0 ? "<p style='text-align:center; color:#999; margin-top:50px;'>ไม่พบรายการงาน</p>" : "";
 
         jobs.forEach(job => {
             const card = document.createElement('div');
             card.className = `job-card priority-${job.priority}`;
-            
             const badgeClass = job.status === 'รอดำเนินการ' ? 'badge-pending' : 'badge-process';
             
             card.innerHTML = `
@@ -130,61 +125,47 @@
                 <span class="status-badge ${badgeClass}">${job.status}</span>
                 <div class="job-detail"><strong>${job.issue}</strong></div>
                 <div class="job-info">
-                    📍 สถานที่: ${job.room}<br>
-                    👤 ผู้แจ้ง: ${job.name}<br>
-                    ⏰ เวลา: ${job.timeStr}<br>
-                    🛠 ช่างดูแล: ${job.adminName}
+                    📍 สถานที่: ${job.room}<br>👤 ผู้แจ้ง: ${job.name}<br>
+                    ⏰ เวลา: ${job.timeStr}<br>🛠 ช่างดูแล: ${job.adminName}
                 </div>
                 <select class="action-select" onchange="updateJobStatus(${job.row}, this.value)">
                     <option value="">-- เลือกดำเนินการ --</option>
-                    <option value="กำลังดำเนินการ">✅ รับงาน/กำลังดำเนินการ</option>
-                    <option value="จัดจ้างร้านภายนอก">🚚 จัดจ้างภายนอก</option>
-                    <option value="ดำเนินการเรียบร้อยแล้ว">🏁 ปิดงาน/เสร็จสิ้น</option>
-                    <option value="รอดำเนินการ">🔄 ยกเลิกและกลับไปรอดำเนินการ</option>
+                    <option value="กำลังดำเนินการ">✅ รับงาน</option>
+                    <option value="ดำเนินการเรียบร้อยแล้ว">🏁 ปิดงาน</option>
                 </select>
             `;
             container.appendChild(card);
         });
     }
 
-    async function updateJobStatus(row, newStatus) {
-        if (!newStatus) return;
-        if (!confirm(`ยืนยันการเปลี่ยนสถานะเป็น "${newStatus}" ?`)) {
-            loadJobs(); // Reset select
-            return;
-        }
-
-        document.getElementById('loading').style.display = 'flex';
-        try {
-            // ส่ง Parameter สำคัญ: action, row, status และ adminUid
-            const res = await fetch(`${WEB_APP_URL}?action=adminUpdate&row=${row}&status=${encodeURIComponent(newStatus)}&adminUid=${currentAdminUid}`);
-            const text = await res.text();
-            
-            if (text === "SUCCESS") {
-                alert("อัปเดตสถานะเรียบร้อย");
-                await loadJobs();
-            } else {
-                alert("เกิดข้อผิดพลาด: " + text);
-            }
-        } catch (e) {
-            alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
-        } finally {
-            document.getElementById('loading').style.display = 'none';
-        }
-    }
-
     function filterJobs() {
-        const prefix = document.getElementById('prefixFilter').value;
+        // ถ้าเป็น admin ให้ดึงค่าจาก Dropdown | ถ้าเป็นแผนกอื่น ให้กรองด้วย adminDept
+        const prefix = (adminDept.toLowerCase() === "admin") 
+                       ? document.getElementById('prefixFilter').value 
+                       : adminDept;
+
         if (prefix === "ALL") {
             renderJobs(allJobs);
         } else {
-            const filtered = allJobs.filter(j => j.ticketId.startsWith(prefix));
+            // กรองเฉพาะงานที่มี Ticket ID ขึ้นต้นด้วยชื่อแผนก (เช่น IT#001)
+            const filtered = allJobs.filter(j => j.ticketId.split('#')[0] === prefix);
             renderJobs(filtered);
         }
     }
 
+    async function updateJobStatus(row, newStatus) {
+        if (!newStatus) return;
+        document.getElementById('loading').style.display = 'flex';
+        try {
+            const res = await fetch(`${WEB_APP_URL}?action=adminUpdate&row=${row}&status=${encodeURIComponent(newStatus)}&adminUid=${currentAdminUid}`);
+            if (await res.text() === "SUCCESS") {
+                await loadJobs();
+            }
+        } catch (e) { alert("อัปเดตล้มเหลว"); }
+        finally { document.getElementById('loading').style.display = 'none'; }
+    }
+
     main();
 </script>
-
 </body>
 </html>
