@@ -3,59 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ติดตามสถานะการแจ้งซ่อม</title>
+    <title>ติดตามสถานะงานซ่อม</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #000080; --accent: #FBCEB1; --bg: #f8f9fa; }
+        :root { --primary: #000080; --bg: #f4f7f9; }
         * { box-sizing: border-box; font-family: 'Prompt', sans-serif; }
-        body { background-color: var(--bg); margin: 0; padding: 20px; color: #333; }
+        body { background-color: var(--bg); margin: 0; padding: 15px; }
         .container { max-width: 500px; margin: auto; }
         
-        .header { text-align: center; margin-bottom: 25px; }
-        .header h2 { color: var(--primary); margin: 10px 0; }
-
-        .search-box {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-        .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; font-size: 14px; margin-bottom: 5px; color: #666; }
-        input { 
-            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; 
-            font-size: 16px; outline: none; transition: 0.3s;
-        }
-        input:focus { border-color: var(--primary); }
-
-        .btn-search {
-            width: 100%; padding: 12px; background: var(--primary); color: white;
-            border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer;
+        .header { 
+            background: var(--primary); color: white; 
+            padding: 20px; border-radius: 15px; 
+            text-align: center; margin-bottom: 15px; 
         }
 
-        /* Result Card */
-        #result { display: none; margin-top: 20px; }
-        .status-card {
-            background: white; padding: 20px; border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-top: 8px solid var(--primary);
+        /* Filter Chips */
+        .filter-section { 
+            display: flex; gap: 8px; overflow-x: auto; 
+            padding: 5px 0 15px 0; scrollbar-width: none;
         }
-        .status-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .ticket-id { font-size: 20px; font-weight: 800; color: var(--primary); }
+        .filter-section::-webkit-scrollbar { display: none; }
+        .chip { 
+            padding: 8px 18px; background: white; border-radius: 20px; 
+            border: 1px solid #ddd; font-size: 13px; cursor: pointer; 
+            white-space: nowrap; transition: 0.3s; color: #555;
+        }
+        .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* Job Card */
+        .job-card { 
+            background: white; border-radius: 15px; padding: 15px; 
+            margin-bottom: 15px; border-left: 6px solid #ddd; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+        }
+        .prio-ด่วนที่สุด { border-left-color: #e74c3c; }
+        .prio-ด่วน { border-left-color: #f39c12; }
+        .prio-ปกติ { border-left-color: #3498db; }
+
+        .job-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .ticket-id { font-weight: 600; color: var(--primary); font-size: 16px; }
+        .status-text { font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 10px; }
         
-        /* Status Badge Colors */
-        .badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .bg-pending { background: #fff3cd; color: #856404; }
-        .bg-process { background: #cfe2ff; color: #084298; }
-        .bg-external { background: #e2e3e5; color: #41464b; }
-        .bg-success { background: #d1e7dd; color: #0f5132; }
+        /* Status Colors */
+        .st-รอดำเนินการ { background: #fff3cd; color: #856404; }
+        .st-กำลังดำเนินการ { background: #cfe2ff; color: #084298; }
+        .st-จัดจ้างร้านภายนอก { background: #e2e3e5; color: #41464b; }
+        .st-ดำเนินการเรียบร้อยแล้ว { background: #d1e7dd; color: #0f5132; }
 
-        .info-row { display: flex; margin-bottom: 10px; font-size: 14px; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; }
-        .info-label { width: 100px; color: #888; flex-shrink: 0; }
-        .info-value { color: #333; font-weight: 500; }
+        .job-detail { font-size: 14px; margin: 10px 0; color: #444; line-height: 1.5; }
+        .admin-note { font-size: 12px; color: #000080; background: #f0f0ff; padding: 5px 10px; border-radius: 8px; display: inline-block; }
 
-        .loader { display: none; text-align: center; margin-top: 20px; }
+        #loader { text-align: center; padding: 30px; }
         .spinner { 
             border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); 
             border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: auto;
@@ -67,125 +66,119 @@
 
 <div class="container">
     <div class="header">
-        <h2>ติดตามสถานะแจ้งซ่อม</h2>
-        <p style="font-size: 13px; color: #888;">กรอกหมายเลข Ticket เพื่อตรวจสอบความคืบหน้า</p>
+        <h2 style="margin:0; font-size: 20px;">ติดตามสถานะงานซ่อม</h2>
+        <p style="margin:5px 0 0; opacity:0.8; font-size:12px">ตรวจสอบความคืบหน้าแยกตามแผนก</p>
     </div>
 
-    <div class="search-box">
-        <div class="input-group">
-            <label for="ticketInput">หมายเลข Ticket (เช่น IT#001)</label>
-            <input type="text" id="ticketInput" placeholder="กรอกเลขที่แจ้งซ่อมของคุณ" autocomplete="off">
-        </div>
-        <button class="btn-search" onclick="searchTicket()">ตรวจสอบสถานะ</button>
+    <div class="filter-section" id="filterArea">
+        <div class="chip active" onclick="filterJobs('ALL', this)">ทั้งหมด</div>
     </div>
 
-    <div id="loader" class="loader">
+    <div id="loader">
         <div class="spinner"></div>
-        <p style="font-size: 13px; color: #666; margin-top: 10px;">กำลังค้นหาข้อมูล...</p>
+        <p style="font-size: 13px; color: #666; margin-top: 10px;">กำลังโหลดข้อมูล...</p>
     </div>
 
-    <div id="result">
-        <div class="status-card">
-            <div class="status-header">
-                <span class="ticket-id" id="resTicket"></span>
-                <span id="resBadge" class="badge"></span>
-            </div>
-            
-            <div class="info-row">
-                <div class="info-label">📍 สถานที่:</div>
-                <div class="info-value" id="resRoom"></div>
-            </div>
-            <div class="info-row">
-                <div class="info-label">🔧 อาการ:</div>
-                <div class="info-value" id="resIssue"></div>
-            </div>
-            <div class="info-row">
-                <div class="info-label">⚠️ ความสำคัญ:</div>
-                <div class="info-value" id="resPrio"></div>
-            </div>
-            <div class="info-row">
-                <div class="info-label">👤 เจ้าหน้าที่:</div>
-                <div class="info-value" id="resAdmin" style="color: var(--primary); font-weight: 600;"></div>
-            </div>
-            <div class="info-row" style="border: none;">
-                <div class="info-label">🕒 แจ้งเมื่อ:</div>
-                <div class="info-value" id="resTime"></div>
-            </div>
-        </div>
-    </div>
+    <div id="jobList"></div>
 </div>
 
 <script>
-    // ** ตรวจสอบ URL_GAS ให้เป็นตัวเดียวกับในหน้า Admin และ Index **
     const URL_GAS = "https://script.google.com/macros/s/AKfycby7gaRKVcrfqxhHQTchgOn4tgqno6UJjXZPv23A-d7xE6CgSUDWfmF_T3-xvitCzDxW/exec";
-    const LIFF_ID = "2008875334-wOYUvNha"; // ใส่ LIFF ID ของคุณ
-    let userUid = "";
+    const LIFF_ID = "2008875334-wOYUvNha"; 
+    let allJobs = [];
 
-    async function initLiff() {
+    async function init() {
         try {
             await liff.init({ liffId: LIFF_ID });
-            if (!liff.isLoggedIn()) {
-                liff.login();
-            } else {
-                const profile = await liff.getProfile();
-                userUid = profile.userId;
-            }
-        } catch (err) {
-            console.error("LIFF Init Error", err);
+            if (!liff.isLoggedIn()) liff.login();
+            
+            await loadPrefixes();
+            await loadAllJobs();
+        } catch (e) {
+            console.error(e);
+            // ถ้าโหลด LIFF ไม่ได้ ให้ลองโหลดข้อมูลเลย (สำหรับเปิดบน Browser)
+            await loadPrefixes();
+            await loadAllJobs();
         }
     }
 
-    async function searchTicket() {
-        const ticketId = document.getElementById('ticketInput').value.trim();
-        if (!ticketId) {
-            alert("กรุณากรอกหมายเลข Ticket");
-            return;
-        }
+    async function loadPrefixes() {
+        try {
+            const res = await fetch(`${URL_GAS}?action=getPrefixes`);
+            const prefixes = await res.json();
+            const area = document.getElementById('filterArea');
+            prefixes.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'chip';
+                div.innerText = p;
+                div.onclick = (e) => filterJobs(p, e.target);
+                area.appendChild(div);
+            });
+        } catch (e) { console.error("Prefix error", e); }
+    }
 
+    async function loadAllJobs() {
+        const container = document.getElementById('jobList');
         const loader = document.getElementById('loader');
-        const resultDiv = document.getElementById('result');
-        
         loader.style.display = 'block';
-        resultDiv.style.display = 'none';
 
         try {
-            // ดึงข้อมูลโดยส่ง Ticket ID และ UID (เพื่อความปลอดภัยให้เห็นเฉพาะงานของตัวเอง)
-            const response = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(ticketId)}&uid=${userUid}`);
-            const data = await response.json();
-
-            if (data.found) {
-                document.getElementById('resTicket').innerText = data.ticketId || ticketId;
-                document.getElementById('resRoom').innerText = data.room;
-                document.getElementById('resIssue').innerText = data.issue;
-                document.getElementById('resPrio').innerText = data.priority;
-                document.getElementById('resTime').innerText = data.time;
-                
-                // แสดงชื่อ Admin (ที่ Code.gs แปลงจาก UID มาให้แล้ว)
-                document.getElementById('resAdmin').innerText = data.admin;
-
-                // จัดการ Badge สถานะ
-                const badge = document.getElementById('resBadge');
-                badge.innerText = data.status;
-                badge.className = 'badge'; // reset
-                
-                if (data.status === "รอดำเนินการ") badge.classList.add('bg-pending');
-                else if (data.status === "กำลังดำเนินการ") badge.classList.add('bg-process');
-                else if (data.status === "จัดจ้างร้านภายนอก") badge.classList.add('bg-external');
-                else if (data.status === "ดำเนินการเรียบร้อยแล้ว") badge.classList.add('bg-success');
-
-                resultDiv.style.display = 'block';
-            } else {
-                alert("ไม่พบข้อมูลหมายเลข Ticket นี้ หรือคุณไม่ใช่ผู้แจ้งรายการนี้");
-            }
-        } catch (err) {
-            console.error(err);
-            alert("เกิดข้อผิดพลาดในการเชื่อมต่อข้อมูล");
+            // ดึงข้อมูลงานทั้งหมด (ใช้ getAllJobs เหมือนหน้า Admin แต่ในหน้า Track จะเน้นแสดงผล)
+            const res = await fetch(`${URL_GAS}?action=getAllJobs`);
+            allJobs = await res.json();
+            renderJobs(allJobs);
+        } catch (e) {
+            container.innerHTML = "<p style='text-align:center; color:red;'>ไม่สามารถดึงข้อมูลได้</p>";
         } finally {
             loader.style.display = 'none';
         }
     }
 
-    initLiff();
+    function renderJobs(jobs) {
+        const container = document.getElementById('jobList');
+        container.innerHTML = "";
+
+        if (jobs.length === 0) {
+            container.innerHTML = "<p style='text-align:center; color:#999; margin-top:20px;'>ไม่พบรายการงาน</p>";
+            return;
+        }
+
+        jobs.forEach(job => {
+            const card = document.createElement('div');
+            card.className = `job-card prio-${job.priority}`;
+            card.innerHTML = `
+                <div class="job-header">
+                    <span class="ticket-id">${job.ticketId}</span>
+                    <span class="status-text st-${job.status}">${job.status}</span>
+                </div>
+                <div class="job-detail">
+                    📍 <b>สถานที่:</b> ${job.room}<br>
+                    🔧 <b>อาการ:</b> ${job.issue}<br>
+                    🕒 <b>แจ้งเมื่อ:</b> ${job.timeStr}
+                </div>
+                <div class="admin-note">
+                    👤 ผู้รับผิดชอบ: ${job.adminName || 'กำลังมอบหมาย'}
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function filterJobs(p, el) {
+        // เปลี่ยนสถานะปุ่ม Chip
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+
+        // กรองข้อมูล
+        if (p === 'ALL') {
+            renderJobs(allJobs);
+        } else {
+            const filtered = allJobs.filter(j => j.ticketId.startsWith(p + "#"));
+            renderJobs(filtered);
+        }
+    }
+
+    init();
 </script>
 </body>
 </html>
