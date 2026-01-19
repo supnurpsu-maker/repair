@@ -7,175 +7,213 @@
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #000080; --bg: #f4f7f9; }
+        :root { --primary: #000080; --bg: #f8f9fa; }
         * { box-sizing: border-box; font-family: 'Prompt', sans-serif; }
-        body { background-color: var(--bg); margin: 0; padding: 15px; }
-        .container { max-width: 500px; margin: auto; }
         
-        .header { 
-            background: var(--primary); color: white; 
-            padding: 20px; border-radius: 15px; 
-            text-align: center; margin-bottom: 15px; 
+        body { 
+            background-color: var(--bg); 
+            margin: 0; 
+            padding: 15px; 
+            overflow-x: hidden; /* ป้องกันการเลื่อนออกนอกจอ */
         }
 
-        /* Filter Chips */
-        .filter-section { 
-            display: flex; gap: 8px; overflow-x: auto; 
-            padding: 5px 0 15px 0; scrollbar-width: none;
+        .container { 
+            max-width: 100%; 
+            margin: auto; 
         }
-        .filter-section::-webkit-scrollbar { display: none; }
-        .chip { 
-            padding: 8px 18px; background: white; border-radius: 20px; 
-            border: 1px solid #ddd; font-size: 13px; cursor: pointer; 
-            white-space: nowrap; transition: 0.3s; color: #555;
-        }
-        .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* Job Card */
-        .job-card { 
-            background: white; border-radius: 15px; padding: 15px; 
-            margin-bottom: 15px; border-left: 6px solid #ddd; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+        .header-box {
+            background: var(--primary);
+            color: white;
+            padding: 20px 15px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        .prio-ด่วนที่สุด { border-left-color: #e74c3c; }
-        .prio-ด่วน { border-left-color: #f39c12; }
-        .prio-ปกติ { border-left-color: #3498db; }
 
-        .job-header { display: flex; justify-content: space-between; align-items: flex-start; }
-        .ticket-id { font-weight: 600; color: var(--primary); font-size: 16px; }
-        .status-text { font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 10px; }
+        /* ส่วนค้นหา */
+        .search-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 14px; margin-bottom: 8px; color: #555; }
         
-        /* Status Colors */
-        .st-รอดำเนินการ { background: #fff3cd; color: #856404; }
-        .st-กำลังดำเนินการ { background: #cfe2ff; color: #084298; }
-        .st-จัดจ้างร้านภายนอก { background: #e2e3e5; color: #41464b; }
-        .st-ดำเนินการเรียบร้อยแล้ว { background: #d1e7dd; color: #0f5132; }
-
-        .job-detail { font-size: 14px; margin: 10px 0; color: #444; line-height: 1.5; }
-        .admin-note { font-size: 12px; color: #000080; background: #f0f0ff; padding: 5px 10px; border-radius: 8px; display: inline-block; }
-
-        #loader { text-align: center; padding: 30px; }
-        .spinner { 
-            border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); 
-            border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: auto;
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1.5px solid #eee; 
+            border-radius: 10px; 
+            font-size: 16px; 
+            background: #fafafa;
+            -webkit-appearance: none; /* ลบสไตล์เดิมของ iOS */
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .btn-search {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        /* การแสดงผลลัพธ์แบบพอดีจอ */
+        #result { display: none; }
+        .result-card {
+            background: white;
+            border-radius: 15px;
+            padding: 0;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .res-header {
+            background: #f0f0ff;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .res-body { padding: 15px; }
+
+        .info-item {
+            display: flex;
+            margin-bottom: 12px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .info-label { width: 85px; color: #888; flex-shrink: 0; }
+        .info-value { color: #333; font-weight: 400; word-break: break-word; } /* ตัดคำถ้าข้อความยาว */
+
+        /*Badge สถานะ */
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .st-1 { background: #fff3cd; color: #856404; } /* รอดำเนินการ */
+        .st-2 { background: #cfe2ff; color: #084298; } /* กำลังดำเนินการ */
+        .st-3 { background: #e2e3e5; color: #41464b; } /* จัดจ้างร้านภายนอก */
+        .st-4 { background: #d1e7dd; color: #0f5132; } /* ดำเนินการเรียบร้อยแล้ว */
+
+        #loader { display: none; text-align: center; padding: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
-        <h2 style="margin:0; font-size: 20px;">ติดตามสถานะงานซ่อม</h2>
-        <p style="margin:5px 0 0; opacity:0.8; font-size:12px">ตรวจสอบความคืบหน้าแยกตามแผนก</p>
+    <div class="header-box">
+        <h2 style="margin:0; font-size: 20px;">ติดตามงานซ่อม</h2>
+        <p style="margin:5px 0 0; font-size: 13px; opacity: 0.9;">ค้นหาสถานะล่าสุดของคุณ</p>
     </div>
 
-    <div class="filter-section" id="filterArea">
-        <div class="chip active" onclick="filterJobs('ALL', this)">ทั้งหมด</div>
+    <div class="search-card">
+        <div class="input-group">
+            <label>หมายเลข Ticket</label>
+            <input type="text" id="ticketInput" placeholder="ตัวอย่าง: IT#001" autocomplete="off">
+        </div>
+        <button class="btn-search" onclick="searchTicket()">ตรวจสอบสถานะ</button>
     </div>
 
-    <div id="loader">
-        <div class="spinner"></div>
-        <p style="font-size: 13px; color: #666; margin-top: 10px;">กำลังโหลดข้อมูล...</p>
-    </div>
+    <div id="loader">⏳ กำลังค้นหา...</div>
 
-    <div id="jobList"></div>
+    <div id="result">
+        <div class="result-card">
+            <div class="res-header">
+                <strong id="dispId" style="color:var(--primary); font-size: 18px;"></strong>
+                <span id="dispBadge" class="badge"></span>
+            </div>
+            <div class="res-body">
+                <div class="info-item">
+                    <div class="info-label">📍 สถานที่:</div>
+                    <div class="info-value" id="dispRoom"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">🔧 อาการ:</div>
+                    <div class="info-value" id="dispIssue"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">👤 ช่างดูแล:</div>
+                    <div class="info-value" id="dispAdmin" style="color:blue;"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">⚠️ ความเร่งด่วน:</div>
+                    <div class="info-value" id="dispPrio"></div>
+                </div>
+                <div class="info-item" style="margin-bottom:0;">
+                    <div class="info-label">🕒 วันที่แจ้ง:</div>
+                    <div class="info-value" id="dispTime"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
     const URL_GAS = "https://script.google.com/macros/s/AKfycby7gaRKVcrfqxhHQTchgOn4tgqno6UJjXZPv23A-d7xE6CgSUDWfmF_T3-xvitCzDxW/exec";
-    const LIFF_ID = "2008875334-wOYUvNha"; 
-    let allJobs = [];
+    const LIFF_ID = "2008875334-wOYUvNha";
+    let myUid = "";
 
     async function init() {
         try {
             await liff.init({ liffId: LIFF_ID });
             if (!liff.isLoggedIn()) liff.login();
-            
-            await loadPrefixes();
-            await loadAllJobs();
-        } catch (e) {
-            console.error(e);
-            // ถ้าโหลด LIFF ไม่ได้ ให้ลองโหลดข้อมูลเลย (สำหรับเปิดบน Browser)
-            await loadPrefixes();
-            await loadAllJobs();
-        }
+            const profile = await liff.getProfile();
+            myUid = profile.userId;
+        } catch (e) { console.error(e); }
     }
 
-    async function loadPrefixes() {
-        try {
-            const res = await fetch(`${URL_GAS}?action=getPrefixes`);
-            const prefixes = await res.json();
-            const area = document.getElementById('filterArea');
-            prefixes.forEach(p => {
-                const div = document.createElement('div');
-                div.className = 'chip';
-                div.innerText = p;
-                div.onclick = (e) => filterJobs(p, e.target);
-                area.appendChild(div);
-            });
-        } catch (e) { console.error("Prefix error", e); }
-    }
+    async function searchTicket() {
+        const tid = document.getElementById('ticketInput').value.trim();
+        if (!tid) return alert("กรุณาระบุหมายเลข Ticket");
 
-    async function loadAllJobs() {
-        const container = document.getElementById('jobList');
-        const loader = document.getElementById('loader');
-        loader.style.display = 'block';
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('result').style.display = 'none';
 
         try {
-            // ดึงข้อมูลงานทั้งหมด (ใช้ getAllJobs เหมือนหน้า Admin แต่ในหน้า Track จะเน้นแสดงผล)
-            const res = await fetch(`${URL_GAS}?action=getAllJobs`);
-            allJobs = await res.json();
-            renderJobs(allJobs);
-        } catch (e) {
-            container.innerHTML = "<p style='text-align:center; color:red;'>ไม่สามารถดึงข้อมูลได้</p>";
-        } finally {
-            loader.style.display = 'none';
-        }
+            const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(tid)}&uid=${myUid}`);
+            const data = await res.json();
+
+            if (data.found) {
+                document.getElementById('dispId').innerText = tid;
+                document.getElementById('dispRoom').innerText = data.room;
+                document.getElementById('dispIssue').innerText = data.issue;
+                document.getElementById('dispAdmin').innerText = data.admin;
+                document.getElementById('dispPrio').innerText = data.priority;
+                document.getElementById('dispTime').innerText = data.time;
+
+                const badge = document.getElementById('dispBadge');
+                badge.innerText = data.status;
+                badge.className = 'badge ' + getStatusClass(data.status);
+
+                document.getElementById('result').style.display = 'block';
+            } else {
+                alert("ไม่พบข้อมูล หรือคุณไม่มีสิทธิ์เข้าถึงงานนี้");
+            }
+        } catch (e) { alert("เกิดข้อผิดพลาดในการโหลดข้อมูล"); }
+        document.getElementById('loader').style.display = 'none';
     }
 
-    function renderJobs(jobs) {
-        const container = document.getElementById('jobList');
-        container.innerHTML = "";
-
-        if (jobs.length === 0) {
-            container.innerHTML = "<p style='text-align:center; color:#999; margin-top:20px;'>ไม่พบรายการงาน</p>";
-            return;
-        }
-
-        jobs.forEach(job => {
-            const card = document.createElement('div');
-            card.className = `job-card prio-${job.priority}`;
-            card.innerHTML = `
-                <div class="job-header">
-                    <span class="ticket-id">${job.ticketId}</span>
-                    <span class="status-text st-${job.status}">${job.status}</span>
-                </div>
-                <div class="job-detail">
-                    📍 <b>สถานที่:</b> ${job.room}<br>
-                    🔧 <b>อาการ:</b> ${job.issue}<br>
-                    🕒 <b>แจ้งเมื่อ:</b> ${job.timeStr}
-                </div>
-                <div class="admin-note">
-                    👤 ผู้รับผิดชอบ: ${job.adminName || 'กำลังมอบหมาย'}
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    }
-
-    function filterJobs(p, el) {
-        // เปลี่ยนสถานะปุ่ม Chip
-        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-        el.classList.add('active');
-
-        // กรองข้อมูล
-        if (p === 'ALL') {
-            renderJobs(allJobs);
-        } else {
-            const filtered = allJobs.filter(j => j.ticketId.startsWith(p + "#"));
-            renderJobs(filtered);
-        }
+    function getStatusClass(s) {
+        if (s === "รอดำเนินการ") return "st-1";
+        if (s === "กำลังดำเนินการ") return "st-2";
+        if (s === "จัดจ้างร้านภายนอก") return "st-3";
+        if (s === "ดำเนินการเรียบร้อยแล้ว") return "st-4";
+        return "";
     }
 
     init();
