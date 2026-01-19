@@ -2,49 +2,218 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Track Status - IT Service</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Track Status - Modern IT Service</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        :root { --primary: #000080; --accent: #FBCEB1; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); padding: 20px; margin: 0; }
-        .card { background: white; max-width: 400px; margin: 10px auto; border-radius: 15px; border-top: 8px solid var(--primary); padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: var(--primary); margin-bottom: 20px; }
-        .search-group { display: flex; gap: 8px; margin-bottom: 15px; }
-        select { padding: 12px; border: 2px solid #ddd; border-radius: 10px; background: white; font-weight: bold; color: var(--primary); flex: 1; }
-        input[type="number"] { flex: 1.2; padding: 12px; border: 2px solid #ddd; border-radius: 10px; text-align: center; font-size: 18px; outline: none; }
-        .btn { padding: 12px 20px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
-        .btn:disabled { background: #ccc; }
-        #loader { display: none; text-align: center; margin: 20px 0; color: var(--primary); }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 25px; height: 25px; animation: spin 1s linear infinite; margin: 0 auto 5px; }
+        :root { 
+            --primary: #000080; 
+            --primary-light: #1a1a99;
+            --accent: #FBCEB1; 
+            --bg: #f0f2f5; 
+            --white: #ffffff;
+            --text-main: #2c3e50;
+            --text-sub: #7f8c8d;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body { 
+            font-family: 'Prompt', 'Segoe UI', sans-serif; 
+            background-color: var(--bg);
+            background-image: linear-gradient(135deg, #f0f2f5 0%, #e0e6ed 100%);
+            margin: 0; 
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container { 
+            width: 100%;
+            max-width: 450px; /* จำกัดความกว้างสูงสุด */
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px; 
+            padding: 24px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        h2 { 
+            text-align: center; 
+            color: var(--primary); 
+            margin: 0 0 20px 0;
+            font-size: 22px;
+            letter-spacing: -0.5px;
+        }
+
+        /* Search Section */
+        .search-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);
+            border: 1px solid #edf2f7;
+            margin-bottom: 20px;
+        }
+
+        .search-label {
+            font-size: 13px;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .input-group { 
+            display: flex; 
+            gap: 10px; 
+        }
+
+        select, input[type="number"] { 
+            padding: 12px; 
+            border: 1.5px solid #e2e8f0; 
+            border-radius: 12px; 
+            font-size: 16px; 
+            outline: none;
+            transition: all 0.2s;
+            background: #f8fafc;
+        }
+
+        select { flex: 1; font-weight: bold; color: var(--primary); cursor: pointer; }
+        input[type="number"] { flex: 1.5; }
+
+        select:focus, input:focus { border-color: var(--primary); background: #fff; }
+
+        .btn-track { 
+            width: 100%;
+            margin-top: 12px;
+            padding: 14px; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            font-weight: 600; 
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,128,0.2);
+        }
+
+        .btn-track:active { transform: scale(0.98); background: var(--primary-light); }
+        .btn-track:disabled { background: #cbd5e0; box-shadow: none; }
+
+        /* Loader */
+        #loader { display: none; text-align: center; margin: 20px 0; }
+        .spinner { 
+            border: 3px solid #f3f3f3; 
+            border-top: 3px solid var(--primary); 
+            border-radius: 50%; 
+            width: 28px; height: 28px; 
+            animation: spin 1s linear infinite; 
+            margin: 0 auto 10px; 
+        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .res { display: none; margin-top: 25px; border-top: 2px solid #eee; padding-top: 20px; animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .badge { display: inline-block; background: var(--accent); color: var(--primary); padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-bottom: 15px; }
-        .row-item { margin-bottom: 15px; display: flex; flex-direction: column; border-bottom: 1px solid #f9f9f9; padding-bottom: 8px; }
-        .lbl { font-size: 11px; color: #888; text-transform: uppercase; }
-        .val { font-size: 15px; font-weight: bold; color: #333; margin-top: 2px; }
+
+        /* Result Section */
+        .res { 
+            display: none; 
+            animation: slideUp 0.4s ease-out; 
+        }
+        
+        @keyframes slideUp { 
+            from { opacity: 0; transform: translateY(20px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        .status-banner {
+            text-align: center;
+            background: var(--accent);
+            color: var(--primary);
+            padding: 10px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 15px;
+            margin-bottom: 20px;
+        }
+
+        .data-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .data-item {
+            display: flex;
+            flex-direction: column;
+            border-bottom: 1px solid #f1f4f8;
+            padding-bottom: 10px;
+        }
+
+        .data-item:last-child { border: none; }
+
+        .lbl { font-size: 11px; color: var(--text-sub); text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
+        .val { font-size: 15px; color: var(--text-main); font-weight: 500; line-height: 1.4; }
+        .id-val { color: var(--primary) !important; font-size: 18px !important; font-weight: 800; }
+        .admin-val { color: #e53e3e; font-weight: 600; }
+
+        /* สำหรับหน้าจอเล็กมาก */
+        @media (max-width: 320px) {
+            .container { padding: 16px; }
+            h2 { font-size: 18px; }
+            .input-group { flex-direction: column; }
+            select, input[type="number"] { width: 100%; }
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
+<div class="container">
     <h2>ติดตามสถานะแจ้งซ่อม</h2>
-    <div class="search-group">
-        <select id="prefixSelect"><option value="">Loading...</option></select>
-        <input type="number" id="tid" placeholder="001">
-        <button id="btnTrack" class="btn" onclick="track()">ค้นหา</button>
+    
+    <div class="search-card">
+        <span class="search-label">ระบุหมายเลขงานของคุณ</span>
+        <div class="input-group">
+            <select id="prefixSelect"><option value="">Loading...</option></select>
+            <input type="number" id="tid" placeholder="001" inputmode="numeric">
+        </div>
+        <button id="btnTrack" class="btn-track" onclick="track()">ค้นหาข้อมูล</button>
     </div>
-    <div id="loader"><div class="spinner"></div>ค้นหาข้อมูล...</div>
+
+    <div id="loader">
+        <div class="spinner"></div>
+        <p style="color: var(--text-sub); font-size: 14px;">กำลังตรวจสอบฐานข้อมูล...</p>
+    </div>
 
     <div id="result" class="res">
-        <div style="text-align:center;"><span id="rStat" class="badge"></span></div>
-        <div class="row-item"><span class="lbl">🆔 หมายเลขงาน:</span><span id="rId" class="val" style="color:var(--primary)"></span></div>
-        <div class="row-item"><span class="lbl">📅 เวลาแจ้ง:</span><span id="rTime" class="val"></span></div>
-        <div class="row-item"><span class="lbl">📍 สถานที่:</span><span id="rRoom" class="val"></span></div>
-        <div class="row-item"><span class="lbl">⚠️ รายละเอียดปัญหา:</span><span id="rIssue" class="val"></span></div>
-        <div class="row-item"><span class="lbl">🚨 ความเร่งด่วน:</span><span id="rPrio" class="val"></span></div>
-        <div class="row-item"><span class="lbl">🛠 เจ้าหน้าที่ผู้รับผิดชอบ:</span><span id="rAdmin" class="val" style="color: #d9534f;"></span></div>
+        <div id="rStat" class="status-banner"></div>
+        
+        <div class="data-grid">
+            <div class="data-item">
+                <span class="lbl">Ticket ID</span>
+                <span id="rId" class="val id-val"></span>
+            </div>
+            <div class="data-item">
+                <span class="lbl">วัน-เวลาที่แจ้ง</span>
+                <span id="rTime" class="val"></span>
+            </div>
+            <div class="data-item">
+                <span class="lbl">สถานที่ / ห้อง</span>
+                <span id="rRoom" class="val"></span>
+            </div>
+            <div class="data-item">
+                <span class="lbl">ปัญหาที่พบ</span>
+                <span id="rIssue" class="val"></span>
+            </div>
+            <div class="data-item">
+                <span class="lbl">ความเร่งด่วน</span>
+                <span id="rPrio" class="val"></span>
+            </div>
+            <div class="data-item">
+                <span class="lbl">ช่างเทคนิคดูแล</span>
+                <span id="rAdmin" class="val admin-val"></span>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -60,7 +229,7 @@
             const profile = await liff.getProfile();
             uId = profile.userId;
             loadPrefixes();
-        } catch (err) { console.error(err); }
+        } catch (err) { console.error("LIFF Error:", err); }
     }
 
     async function loadPrefixes() {
@@ -74,35 +243,49 @@
                 opt.value = p; opt.innerText = p;
                 select.appendChild(opt);
             });
-        } catch (e) { document.getElementById('prefixSelect').innerHTML = '<option value="IT">IT</option>'; }
+        } catch (e) { 
+            document.getElementById('prefixSelect').innerHTML = '<option value="IT">IT</option>'; 
+        }
     }
 
     async function track() {
         const pref = document.getElementById('prefixSelect').value;
         const num = document.getElementById('tid').value;
-        if(!num) { alert("กรุณากรอกเลขงาน"); return; }
+        const btn = document.getElementById('btnTrack');
+        
+        if(!num) { alert("กรุณาระบุตัวเลขหมายเลขงาน"); return; }
         
         const fullId = pref + "#" + num.padStart(3, '0');
-        document.getElementById('btnTrack').disabled = true;
+        
+        btn.disabled = true;
         document.getElementById('loader').style.display = 'block';
         document.getElementById('result').style.display = 'none';
 
         try {
             const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(fullId)}&uid=${uId}`);
             const d = await res.json();
+            
             if(d.found) {
                 document.getElementById('rId').innerText = fullId;
-                document.getElementById('rStat').innerText = d.status;
+                document.getElementById('rStat').innerText = "สถานะ: " + d.status;
                 document.getElementById('rTime').innerText = d.time;
                 document.getElementById('rRoom').innerText = d.room;
                 document.getElementById('rIssue').innerText = d.issue;
                 document.getElementById('rPrio').innerText = d.priority;
-                document.getElementById('rAdmin').innerText = d.admin;
+                document.getElementById('rAdmin').innerText = d.admin || "กำลังมอบหมายงาน";
                 document.getElementById('result').style.display = 'block';
-            } else { alert("ไม่พบข้อมูล หรือคุณไม่มีสิทธิ์เข้าถึง"); }
-        } catch (e) { alert("เกิดข้อผิดพลาดในการเชื่อมต่อ"); }
-        document.getElementById('btnTrack').disabled = false;
-        document.getElementById('loader').style.display = 'none';
+                
+                // Scroll ไปที่ผลลัพธ์
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            } else { 
+                alert("❌ ไม่พบข้อมูลรายการนี้ในระบบ หรืออาจเป็นรายการของผู้อื่น"); 
+            }
+        } catch (e) { 
+            alert("⚠️ ระบบขัดข้อง กรุณาลองใหม่ภายหลัง"); 
+        } finally {
+            btn.disabled = false;
+            document.getElementById('loader').style.display = 'none';
+        }
     }
     init();
 </script>
