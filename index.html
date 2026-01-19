@@ -12,11 +12,6 @@
         .header { background: var(--primary); color: white; padding: 20px; text-align: center; }
         .profile-bar { display: flex; align-items: center; background: var(--accent); padding: 12px 20px; }
         #userImg { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--primary); margin-right: 15px; }
-        
-        /* ส่วนแสดงคิวที่เพิ่มเข้ามา */
-        .queue-info { background: #e8f0fe; padding: 15px; text-align: center; border-bottom: 1px solid #dee2e6; }
-        .queue-count { font-size: 24px; font-weight: bold; color: var(--primary); }
-
         form { padding: 20px; }
         label { display: block; margin-top: 15px; font-weight: bold; color: var(--primary); }
         input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
@@ -33,11 +28,6 @@
     <div class="profile-bar">
         <img id="userImg" src="" alt="Profile">
         <div id="userName">กำลังโหลดโปรไฟล์...</div>
-    </div>
-    
-    <div class="queue-info">
-        <div>คิวที่รองานขณะนี้</div>
-        <div class="queue-count" id="queueDisplay">...</div>
     </div>
     
     <form id="repairForm">
@@ -77,7 +67,6 @@
 </div>
 
 <script>
-    // --- ตั้งค่า LIFF และ GAS ---
     const LIFF_ID = "2008875334-eZXiyz43"; 
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbydR31ndsEr8L0E9gyn4ilcwQ835qHr__8VAyVaAd_39YuAcwuS_D09qwW6RDqEUNU9/exec"; 
     const REVIEW_LIFF_URL = "https://liff.line.me/2008875334-d6l72Uox"; 
@@ -91,40 +80,22 @@
                 const profile = await liff.getProfile();
                 document.getElementById('userName').innerText = profile.displayName;
                 document.getElementById('userImg').src = profile.pictureUrl || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-                
-                // เพิ่มการโหลดคิวทันทีที่เปิดหน้าเว็บ
-                updateQueue();
             }
         } catch (err) {
             console.error("LIFF Initialization failed", err);
         }
     }
 
-    // ฟังก์ชันดึงจำนวนคิวจาก Google Sheets
-    async function updateQueue() {
-        try {
-            const res = await fetch(`${WEB_APP_URL}?action=getQueue`);
-            const data = await res.json();
-            // แก้ไขปัญหา undefined โดยเช็กค่าก่อนแสดงผล
-            document.getElementById('queueDisplay').innerText = (data.queueCount !== undefined ? data.queueCount : "0") + " คิว";
-        } catch (e) {
-            document.getElementById('queueDisplay').innerText = "0 คิว";
-        }
-    }
-
     document.getElementById('repairForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
         const btn = document.getElementById('btnSub');
         const loading = document.getElementById('loading');
-        
         btn.disabled = true;
         loading.style.display = 'block';
 
         const profile = await liff.getProfile();
         let base64 = "";
         const file = document.getElementById('imageFile').files[0];
-        
         if (file) {
             base64 = await new Promise((res) => {
                 const r = new FileReader();
@@ -148,14 +119,11 @@
         };
 
         try {
-            const response = await fetch(WEB_APP_URL, { 
-                method: "POST", 
-                body: JSON.stringify(payload) 
-            });
+            const response = await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(payload) });
             const resData = await response.json();
 
             if (resData.result === "ok") {
-                // เช็กค่า pendingCount ป้องกัน undefined ใน Flex Message
+                // ดึงค่าคิวจาก resData ที่ GAS ส่งกลับมา (ถ้าไม่มีให้เป็น 0)
                 const currentQueue = resData.pendingCount !== undefined ? resData.pendingCount : "0";
 
                 if (liff.isInClient()) {
@@ -178,6 +146,7 @@
                                         "type": "box", "layout": "vertical", "backgroundColor": "#E8F0FE", "paddingAll": "md", "cornerRadius": "md",
                                         "contents": [
                                             { "type": "text", "text": "สถานะ: รอดำเนินการ", "color": "#000080", "weight": "bold", "size": "sm" },
+                                            // แสดงคิวเฉพาะในนี้เท่านั้น
                                             { "type": "text", "text": "คิวที่รอขณะนี้: " + currentQueue + " คิว", "color": "#444444", "size": "xs", "margin": "xs" }
                                         ]
                                     },
@@ -225,6 +194,5 @@
 
     main();
 </script>
-
 </body>
 </html>
