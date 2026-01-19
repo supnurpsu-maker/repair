@@ -132,17 +132,34 @@
     }
 
     function filterJobs() {
-        const prefix = (adminDept.toLowerCase() === "admin") 
-                       ? document.getElementById('prefixFilter').value 
-                       : adminDept;
+    // 1. ตรวจสอบก่อนว่าเลือกแผนกอะไร (ถ้าเป็น admin ให้ดูจาก dropdown ถ้าไม่ใช่ให้ดูจากสิทธิ์ตัวเอง)
+    const prefix = (adminDept.toLowerCase() === "admin") 
+                   ? document.getElementById('prefixFilter').value 
+                   : adminDept;
 
-        if (prefix === "ALL") {
-            renderJobs(allJobs);
-        } else {
-            const filtered = allJobs.filter(j => j.ticketId.split('#')[0] === prefix);
-            renderJobs(filtered);
-        }
+    let filtered = allJobs;
+
+    // 2. กรองตามแผนก (Prefix)
+    if (prefix !== "ALL") {
+        filtered = filtered.filter(j => j.ticketId.split('#')[0] === prefix);
     }
+
+    // 3. กรองตามเจ้าหน้าที่ (Logic: ซ่อนงานที่มีคนรับแล้ว ยกเว้นคนรับจะเป็นเราเอง)
+    filtered = filtered.filter(job => {
+        // ถ้าสถานะเป็น "รอดำเนินการ" ทุกคนต้องมองเห็นเพื่อกดรับงาน
+        if (job.status === "รอดำเนินการ") {
+            return true;
+        } 
+        
+        // ถ้าสถานะไม่ใช่ "รอดำเนินการ" (เช่น กำลังดำเนินการ/จัดจ้างภายนอก)
+        // จะแสดงให้เห็นเฉพาะเจ้าหน้าที่ที่ "ชื่อตรงกับคนรับผิดชอบ" เท่านั้น
+        // หมายเหตุ: job.adminName คือชื่อจาก Sheet admin ที่เราดึงมาแสดง
+        const myDisplayName = document.getElementById('adminName').innerText.split('(')[0].replace('ผู้ดูแล: ', '').trim();
+        return job.adminName === myDisplayName;
+    });
+
+    renderJobs(filtered);
+}
 
     async function updateJobStatus(row, newStatus) {
         if (!newStatus) return;
