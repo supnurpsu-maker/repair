@@ -2,170 +2,189 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Admin Panel - IT Service</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #000080; --bg: #f4f7f9; --urgent: #e74c3c; }
-        body { font-family: 'Prompt', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .container { max-width: 500px; margin: auto; }
-        .header { background: var(--primary); color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 15px; }
-        .job-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; border-left: 6px solid #ddd; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .prio-ด่วนที่สุด { border-left-color: var(--urgent); background: #fff8f8; }
-        .prio-ด่วน { border-left-color: #f39c12; }
-        .prio-ปกติ { border-left-color: #3498db; }
-        .status-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #eee; color: #666; margin-top: 5px; display: inline-block; }
-        .filter-section { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px; }
-        .chip { padding: 6px 15px; background: white; border-radius: 20px; border: 1px solid #ddd; font-size: 13px; cursor: pointer; white-space: nowrap; }
-        .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .btn-update { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; margin-top: 10px; font-weight: 600; cursor: pointer; }
-        #loader { text-align: center; padding: 30px; }
+        :root { --primary: #000080; --accent: #FBCEB1; --bg: #f4f7fa; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .header { background: var(--primary); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .filter-section { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: flex; gap: 10px; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        select#prefixFilter { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
+        
+        .job-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); position: relative; border-left: 6px solid #ccc; }
+        .priority-ด่วนที่สุด { border-left-color: #ff4d4d; }
+        .priority-ด่วน { border-left-color: #ffa500; }
+        .priority-ปกติ { border-left-color: #2ecc71; }
+        
+        .ticket-id { font-weight: bold; color: var(--primary); font-size: 0.9em; }
+        .status-badge { float: right; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+        .badge-pending { background: #fff5f5; color: #ff4d4d; border: 1px solid #ff4d4d; }
+        .badge-process { background: #e8f0fe; color: #000080; border: 1px solid #000080; }
+        
+        .job-detail { margin-top: 10px; font-size: 14px; color: #333; }
+        .job-info { font-size: 12px; color: #666; margin-top: 8px; line-height: 1.6; }
+        
+        .action-select { width: 100%; margin-top: 12px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fafafa; font-family: inherit; }
+        
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); 
+                    display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h2 style="margin:0">Admin Dashboard</h2>
-        <small id="adminDeptInfo">ตรวจสอบสิทธิ์...</small>
-    </div>
-
-    <div id="superAdminTools" style="display:none;">
-        <div class="filter-section" id="filterArea">
-            <div class="chip active" onclick="filterJobs('ALL', this)">ทั้งหมด (All)</div>
-        </div>
-    </div>
-
-    <div id="loader">⏳ กำลังโหลดรายการงาน...</div>
-    <div id="jobList"></div>
+<div id="loading">
+    <div class="spinner"></div>
+    <p style="margin-top:10px; color:var(--primary); font-weight:bold;">กำลังดำเนินการ...</p>
 </div>
 
-<script>
-    // ** เปลี่ยน URL_GAS เป็น Web App URL ล่าสุดของคุณ **
-    const URL_GAS = "https://script.google.com/macros/s/AKfycbxJetfL-YG4QMZtk6SVaWoGQpelo7QX3WcAr302FTf6Xr438UdBQR6GonEBjP9o4Wi-/exec";
-    const LIFF_ID = "2008875334-VPUmuC8D";
-    let allJobs = [];
-    let myRole = ""; 
-    let myDept = "";
-    let myUid = "";
+<div class="header">
+    <h2 style="margin:0;">ระบบจัดการงานซ่อม</h2>
+    <p id="adminName" style="margin:5px 0 0; font-size:14px; opacity:0.9;">กำลังโหลดข้อมูลผู้ดูแล...</p>
+</div>
 
-    async function init() {
+<div class="filter-section">
+    <label style="font-size:14px; font-weight:bold;">กรองแผนก:</label>
+    <select id="prefixFilter" onchange="filterJobs()">
+        <option value="ALL">แสดงทั้งหมด</option>
+    </select>
+</div>
+
+<div id="jobContainer">
+    </div>
+
+<script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJetfL-YG4QMZtk6SVaWoGQpelo7QX3WcAr302FTf6Xr438UdBQR6GonEBjP9o4Wi-/exec";
+    const LIFF_ID = "2008875334-VPUmuC8D"; // เปลี่ยนเป็น LIFF ID ของ Admin ของคุณ
+
+    let allJobs = [];
+    let currentAdminUid = "";
+
+    async function main() {
         try {
             await liff.init({ liffId: LIFF_ID });
-            if (!liff.isLoggedIn()) liff.login();
-            const profile = await liff.getProfile();
-            myUid = profile.userId;
-            
-            const res = await fetch(`${URL_GAS}?action=getAdminRole&uid=${myUid}`);
-            const data = await res.json();
-            
-            if (data.role === "GUEST") {
-                document.body.innerHTML = "<div style='text-align:center; padding:50px;'><h3>❌ คุณไม่มีสิทธิ์เข้าถึงหน้านี้</h3></div>";
-                return;
-            }
-
-            myRole = data.role;
-            myDept = data.dept;
-            document.getElementById('adminDeptInfo').innerText = `Admin: ${data.dept}`;
-
-            if (myRole === "SUPER_ADMIN") {
-                document.getElementById('superAdminTools').style.display = 'block';
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            } else {
+                const profile = await liff.getProfile();
+                currentAdminUid = profile.userId;
+                document.getElementById('adminName').innerText = "ผู้ดูแล: " + profile.displayName;
+                
                 await loadPrefixes();
+                await loadJobs();
             }
-
-            await loadAllJobs();
-        } catch (e) { alert("เกิดข้อผิดพลาดในการเริ่มต้น: " + e); }
+        } catch (err) {
+            console.error(err);
+            alert("Error: " + err.message);
+        }
     }
 
+    // โหลด Prefix เพื่อสร้างตัวกรอง
     async function loadPrefixes() {
         try {
-            const res = await fetch(`${URL_GAS}?action=getPrefixes`);
+            const res = await fetch(`${WEB_APP_URL}?action=getPrefixes`);
             const prefixes = await res.json();
-            const area = document.getElementById('filterArea');
+            const select = document.getElementById('prefixFilter');
             prefixes.forEach(p => {
-                const div = document.createElement('div');
-                div.className = 'chip'; div.innerText = p;
-                div.onclick = (e) => filterJobs(p, e.target);
-                area.appendChild(div);
+                const opt = document.createElement('option');
+                opt.value = p;
+                opt.innerText = p;
+                select.appendChild(opt);
             });
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("Load Prefixes failed"); }
     }
 
-    async function loadAllJobs() {
-        document.getElementById('loader').style.display = 'block';
+    // โหลดรายการงานซ่อม
+    async function loadJobs() {
+        document.getElementById('loading').style.display = 'flex';
         try {
-            const res = await fetch(`${URL_GAS}?action=getAllJobs`);
+            const res = await fetch(`${WEB_APP_URL}?action=getAllJobs`);
             allJobs = await res.json();
-            
-            let displayJobs = (myRole === "DEPT_ADMIN") 
-                ? allJobs.filter(j => j.ticketId.startsWith(myDept + "#")) 
-                : allJobs;
-            
-            renderJobs(displayJobs);
-        } catch (e) { document.getElementById('jobList').innerHTML = "โหลดข้อมูลไม่สำเร็จ"; }
-        document.getElementById('loader').style.display = 'none';
+            renderJobs(allJobs);
+        } catch (err) {
+            alert("โหลดข้อมูลไม่สำเร็จ");
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
     }
 
     function renderJobs(jobs) {
-        const container = document.getElementById('jobList');
-        container.innerHTML = jobs.length === 0 ? "<p style='text-align:center; color:#999;'>ไม่มีรายการงานค้าง</p>" : "";
-        
+        const container = document.getElementById('jobContainer');
+        container.innerHTML = "";
+
+        if (jobs.length === 0) {
+            container.innerHTML = "<p style='text-align:center; color:#999; margin-top:50px;'>ไม่พบรายการงานค้าง</p>";
+            return;
+        }
+
         jobs.forEach(job => {
             const card = document.createElement('div');
-            card.className = `job-card prio-${job.priority}`;
+            card.className = `job-card priority-${job.priority}`;
+            
+            const badgeClass = job.status === 'รอดำเนินการ' ? 'badge-pending' : 'badge-process';
+            
             card.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                    <div>
-                        <strong style="color:var(--primary); font-size:16px;">${job.ticketId}</strong><br>
-                        <div class="status-badge">${job.priority}</div>
-                    </div>
-                    <small style="color:#999">${job.timeStr}</small>
+                <span class="ticket-id">#${job.ticketId}</span>
+                <span class="status-badge ${badgeClass}">${job.status}</span>
+                <div class="job-detail"><strong>${job.issue}</strong></div>
+                <div class="job-info">
+                    📍 สถานที่: ${job.room}<br>
+                    👤 ผู้แจ้ง: ${job.name}<br>
+                    ⏰ เวลา: ${job.timeStr}<br>
+                    🛠 ช่างดูแล: ${job.adminName}
                 </div>
-                <div style="margin:10px 0; font-size:14px; line-height:1.6;">
-                    📍 <b>สถานที่:</b> ${job.room}<br>
-                    👤 <b>ผู้แจ้ง:</b> ${job.name}<br>
-                    🔧 <b>อาการ:</b> ${job.issue}<br>
-                    <span style="color:blue; font-size:12px;">👤 ผู้ดูแล: ${job.adminName}</span>
-                </div>
-                <div style="display:flex; gap:5px;">
-                    <select id="stat-${job.row}" style="flex:1.5; padding:8px; border-radius:8px; border:1px solid #ddd; font-size:13px;">
-                        <option value="รอดำเนินการ" ${job.status == 'รอดำเนินการ' ? 'selected' : ''}>รอดำเนินการ</option>
-                        <option value="กำลังดำเนินการ" ${job.status == 'กำลังดำเนินการ' ? 'selected' : ''}>กำลังดำเนินการ</option>
-                        <option value="จัดจ้างร้านภายนอก" ${job.status == 'จัดจ้างร้านภายนอก' ? 'selected' : ''}>จัดจ้างร้านภายนอก</option>
-                        <option value="ดำเนินการเรียบร้อยแล้ว">ดำเนินการเรียบร้อยแล้ว</option>
-                    </select>
-                    <button class="btn-update" style="flex:0.8; margin-top:0;" onclick="updateJob(${job.row})">อัปเดต</button>
-                </div>
+                <select class="action-select" onchange="updateJobStatus(${job.row}, this.value)">
+                    <option value="">-- เลือกดำเนินการ --</option>
+                    <option value="กำลังดำเนินการ">✅ รับงาน/กำลังดำเนินการ</option>
+                    <option value="จัดจ้างร้านภายนอก">🚚 จัดจ้างภายนอก</option>
+                    <option value="ดำเนินการเรียบร้อยแล้ว">🏁 ปิดงาน/เสร็จสิ้น</option>
+                    <option value="รอดำเนินการ">🔄 ยกเลิกและกลับไปรอดำเนินการ</option>
+                </select>
             `;
             container.appendChild(card);
         });
     }
 
-    async function updateJob(row) {
-        const status = document.getElementById(`stat-${row}`).value;
-        if(!confirm(`ยืนยันการเปลี่ยนสถานะเป็น "${status}"?`)) return;
+    async function updateJobStatus(row, newStatus) {
+        if (!newStatus) return;
+        if (!confirm(`ยืนยันการเปลี่ยนสถานะเป็น "${newStatus}" ?`)) {
+            loadJobs(); // Reset select
+            return;
+        }
 
+        document.getElementById('loading').style.display = 'flex';
         try {
-            const res = await fetch(`${URL_GAS}?action=adminUpdate&row=${row}&status=${encodeURIComponent(status)}&adminUid=${myUid}`);
-            const result = await res.text();
-            if (result === "SUCCESS") {
-                alert("บันทึกสำเร็จ ✅");
-                await loadAllJobs(); // รีโหลดงาน (งานที่เสร็จจะหายไปจากรายการ)
+            // ส่ง Parameter สำคัญ: action, row, status และ adminUid
+            const res = await fetch(`${WEB_APP_URL}?action=adminUpdate&row=${row}&status=${encodeURIComponent(newStatus)}&adminUid=${currentAdminUid}`);
+            const text = await res.text();
+            
+            if (text === "SUCCESS") {
+                alert("อัปเดตสถานะเรียบร้อย");
+                await loadJobs();
             } else {
-                alert("เกิดข้อผิดพลาด: " + result);
+                alert("เกิดข้อผิดพลาด: " + text);
             }
-        } catch (e) { alert("ไม่สามารถติดต่อ Server ได้"); }
+        } catch (e) {
+            alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
     }
 
-    function filterJobs(p, el) {
-        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-        el.classList.add('active');
-        const filtered = (p === 'ALL') ? allJobs : allJobs.filter(j => j.ticketId.startsWith(p + "#"));
-        renderJobs(filtered);
+    function filterJobs() {
+        const prefix = document.getElementById('prefixFilter').value;
+        if (prefix === "ALL") {
+            renderJobs(allJobs);
+        } else {
+            const filtered = allJobs.filter(j => j.ticketId.startsWith(prefix));
+            renderJobs(filtered);
+        }
     }
 
-    init();
+    main();
 </script>
+
 </body>
 </html>
