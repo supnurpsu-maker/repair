@@ -7,7 +7,7 @@
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #000080; --bg: #f8f9fa; }
+        :root { --primary: #000080; --bg: #f8f9fa; --success: #28a745; }
         * { box-sizing: border-box; font-family: 'Prompt', sans-serif; }
         body { background-color: var(--bg); margin: 0; padding: 15px; overflow-x: hidden; }
         .container { max-width: 100%; margin: auto; }
@@ -27,7 +27,6 @@
         .input-group { margin-bottom: 15px; }
         .input-group label { display: block; font-size: 14px; margin-bottom: 8px; color: #555; }
         
-        /* จัดวาง Dropdown คู่กับ Input เลข */
         .search-row { display: flex; gap: 10px; }
         select { 
             width: 100px; padding: 12px; border: 1.5px solid #eee; 
@@ -36,7 +35,6 @@
         input { 
             flex: 1; padding: 12px; border: 1.5px solid #eee; 
             border-radius: 10px; font-size: 16px; background: #fafafa;
-            -webkit-appearance: none;
         }
 
         .btn-search {
@@ -49,6 +47,7 @@
         .result-card {
             background: white; border-radius: 15px;
             overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
         }
         .res-header {
             background: #f0f0ff; padding: 15px;
@@ -56,16 +55,24 @@
         }
         .res-body { padding: 15px; }
         .info-item { display: flex; margin-bottom: 12px; font-size: 14px; line-height: 1.4; }
-        .info-label { width: 90px; color: #888; flex-shrink: 0; }
+        .info-label { width: 100px; color: #888; flex-shrink: 0; }
         .info-value { color: #333; font-weight: 400; word-break: break-word; }
 
         .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .st-1 { background: #fff3cd; color: #856404; }
-        .st-2 { background: #cfe2ff; color: #084298; }
-        .st-3 { background: #e2e3e5; color: #41464b; }
-        .st-4 { background: #d1e7dd; color: #0f5132; }
+        .st-1 { background: #fff3cd; color: #856404; } /* รอดำเนินการ */
+        .st-2 { background: #cfe2ff; color: #084298; } /* กำลังดำเนินการ */
+        .st-3 { background: #e2e3e5; color: #41464b; } /* จัดจ้างภายนอก */
+        .st-4 { background: #d1e7dd; color: #0f5132; } /* ดำเนินการเรียบร้อยแล้ว */
 
-        #loader { display: none; text-align: center; padding: 20px; }
+        #btnArea { padding: 0 15px 15px 15px; }
+        .btn-review {
+            width: 100%; padding: 14px; background: var(--success);
+            color: white; border: none; border-radius: 10px;
+            font-size: 16px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+        }
+
+        #loader { display: none; text-align: center; padding: 20px; color: var(--primary); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -73,23 +80,23 @@
 <div class="container">
     <div class="header-box">
         <h2 style="margin:0; font-size: 20px;">ติดตามงานซ่อม</h2>
-        <p style="margin:5px 0 0; font-size: 12px; opacity: 0.9;">เลือกแผนกและระบุหมายเลขงาน</p>
+        <p style="margin:5px 0 0; font-size: 12px; opacity: 0.9;">ระบุหมายเลขงานเพื่อตรวจสอบสถานะ</p>
     </div>
 
     <div class="search-card">
         <div class="input-group">
-            <label>ระบุหมายเลข Ticket</label>
+            <label>เลือกแผนกและกรอกหมายเลข</label>
             <div class="search-row">
                 <select id="deptSelect">
                     <option value="">เลือก</option>
                 </select>
-                <input type="number" id="numInput" placeholder="เช่น 1 หรือ 001" pattern="\d*">
+                <input type="number" id="numInput" placeholder="เช่น 1 หรือ 001" inputmode="numeric">
             </div>
         </div>
         <button class="btn-search" onclick="searchTicket()">ตรวจสอบสถานะ</button>
     </div>
 
-    <div id="loader">⏳ กำลังค้นหา...</div>
+    <div id="loader">⏳ กำลังค้นหาข้อมูล...</div>
 
     <div id="result">
         <div class="result-card">
@@ -111,26 +118,24 @@
                     <div class="info-value" id="dispAdmin" style="color:blue; font-weight:600;"></div>
                 </div>
                 <div class="info-item">
-                    <div class="info-label">⚠️ ความเร่งด่วน:</div>
-                    <div class="info-value" id="dispPrio"></div>
-                </div>
-                <div class="info-item" style="margin-bottom:0;">
                     <div class="info-label">🕒 แจ้งเมื่อ:</div>
                     <div class="info-value" id="dispTime"></div>
                 </div>
             </div>
+            <div id="btnArea"></div>
         </div>
     </div>
 </div>
 
 <script>
     const URL_GAS = "https://script.google.com/macros/s/AKfycbx2sEUWuPctC9GrviiyqTNc4c__LhlPKniIBJR1qjsE9r4bnzYsp6Bao-b1jKh26ULV/exec";
-    const LIFF_ID = "2008875334-wOYUvNha";
+    const LIFF_ID_TRACK = "2008875334-wOYUvNha";
+    const LIFF_ID_REVIEW = "2008875334-d6l72Uox"; // สำหรับส่งไปหน้าประเมิน
     let myUid = "";
 
     async function init() {
         try {
-            await liff.init({ liffId: LIFF_ID });
+            await liff.init({ liffId: LIFF_ID_TRACK });
             if (!liff.isLoggedIn()) liff.login();
             const profile = await liff.getProfile();
             myUid = profile.userId;
@@ -138,7 +143,6 @@
         } catch (e) { console.error(e); }
     }
 
-    // โหลดรายชื่อ Prefix แผนกเข้า Dropdown
     async function loadDepts() {
         try {
             const res = await fetch(`${URL_GAS}?action=getPrefixes`);
@@ -146,8 +150,7 @@
             const select = document.getElementById('deptSelect');
             prefixes.forEach(p => {
                 let opt = document.createElement('option');
-                opt.value = p;
-                opt.innerText = p;
+                opt.value = p; opt.innerText = p;
                 select.appendChild(opt);
             });
         } catch (e) { console.error(e); }
@@ -157,16 +160,14 @@
         const dept = document.getElementById('deptSelect').value;
         const num = document.getElementById('numInput').value.trim();
 
-        if (!dept || !num) {
-            return alert("กรุณาเลือกแผนกและระบุตัวเลขหมายเลขงาน");
-        }
+        if (!dept || !num) return alert("กรุณาเลือกแผนกและระบุหมายเลขงาน");
 
-        // แปลงตัวเลขให้เป็น Format 001 (padStart 3 หลัก)
-        const formattedNum = num.padStart(3, '0');
-        const fullTicketId = `${dept}#${formattedNum}`;
-
-        document.getElementById('loader').style.display = 'block';
+        // ล้างปุ่มและผลการค้นหาเดิมออกก่อน
+        document.getElementById('btnArea').innerHTML = "";
         document.getElementById('result').style.display = 'none';
+        document.getElementById('loader').style.display = 'block';
+
+        const fullTicketId = `${dept}#${num.padStart(3, '0')}`;
 
         try {
             const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(fullTicketId)}&uid=${myUid}`);
@@ -174,46 +175,48 @@
 
             if (data.found) {
                 document.getElementById('dispId').innerText = fullTicketId;
-                // ... แสดงข้อมูลอื่นๆ ตามปกติ ...
-            
-                const resultDiv = document.getElementById('result');
-                resultDiv.style.display = 'block';
-            
-                // ล้างปุ่มเดิมออกก่อน (ถ้ามี)
-                const oldBtn = document.getElementById('reviewBtn');
-                if (oldBtn) oldBtn.remove();
-            
-                // ตรวจสอบเงื่อนไข: ต้อง "ดำเนินการเรียบร้อยแล้ว" ถึงจะโชว์ปุ่ม
+                document.getElementById('dispRoom').innerText = data.room;
+                document.getElementById('dispIssue').innerText = data.issue;
+                document.getElementById('dispAdmin').innerText = data.admin;
+                document.getElementById('dispTime').innerText = data.time;
+
+                const badge = document.getElementById('dispBadge');
+                badge.innerText = data.status;
+                badge.className = 'badge ' + getStatusClass(data.status);
+
+                // แสดงปุ่มประเมินหากสถานะคือ "ดำเนินการเรียบร้อยแล้ว"
                 if (data.status === "ดำเนินการเรียบร้อยแล้ว") {
-                    // เปลี่ยน YOUR_REVIEW_LIFF_ID เป็น LIFF ID ของหน้า Review
-                    const reviewLiffId = "2008875334-XXXXXX"; 
                     const btn = document.createElement('button');
-                    btn.id = "reviewBtn";
-                    btn.innerHTML = "🌟 ประเมินการซ่อมนี้";
-                    btn.style = "width:100%; margin-top:15px; background:#28a745; color:white; border:none; padding:15px; border-radius:12px; font-weight:bold; cursor:pointer;";
-                    
-                    btn.onclick = function() {
-                        // ส่ง row ไปที่ LIFF หน้า Review
+                    btn.className = "btn-review";
+                    btn.innerHTML = "🌟 ประเมินความพึงพอใจ";
+                    btn.onclick = () => {
                         liff.openWindow({
-                            url: `https://liff.line.me/${reviewLiffId}?row=${data.row}`,
+                            url: `https://liff.line.me/${LIFF_ID_REVIEW}?row=${data.row}`,
                             external: false
                         });
                     };
-                    resultDiv.appendChild(btn);
+                    document.getElementById('btnArea').appendChild(btn);
                 }
+
+                document.getElementById('result').style.display = 'block';
             } else {
-                alert(`ไม่พบเลขที่ ${fullTicketId} ในระบบ หรือคุณไม่ใช่เจ้าของรายการนี้`);
-                    }
-                } catch (e) { alert("เกิดข้อผิดพลาดในการโหลดข้อมูล"); }
-                document.getElementById('loader').style.display = 'none';
+                alert(`ไม่พบรายการ ${fullTicketId} หรือคุณไม่ใช่เจ้าของรายการนี้`);
             }
+        } catch (e) { 
+            alert("เกิดข้อผิดพลาดในการโหลดข้อมูล"); 
+        } finally {
+            document.getElementById('loader').style.display = 'none';
+        }
+    }
 
     function getStatusClass(s) {
-        if (s === "รอดำเนินการ") return "st-1";
-        if (s === "กำลังดำเนินการ") return "st-2";
-        if (s === "จัดจ้างร้านภายนอก") return "st-3";
-        if (s === "ดำเนินการเรียบร้อยแล้ว") return "st-4";
-        return "";
+        switch(s) {
+            case "รอดำเนินการ": return "st-1";
+            case "กำลังดำเนินการ": return "st-2";
+            case "จัดจ้างร้านภายนอก": return "st-3";
+            case "ดำเนินการเรียบร้อยแล้ว": return "st-4";
+            default: return "";
+        }
     }
 
     init();
