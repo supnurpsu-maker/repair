@@ -124,7 +124,7 @@
 </div>
 
 <script>
-    const URL_GAS = "https://script.google.com/macros/s/AKfycbxFRuQZwtPWWP9O3PrvAVRWfTvmpsUa5H5H0HxdADWqIgu49hxXahXHzTEfKsVZGzEz/exec";
+    const URL_GAS = "https://script.google.com/macros/s/AKfycbx2sEUWuPctC9GrviiyqTNc4c__LhlPKniIBJR1qjsE9r4bnzYsp6Bao-b1jKh26ULV/exec";
     const LIFF_ID = "2008875334-wOYUvNha";
     let myUid = "";
 
@@ -174,32 +174,39 @@
 
             if (data.found) {
                 document.getElementById('dispId').innerText = fullTicketId;
-                document.getElementById('dispRoom').innerText = data.room;
-                document.getElementById('dispIssue').innerText = data.issue;
-                document.getElementById('dispAdmin').innerText = data.admin;
-                document.getElementById('dispPrio').innerText = data.priority;
-                document.getElementById('dispTime').innerText = data.time;
-
-                const badge = document.getElementById('dispBadge');
-                badge.innerText = data.status;
-                badge.className = 'badge ' + getStatusClass(data.status);
-
-                document.getElementById('result').style.display = 'block';
-
+                // ... แสดงข้อมูลอื่นๆ ตามปกติ ...
+            
+                const resultDiv = document.getElementById('result');
+                resultDiv.style.display = 'block';
+            
+                // ล้างปุ่มเดิมออกก่อน (ถ้ามี)
+                const oldBtn = document.getElementById('reviewBtn');
+                if (oldBtn) oldBtn.remove();
+            
+                // ตรวจสอบเงื่อนไข: ต้อง "ดำเนินการเรียบร้อยแล้ว" ถึงจะโชว์ปุ่ม
                 if (data.status === "ดำเนินการเรียบร้อยแล้ว") {
-                    const reviewUrl = `https://liff.line.me/YOUR_REVIEW_LIFF_ID?row=${data.row}`;
-                    document.getElementById('result').innerHTML += `
-                        <button onclick="window.location.href='${reviewUrl}'" 
-                                style="width:100%; margin-top:15px; background:#28a745; color:white; border:none; padding:12px; border-radius:10px; font-weight:bold;">
-                            🌟 ประเมินการซ่อมนี้
-                        </button>`;
+                    // เปลี่ยน YOUR_REVIEW_LIFF_ID เป็น LIFF ID ของหน้า Review
+                    const reviewLiffId = "2008875334-XXXXXX"; 
+                    const btn = document.createElement('button');
+                    btn.id = "reviewBtn";
+                    btn.innerHTML = "🌟 ประเมินการซ่อมนี้";
+                    btn.style = "width:100%; margin-top:15px; background:#28a745; color:white; border:none; padding:15px; border-radius:12px; font-weight:bold; cursor:pointer;";
+                    
+                    btn.onclick = function() {
+                        // ส่ง row ไปที่ LIFF หน้า Review
+                        liff.openWindow({
+                            url: `https://liff.line.me/${reviewLiffId}?row=${data.row}`,
+                            external: false
+                        });
+                    };
+                    resultDiv.appendChild(btn);
                 }
             } else {
                 alert(`ไม่พบเลขที่ ${fullTicketId} ในระบบ หรือคุณไม่ใช่เจ้าของรายการนี้`);
+                    }
+                } catch (e) { alert("เกิดข้อผิดพลาดในการโหลดข้อมูล"); }
+                document.getElementById('loader').style.display = 'none';
             }
-        } catch (e) { alert("เกิดข้อผิดพลาดในการโหลดข้อมูล"); }
-        document.getElementById('loader').style.display = 'none';
-    }
 
     function getStatusClass(s) {
         if (s === "รอดำเนินการ") return "st-1";
