@@ -1,53 +1,141 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rate Service</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ประเมินความพึงพอใจ - ระบบซ่อม</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; text-align: center; padding-top: 100px; background: #f4f7fa; color: #000080; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #000080; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        :root { --primary: #000080; --accent: #ffcc00; --bg: #f8f9fa; }
+        * { box-sizing: border-box; font-family: 'Prompt', sans-serif; }
+        body { background-color: var(--bg); margin: 0; padding: 20px; text-align: center; }
+        
+        .card {
+            background: white; padding: 30px 20px; border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto;
+        }
+
+        .header-icon { font-size: 50px; margin-bottom: 10px; }
+        h2 { color: var(--primary); margin: 10px 0; }
+        p { color: #666; font-size: 14px; margin-bottom: 30px; }
+
+        .star-rating {
+            display: flex; flex-direction: row-reverse; justify-content: center;
+            gap: 10px; margin-bottom: 30px;
+        }
+        .star-rating input { display: none; }
+        .star-rating label {
+            font-size: 40px; color: #ddd; cursor: pointer; transition: 0.2s;
+        }
+        .star-rating input:checked ~ label { color: var(--accent); }
+        .star-rating label:hover, .star-rating label:hover ~ label { color: var(--accent); }
+
+        .btn-submit {
+            width: 100%; padding: 15px; background: var(--primary);
+            color: white; border: none; border-radius: 12px;
+            font-size: 18px; font-weight: 600; cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
+
+        #loader {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.8); z-index: 1000;
+            padding-top: 50%;
+        }
     </style>
 </head>
 <body>
-    <div id="status">
-        <h2>กำลังบันทึกคะแนนความพึงพอใจ...</h2>
-        <div class="loader"></div>
+
+<div id="loader">⏳ กำลังบันทึกคะแนน...</div>
+
+<div class="card">
+    <div class="header-icon">⭐</div>
+    <h2>ประเมินความพึงพอใจ</h2>
+    <p>คะแนนของคุณช่วยให้เราพัฒนาการบริการให้ดียิ่งขึ้น</p>
+
+    <div class="star-rating">
+        <input type="radio" name="stars" id="star5" value="5"><label for="star5">★</label>
+        <input type="radio" name="stars" id="star4" value="4"><label for="star4">★</label>
+        <input type="radio" name="stars" id="star3" value="3"><label for="star3">★</label>
+        <input type="radio" name="stars" id="star2" value="2"><label for="star2">★</label>
+        <input type="radio" name="stars" id="star1" value="1"><label for="star1">★</label>
     </div>
 
-    <script>
-        const URL_GAS = "https://script.google.com/macros/s/AKfycbxFRuQZwtPWWP9O3PrvAVRWfTvmpsUa5H5H0HxdADWqIgu49hxXahXHzTEfKsVZGzEz/exec";
-        
-        async function submitReview(score) {
-            const row = new URLSearchParams(window.location.search).get('row');
-            
-            // แสดง Loading
-            document.getElementById('loader').style.display = 'block';
-        
-            try {
-                const res = await fetch(`${URL_GAS}?action=submitReview&row=${row}&score=${score}`);
-                const result = await res.text();
-        
-                if (result === "OK") {
-                    alert("ขอบคุณสำหรับคะแนนประเมินครับ");
-                    liff.closeWindow(); // ปิดหน้าต่าง LIFF
-                } else if (result === "ERROR_NOT_FINISHED") {
-                    alert("❌ ไม่สามารถประเมินได้: เนื่องจากงานนี้ยังดำเนินการไม่เสร็จสิ้น");
-                } else if (result === "ERROR_ALREADY_RATED") {
-                    alert("⚠️ คุณได้ทำการประเมินรายการนี้ไปแล้ว");
-                    liff.closeWindow();
-                } else {
-                    alert("เกิดข้อผิดพลาด: " + result);
-                }
-            } catch (e) {
-                alert("การเชื่อมต่อล้มเหลว");
-            } finally {
-                document.getElementById('loader').style.display = 'none';
+    <button class="btn-submit" id="submitBtn" onclick="sendReview()">ส่งคะแนนประเมิน</button>
+</div>
+
+<script>
+    const URL_GAS = "https://script.google.com/macros/s/AKfycbxFRuQZwtPWWP9O3PrvAVRWfTvmpsUa5H5H0HxdADWqIgu49hxXahXHzTEfKsVZGzEz/exec";
+    const LIFF_ID = "2008875334-d6l72Uox";
+
+    async function init() {
+        try {
+            await liff.init({ liffId: LIFF_ID });
+            if (!liff.isLoggedIn()) {
+                liff.login();
             }
+        } catch (e) {
+            console.error(e);
         }
-        submitReview();
-    </script>
+    }
+
+    async function sendReview() {
+        // ดึงเลขแถว (row) จาก Parameter ใน URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const row = urlParams.get('row');
+        
+        // ดึงคะแนนที่เลือก
+        const selectedStar = document.querySelector('input[name="stars"]:checked');
+        
+        if (!row) {
+            alert("ไม่พบหมายเลขอ้างอิงรายการซ่อม");
+            return;
+        }
+        if (!selectedStar) {
+            alert("กรุณาเลือกดาวเพื่อประเมินคะแนน");
+            return;
+        }
+
+        const score = selectedStar.value;
+        const submitBtn = document.getElementById('submitBtn');
+        const loader = document.getElementById('loader');
+
+        // ปิดปุ่มและแสดง Loader
+        submitBtn.disabled = true;
+        loader.style.display = 'block';
+
+        try {
+            const response = await fetch(`${URL_GAS}?action=submitReview&row=${row}&score=${score}`);
+            const result = await response.text();
+
+            if (result === "OK") {
+                alert("🌟 บันทึกคะแนนเรียบร้อย ขอบคุณที่ใช้บริการครับ");
+                liff.closeWindow(); // ปิดหน้าต่าง LIFF ทันที
+            } 
+            else if (result === "ERROR_NOT_FINISHED") {
+                alert("❌ ไม่สามารถประเมินได้: เนื่องจากสถานะงานยังดำเนินการไม่เสร็จสิ้น");
+                liff.closeWindow();
+            } 
+            else if (result === "ERROR_ALREADY_RATED") {
+                alert("⚠️ รายการนี้เคยมีการประเมินคะแนนไปแล้ว");
+                liff.closeWindow();
+            } 
+            else {
+                alert("เกิดข้อผิดพลาด: " + result);
+                submitBtn.disabled = false;
+            }
+        } catch (e) {
+            alert("การเชื่อมต่อล้มเหลว กรุณาลองใหม่อีกครั้ง");
+            submitBtn.disabled = false;
+        } finally {
+            loader.style.display = 'none';
+        }
+    }
+
+    init();
+</script>
+
 </body>
 </html>
