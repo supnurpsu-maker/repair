@@ -184,6 +184,19 @@
                 document.getElementById('dispAdmin').innerText = data.admin;
                 document.getElementById('dispTime').innerText = data.time;
 
+                // --- ส่วนที่เพิ่มใหม่สำหรับความเร่งด่วน ---
+                const prioElem = document.getElementById('dispPrio');
+                prioElem.innerText = data.priority;
+                
+                // ปรับสีตัวอักษรตามระดับความเร่งด่วน (ตัวเลือกเสริม)
+                if (data.priority === "ด่วนที่สุด") {
+                    prioElem.style.color = "#ff4d4d"; // สีแดง
+                } else if (data.priority === "ด่วน") {
+                    prioElem.style.color = "#ffa500"; // สีส้ม
+                } else {
+                    prioElem.style.color = "#2ecc71"; // สีเขียว
+                }
+
                 const badge = document.getElementById('dispBadge');
                 badge.innerText = data.status;
                 badge.className = 'badge ' + getStatusClass(data.status);
