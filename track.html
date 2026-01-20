@@ -124,7 +124,7 @@
 </div>
 
 <script>
-    const URL_GAS = "https://script.google.com/macros/s/AKfycbxrVmmXm2Vj9sWUHpgPYbNv9zDDJjx4TaotH7XM1VRwySf3amXg1JCfvz_YgpEFvaXt/exec";
+    const URL_GAS = "https://script.google.com/macros/s/AKfycbxFRuQZwtPWWP9O3PrvAVRWfTvmpsUa5H5H0HxdADWqIgu49hxXahXHzTEfKsVZGzEz/exec";
     const LIFF_ID = "2008875334-wOYUvNha";
     let myUid = "";
 
@@ -185,6 +185,15 @@
                 badge.className = 'badge ' + getStatusClass(data.status);
 
                 document.getElementById('result').style.display = 'block';
+
+                if (data.status === "ดำเนินการเรียบร้อยแล้ว") {
+                    const reviewUrl = `https://liff.line.me/YOUR_REVIEW_LIFF_ID?row=${data.row}`;
+                    document.getElementById('result').innerHTML += `
+                        <button onclick="window.location.href='${reviewUrl}'" 
+                                style="width:100%; margin-top:15px; background:#28a745; color:white; border:none; padding:12px; border-radius:10px; font-weight:bold;">
+                            🌟 ประเมินการซ่อมนี้
+                        </button>`;
+                }
             } else {
                 alert(`ไม่พบเลขที่ ${fullTicketId} ในระบบ หรือคุณไม่ใช่เจ้าของรายการนี้`);
             }
