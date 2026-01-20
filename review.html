@@ -18,24 +18,33 @@
     </div>
 
     <script>
-        const URL_GAS = "https://script.google.com/macros/s/AKfycbxrVmmXm2Vj9sWUHpgPYbNv9zDDJjx4TaotH7XM1VRwySf3amXg1JCfvz_YgpEFvaXt/exec";
+        const URL_GAS = "https://script.google.com/macros/s/AKfycbxFRuQZwtPWWP9O3PrvAVRWfTvmpsUa5H5H0HxdADWqIgu49hxXahXHzTEfKsVZGzEz/exec";
         
-        async function submitReview() {
-            await liff.init({ liffId: "2008875334-d6l72Uox" });
-            const urlParams = new URLSearchParams(window.location.search);
-            const row = urlParams.get('row');
-            const score = urlParams.get('score');
-
-            if (row && score) {
-                try {
-                    // แก้ไขบรรทัด fetch ในไฟล์ review.html ของคุณเป็นดังนี้:
-                    await fetch(`${URL_GAS}?action=submitReview&row=${row}&score=${score}`, { 
-                        method: 'GET', 
-                        mode: 'no-cors' 
-                    });
-                    document.getElementById('status').innerHTML = "<h2>✅ ขอบคุณสำหรับการประเมินความพึงพอใจครับ</h2>";
-                    setTimeout(() => liff.closeWindow(), 2000);
-                } catch (e) { document.getElementById('status').innerHTML = "เกิดข้อผิดพลาด"; }
+        async function submitRating(score) {
+            const row = new URLSearchParams(window.location.search).get('row');
+            
+            // แสดง Loading
+            document.getElementById('loader').style.display = 'block';
+        
+            try {
+                const res = await fetch(`${URL_GAS}?action=submitReview&row=${row}&score=${score}`);
+                const result = await res.text();
+        
+                if (result === "OK") {
+                    alert("ขอบคุณสำหรับคะแนนประเมินครับ");
+                    liff.closeWindow(); // ปิดหน้าต่าง LIFF
+                } else if (result === "ERROR_NOT_FINISHED") {
+                    alert("❌ ไม่สามารถประเมินได้: เนื่องจากงานนี้ยังดำเนินการไม่เสร็จสิ้น");
+                } else if (result === "ERROR_ALREADY_RATED") {
+                    alert("⚠️ คุณได้ทำการประเมินรายการนี้ไปแล้ว");
+                    liff.closeWindow();
+                } else {
+                    alert("เกิดข้อผิดพลาด: " + result);
+                }
+            } catch (e) {
+                alert("การเชื่อมต่อล้มเหลว");
+            } finally {
+                document.getElementById('loader').style.display = 'none';
             }
         }
         submitReview();
