@@ -138,92 +138,87 @@
             }
 
             if (resData.result === "ok") {
-                const currentQueue = resData.pendingCount !== undefined ? resData.pendingCount : "0";
+                /const currentQueue = resData.pendingCount !== undefined ? resData.pendingCount : "0";
 
-                if (liff.isInClient()) {
-                    // เตรียมข้อมูลให้เป็น String 100% ป้องกัน JSON Invalid
-                    const fTicket = String(resData.ticketId || "N/A");
-                    const fQueue = String(resData.pendingCount !== undefined ? resData.pendingCount : "0");
-                    const fRoom = String(roomVal || "-");
-                    const fIssue = String(issueVal || "-");
-                    
-                    // สร้าง Data สำหรับ Postback ให้ปลอดภัย
-                    const postbackData = "action=checkStatus&tid=" + fTicket;
+                / เตรียมตัวแปรให้เป็น String ทั้งหมดก่อนเข้าโครงสร้าง Flex
+                const fTicket = String(resData.ticketId || "N/A");
+                const fQueue = String(resData.pendingCount !== undefined ? resData.pendingCount : "0");
+                const fRoom = String(roomVal || "-");
+                const fIssue = String(issueVal || "-");
+                const fRow = String(resData.row || "");
                 
+                if (liff.isInClient()) {
                     try {
                         await liff.sendMessages([{
                             "type": "flex",
-                            "altText": "แจ้งซ่อมสำเร็จ: " + fTicket,
+                            "altText": "รายการแจ้งซ่อม " + fTicket,
                             "contents": {
                                 "type": "bubble",
                                 "header": {
-                                    "type": "box",
-                                    "layout": "vertical",
-                                    "backgroundColor": "#000080",
+                                    "type": "box", "layout": "horizontal", "backgroundColor": "#000080", "paddingAll": "lg",
                                     "contents": [
-                                        {
-                                            "type": "text",
-                                            "text": "รายการแจ้งซ่อม " + fTicket,
-                                            "color": "#FFFFFF",
-                                            "weight": "bold",
-                                            "size": "md"
-                                        }
+                                        { "type": "text", "text": "รายการแจ้งซ่อม", "color": "#FFFFFF", "weight": "bold", "size": "md", "flex": 1 },
+                                        { "type": "text", "text": fTicket, "color": "#FBCEB1", "weight": "bold", "size": "md", "align": "end", "flex": 1 }
                                     ]
                                 },
                                 "body": {
-                                    "type": "box",
-                                    "layout": "vertical",
-                                    "spacing": "md",
+                                    "type": "box", "layout": "vertical", "spacing": "md", "paddingAll": "lg",
                                     "contents": [
                                         {
-                                            "type": "box",
-                                            "layout": "vertical",
-                                            "backgroundColor": "#E8F0FE",
-                                            "paddingAll": "md",
-                                            "cornerRadius": "md",
+                                            "type": "box", "layout": "vertical", "backgroundColor": "#E8F0FE", "paddingAll": "md", "cornerRadius": "md",
                                             "contents": [
                                                 { "type": "text", "text": "สถานะ: รอดำเนินการ", "color": "#000080", "weight": "bold", "size": "sm" },
                                                 { "type": "text", "text": "คิวที่รอขณะนี้: " + fQueue + " คิว", "color": "#444444", "size": "xs", "margin": "xs" }
                                             ]
                                         },
                                         {
-                                            "type": "box",
-                                            "layout": "vertical",
-                                            "spacing": "xs",
+                                            "type": "box", "layout": "vertical", "margin": "md", "spacing": "xs",
                                             "contents": [
                                                 { "type": "text", "text": "📍 สถานที่: " + fRoom, "size": "sm", "color": "#333333", "wrap": true },
                                                 { "type": "text", "text": "🛠 ปัญหา: " + fIssue, "size": "sm", "color": "#333333", "wrap": true }
                                             ]
+                                        },
+                                        { "type": "separator", "margin": "lg" },
+                                        { "type": "text", "text": "รบกวนให้คะแนนเมื่อบริการเสร็จสิ้น", "size": "xxs", "color": "#aaaaaa", "align": "center", "margin": "md" },
+                                        {
+                                            "type": "box", "layout": "horizontal", "margin": "md", "spacing": "xs",
+                                            "contents": [1, 2, 3, 4, 5].map(s => ({
+                                                "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "cornerRadius": "md", "paddingAll": "sm",
+                                                "contents": [
+                                                    {
+                                                        "type": "text", "text": "⭐" + String(s), // บังคับเป็น String
+                                                        "size": "sm", "align": "center", "weight": "bold", "color": "#555555",
+                                                        "action": {
+                                                            "type": "uri", "label": "star",
+                                                            "uri": REVIEW_LIFF_URL + "?row=" + fRow + "&score=" + String(s)
+                                                        }
+                                                    }
+                                                ]
+                                            }))
                                         }
                                     ]
                                 },
                                 "footer": {
-                                    "type": "box",
-                                    "layout": "vertical",
+                                    "type": "box", "layout": "vertical",
                                     "contents": [
                                         {
                                             "type": "button",
                                             "action": {
                                                 "type": "postback",
                                                 "label": "🔄 อัปเดตสถานะล่าสุด",
-                                                "data": postbackData,
+                                                "data": "action=checkStatus&tid=" + fTicket,
                                                 "displayText": "ตรวจสอบสถานะงาน #" + fTicket
                                             },
-                                            "style": "primary",
-                                            "color": "#000080"
+                                            "style": "primary", "color": "#000080"
                                         }
                                     ]
                                 }
                             }
                         }]);
-                        console.log("Flex Sent Successfully");
                     } catch (err) {
-                        console.error("Flex Message Error:", err);
-                        // ถ้า Flex ยังไม่ขึ้นจริงๆ จะแสดง Error ใน Console และส่ง Text แทน
-                        await liff.sendMessages([{
-                            "type": "text",
-                            "text": "แจ้งซ่อมสำเร็จ!\nเลขที่: " + fTicket + "\nคิวที่รอ: " + fQueue + "\n(ไม่สามารถแสดงผลแบบกราฟิกได้)"
-                        }]);
+                        console.error("Flex Error:", err);
+                        // ถ้าพังจริงๆ ถึงจะส่ง Text
+                        await liff.sendMessages([{ "type": "text", "text": "แจ้งซ่อมสำเร็จ!\nเลขที่: " + fTicket }]);
                     }
                 }
                 alert("แจ้งซ่อมสำเร็จ!");
