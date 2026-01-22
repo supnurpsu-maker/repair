@@ -141,85 +141,89 @@
                 const currentQueue = resData.pendingCount !== undefined ? resData.pendingCount : "0";
 
                 if (liff.isInClient()) {
-                // ป้องกันค่าว่างที่อาจทำให้ Flex พัง (Invalid Message)
-                const safeTicketId = resData.ticketId || "N/A";
-                const safeQueue = (resData.pendingCount !== undefined) ? resData.pendingCount.toString() : "0";
-                const safeRoom = roomVal || "-";
-                const safeIssue = issueVal || "-";
-            
-                try {
-                    await liff.sendMessages([{
-                        "type": "flex",
-                        "altText": "รายการแจ้งซ่อม " + safeTicketId,
-                        "contents": {
-                            "type": "bubble",
-                            "header": {
-                                "type": "box",
-                                "layout": "horizontal",
-                                "backgroundColor": "#000080",
-                                "paddingAll": "lg",
-                                "contents": [
-                                    { "type": "text", "text": "รายการแจ้งซ่อม", "color": "#FFFFFF", "weight": "bold", "size": "md", "flex": 1 },
-                                    { "type": "text", "text": safeTicketId, "color": "#FBCEB1", "weight": "bold", "size": "md", "align": "end", "flex": 1 }
-                                ]
-                            },
-                            "body": {
-                                "type": "box",
-                                "layout": "vertical",
-                                "spacing": "md",
-                                "paddingAll": "lg",
-                                "contents": [
-                                    {
-                                        "type": "box",
-                                        "layout": "vertical",
-                                        "backgroundColor": "#E8F0FE",
-                                        "paddingAll": "md",
-                                        "cornerRadius": "md",
-                                        "contents": [
-                                            { "type": "text", "text": "สถานะ: รอดำเนินการ", "color": "#000080", "weight": "bold", "size": "sm" },
-                                            { "type": "text", "text": "คิวที่รอขณะนี้: " + safeQueue + " คิว", "color": "#444444", "size": "xs", "margin": "xs" }
-                                        ]
-                                    },
-                                    {
-                                        "type": "box",
-                                        "layout": "vertical",
-                                        "margin": "md",
-                                        "spacing": "xs",
-                                        "contents": [
-                                            { "type": "text", "text": "📍 สถานที่: " + safeRoom, "size": "sm", "color": "#333333", "wrap": true },
-                                            { "type": "text", "text": "🛠 ปัญหา: " + safeIssue, "size": "sm", "color": "#333333", "wrap": true }
-                                        ]
-                                    }
-                                ]
-                            },
-                            "footer": {
-                                "type": "box",
-                                "layout": "vertical",
-                                "contents": [
-                                    {
-                                        "type": "button",
-                                        "action": {
-                                            "type": "postback",
-                                            "label": "🔄 อัปเดตสถานะล่าสุด",
-                                            "data": "action=checkStatus&tid=" + safeTicketId,
-                                            "displayText": "ตรวจสอบสถานะงาน #" + safeTicketId
+                    const safeTicketId = String(resData.ticketId || "N/A");
+                    const safeQueue = String(resData.pendingCount !== undefined ? resData.pendingCount : "0");
+                    const safeRoom = String(roomVal || "-");
+                    const safeIssue = String(issueVal || "-");
+                
+                    try {
+                        await liff.sendMessages([{
+                            "type": "flex",
+                            "altText": "แจ้งซ่อมสำเร็จ: " + safeTicketId,
+                            "contents": {
+                                "type": "bubble",
+                                "header": {
+                                    "type": "box",
+                                    "layout": "vertical",
+                                    "backgroundColor": "#000080",
+                                    "paddingAll": "lg",
+                                    "contents": [
+                                        {
+                                            "type": "text",
+                                            "text": "รายการแจ้งซ่อม " + safeTicketId,
+                                            "color": "#FFFFFF",
+                                            "weight": "bold",
+                                            "size": "md"
+                                        }
+                                    ]
+                                },
+                                "body": {
+                                    "type": "box",
+                                    "layout": "vertical",
+                                    "spacing": "md",
+                                    "paddingAll": "lg",
+                                    "contents": [
+                                        {
+                                            "type": "box",
+                                            "layout": "vertical",
+                                            "backgroundColor": "#E8F0FE",
+                                            "paddingAll": "md",
+                                            "cornerRadius": "md",
+                                            "contents": [
+                                                { "type": "text", "text": "สถานะ: รอดำเนินการ", "color": "#000080", "weight": "bold", "size": "sm" },
+                                                { "type": "text", "text": "คิวที่รอขณะนี้: " + safeQueue + " คิว", "color": "#444444", "size": "xs", "margin": "xs" }
+                                            ]
                                         },
-                                        "style": "primary",
-                                        "color": "#000080"
-                                    }
-                                ]
+                                        {
+                                            "type": "box",
+                                            "layout": "vertical",
+                                            "margin": "md",
+                                            "spacing": "xs",
+                                            "contents": [
+                                                { "type": "text", "text": "📍 สถานที่: " + safeRoom, "size": "sm", "color": "#333333", "wrap": true },
+                                                { "type": "text", "text": "🛠 ปัญหา: " + safeIssue, "size": "sm", "color": "#333333", "wrap": true }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "footer": {
+                                    "type": "box",
+                                    "layout": "vertical",
+                                    "contents": [
+                                        {
+                                            "type": "button",
+                                            "action": {
+                                                "type": "postback",
+                                                "label": "🔄 อัปเดตสถานะล่าสุด",
+                                                "data": "action=checkStatus&tid=" + safeTicketId,
+                                                "displayText": "ตรวจสอบสถานะงาน #" + safeTicketId
+                                            },
+                                            "style": "primary",
+                                            "color": "#000080"
+                                        }
+                                    ]
+                                }
                             }
-                        }
-                    }]);
-                } catch (flexErr) {
-                    console.error("Flex Message Error:", flexErr);
-                    // ถ้า Flex พัง ให้ส่งเป็น Text ธรรมดาแทนเพื่อไม่ให้หน้าเว็บค้าง
-                    await liff.sendMessages([{
-                        "type": "text",
-                        "text": "แจ้งซ่อมสำเร็จ!\nเลขที่: " + safeTicketId + "\nคิวที่รอ: " + safeQueue
-                    }]);
+                        }]);
+                    } catch (flexErr) {
+                        // หากยังพังอีก ให้ดูที่ Console ของเบราว์เซอร์ (F12) จะเห็นสาเหตุ
+                        console.error("Flex Error Detail:", flexErr);
+                        await liff.sendMessages([{
+                            "type": "text",
+                            "text": "แจ้งซ่อมสำเร็จ!\nเลขที่: " + safeTicketId + "\nคิวที่รอ: " + safeQueue
+                        }]);
+                    }
                 }
-            }
                 alert("แจ้งซ่อมสำเร็จ!");
                 liff.closeWindow();
             } else {
