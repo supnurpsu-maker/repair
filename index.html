@@ -141,26 +141,29 @@
                 const currentQueue = resData.pendingCount !== undefined ? resData.pendingCount : "0";
 
                 if (liff.isInClient()) {
-                    const safeTicketId = String(resData.ticketId || "N/A");
-                    const safeQueue = String(resData.pendingCount !== undefined ? resData.pendingCount : "0");
-                    const safeRoom = String(roomVal || "-");
-                    const safeIssue = String(issueVal || "-");
+                    // เตรียมข้อมูลให้เป็น String 100% ป้องกัน JSON Invalid
+                    const fTicket = String(resData.ticketId || "N/A");
+                    const fQueue = String(resData.pendingCount !== undefined ? resData.pendingCount : "0");
+                    const fRoom = String(roomVal || "-");
+                    const fIssue = String(issueVal || "-");
+                    
+                    // สร้าง Data สำหรับ Postback ให้ปลอดภัย
+                    const postbackData = "action=checkStatus&tid=" + fTicket;
                 
                     try {
                         await liff.sendMessages([{
                             "type": "flex",
-                            "altText": "แจ้งซ่อมสำเร็จ: " + safeTicketId,
+                            "altText": "แจ้งซ่อมสำเร็จ: " + fTicket,
                             "contents": {
                                 "type": "bubble",
                                 "header": {
                                     "type": "box",
                                     "layout": "vertical",
                                     "backgroundColor": "#000080",
-                                    "paddingAll": "lg",
                                     "contents": [
                                         {
                                             "type": "text",
-                                            "text": "รายการแจ้งซ่อม " + safeTicketId,
+                                            "text": "รายการแจ้งซ่อม " + fTicket,
                                             "color": "#FFFFFF",
                                             "weight": "bold",
                                             "size": "md"
@@ -171,7 +174,6 @@
                                     "type": "box",
                                     "layout": "vertical",
                                     "spacing": "md",
-                                    "paddingAll": "lg",
                                     "contents": [
                                         {
                                             "type": "box",
@@ -181,17 +183,16 @@
                                             "cornerRadius": "md",
                                             "contents": [
                                                 { "type": "text", "text": "สถานะ: รอดำเนินการ", "color": "#000080", "weight": "bold", "size": "sm" },
-                                                { "type": "text", "text": "คิวที่รอขณะนี้: " + safeQueue + " คิว", "color": "#444444", "size": "xs", "margin": "xs" }
+                                                { "type": "text", "text": "คิวที่รอขณะนี้: " + fQueue + " คิว", "color": "#444444", "size": "xs", "margin": "xs" }
                                             ]
                                         },
                                         {
                                             "type": "box",
                                             "layout": "vertical",
-                                            "margin": "md",
                                             "spacing": "xs",
                                             "contents": [
-                                                { "type": "text", "text": "📍 สถานที่: " + safeRoom, "size": "sm", "color": "#333333", "wrap": true },
-                                                { "type": "text", "text": "🛠 ปัญหา: " + safeIssue, "size": "sm", "color": "#333333", "wrap": true }
+                                                { "type": "text", "text": "📍 สถานที่: " + fRoom, "size": "sm", "color": "#333333", "wrap": true },
+                                                { "type": "text", "text": "🛠 ปัญหา: " + fIssue, "size": "sm", "color": "#333333", "wrap": true }
                                             ]
                                         }
                                     ]
@@ -205,8 +206,8 @@
                                             "action": {
                                                 "type": "postback",
                                                 "label": "🔄 อัปเดตสถานะล่าสุด",
-                                                "data": "action=checkStatus&tid=" + safeTicketId,
-                                                "displayText": "ตรวจสอบสถานะงาน #" + safeTicketId
+                                                "data": postbackData,
+                                                "displayText": "ตรวจสอบสถานะงาน #" + fTicket
                                             },
                                             "style": "primary",
                                             "color": "#000080"
@@ -215,12 +216,13 @@
                                 }
                             }
                         }]);
-                    } catch (flexErr) {
-                        // หากยังพังอีก ให้ดูที่ Console ของเบราว์เซอร์ (F12) จะเห็นสาเหตุ
-                        console.error("Flex Error Detail:", flexErr);
+                        console.log("Flex Sent Successfully");
+                    } catch (err) {
+                        console.error("Flex Message Error:", err);
+                        // ถ้า Flex ยังไม่ขึ้นจริงๆ จะแสดง Error ใน Console และส่ง Text แทน
                         await liff.sendMessages([{
                             "type": "text",
-                            "text": "แจ้งซ่อมสำเร็จ!\nเลขที่: " + safeTicketId + "\nคิวที่รอ: " + safeQueue
+                            "text": "แจ้งซ่อมสำเร็จ!\nเลขที่: " + fTicket + "\nคิวที่รอ: " + fQueue + "\n(ไม่สามารถแสดงผลแบบกราฟิกได้)"
                         }]);
                     }
                 }
