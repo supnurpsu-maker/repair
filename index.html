@@ -128,74 +128,73 @@
 
                 if (liff.isInClient()) {
                     await liff.sendMessages([{
-                    "type": "flex",
-                    "altText": "รายการแจ้งซ่อม " + resData.ticketId,
-                    "contents": {
-                        "type": "bubble",
-                        "header": {
-                            "type": "box", "layout": "horizontal", "backgroundColor": "#000080", "paddingAll": "lg",
-                            "contents": [
-                                { "type": "text", "text": "รายการแจ้งซ่อม", "color": "#FFFFFF", "weight": "bold", "size": "md", "flex": 1 },
-                                { "type": "text", "text": resData.ticketId, "color": "#FBCEB1", "weight": "bold", "size": "md", "align": "end", "flex": 1 }
-                            ]
-                        },
-                        "body": {
-                            "type": "box", "layout": "vertical", "spacing": "md", "paddingAll": "lg",
-                            "contents": [
-                                {
-                                    "type": "box", "layout": "vertical", "backgroundColor": "#E8F0FE", "paddingAll": "md", "cornerRadius": "md",
-                                    "contents": [
-                                        { "type": "text", "text": "สถานะ: รอดำเนินการ", "color": "#000080", "weight": "bold", "size": "sm" },
-                                        { "type": "text", "text": "คิวที่รอขณะนี้: " + currentQueue + " คิว", "color": "#444444", "size": "xs", "margin": "xs" }
-                                    ]
-                                },
-                                {
-                                    "type": "box", "layout": "vertical", "margin": "md", "spacing": "xs",
-                                    "contents": [
-                                        { "type": "text", "text": "📍 สถานที่: " + roomVal, "size": "sm", "color": "#333333", "wrap": true },
-                                        { "type": "text", "text": "🛠 ปัญหา: " + issueVal, "size": "sm", "color": "#333333", "wrap": true }
-                                    ]
-                                },
-                                { "type": "separator", "margin": "lg" },
-                                { "type": "text", "text": "รบกวนให้คะแนนเมื่อบริการเสร็จสิ้น", "size": "xxs", "color": "#aaaaaa", "align": "center", "margin": "md" },
-                                {
-                                    "type": "box", "layout": "horizontal", "margin": "md", "spacing": "xs",
-                                    "contents": [1, 2, 3, 4, 5].map(s => ({
-                                        "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "cornerRadius": "md", "paddingAll": "sm",
+                        "type": "flex",
+                        "altText": "รายการแจ้งซ่อม " + resData.ticketId,
+                        "contents": {
+                            "type": "bubble",
+                            "header": {
+                                "type": "box", "layout": "horizontal", "backgroundColor": "#000080", "paddingAll": "lg",
+                                "contents": [
+                                    { "type": "text", "text": "รายการแจ้งซ่อม", "color": "#FFFFFF", "weight": "bold", "size": "md", "flex": 1 },
+                                    { "type": "text", "text": resData.ticketId, "color": "#FBCEB1", "weight": "bold", "size": "md", "align": "end", "flex": 1 }
+                                ]
+                            },
+                            "body": {
+                                "type": "box", "layout": "vertical", "spacing": "md", "paddingAll": "lg",
+                                "contents": [
+                                    {
+                                        "type": "box", "layout": "vertical", "backgroundColor": "#E8F0FE", "paddingAll": "md", "cornerRadius": "md",
                                         "contents": [
-                                            {
-                                                "type": "text", "text": "⭐" + s, "size": "sm", "align": "center", "weight": "bold", "color": "#555555",
-                                                "action": {
-                                                    "type": "uri", "label": "star",
-                                                    "uri": REVIEW_LIFF_URL + "?row=" + resData.row + "&score=" + s
-                                                }
-                                            }
+                                            { "type": "text", "text": "สถานะ: รอดำเนินการ", "color": "#000080", "weight": "bold", "size": "sm" },
+                                            { "type": "text", "text": "คิวที่รอขณะนี้: " + currentQueue + " คิว", "color": "#444444", "size": "xs", "margin": "xs" }
                                         ]
-                                    }))
-                                }
-                            ]
-                        },
-                        // --- ส่วนที่เพิ่มใหม่: ปุ่ม Update ---
-                        "footer": {
-                            "type": "box",
-                            "layout": "vertical",
-                            "contents": [
-                                {
-                                    "type": "button",
-                                    "action": {
-                                        "type": "postback",
-                                        "label": "🔄 อัปเดตสถานะล่าสุด",
-                                        "data": "action=checkStatus&tid=" + resData.ticketId,
-                                        "displayText": "ตรวจสอบสถานะงาน #" + resData.ticketId
                                     },
-                                    "style": "primary",
-                                    "color": "#000080"
-                                }
-                            ]
-                        }
-                        // ------------------------------
-                    }
-                }]);
+                                    {
+                                        "type": "box", "layout": "vertical", "margin": "md", "spacing": "xs",
+                                        "contents": [
+                                            { "type": "text", "text": "📍 สถานที่: " + roomVal, "size": "sm", "color": "#333333", "wrap": true },
+                                            { "type": "text", "text": "🛠 ปัญหา: " + issueVal, "size": "sm", "color": "#333333", "wrap": true }
+                                        ]
+                                    },
+                                    { "type": "separator", "margin": "lg" },
+                                    { "type": "text", "text": "รบกวนให้คะแนนเมื่อบริการเสร็จสิ้น", "size": "xxs", "color": "#aaaaaa", "align": "center", "margin": "md" },
+                                    {
+                                        "type": "box", "layout": "horizontal", "margin": "md", "spacing": "xs",
+                                        "contents": [1, 2, 3, 4, 5].map(s => ({
+                                            "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "cornerRadius": "md", "paddingAll": "sm",
+                                            "contents": [
+                                                {
+                                                    "type": "text", "text": "⭐" + s, "size": "sm", "align": "center", "weight": "bold", "color": "#555555",
+                                                    "action": {
+                                                        "type": "uri", "label": "star",
+                                                        "uri": REVIEW_LIFF_URL + "?row=" + resData.row + "&score=" + s
+                                                    }
+                                                }
+                                            ]
+                                        }))
+                                    }
+                                ]
+                            },
+                            "footer": {
+                                "type": "box",
+                                "layout": "vertical",
+                                "contents": [
+                                    {
+                                        "type": "button",
+                                        "action": {
+                                            "type": "postback",
+                                            "label": "🔄 อัปเดตสถานะล่าสุด",
+                                            "data": "action=checkStatus&tid=" + resData.ticketId,
+                                            "displayText": "ตรวจสอบสถานะงาน #" + resData.ticketId
+                                        },
+                                        "style": "primary",
+                                        "color": "#000080"
+                                    }
+                                ]
+                            }
+                        } // ปิด contents
+                    }]); // ปิด sendMessages;
+                }
 
     main();
 </script>
