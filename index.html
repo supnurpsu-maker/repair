@@ -151,63 +151,39 @@
                                 "type": "box",
                                 "layout": "horizontal",
                                 "contents": [
-                                    { "type": "text", "text": "รายการแจ้งซ่อม", "weight": "bold", "color": "#000080", "size": "sm" },
-                                    { "type": "text", "text": fTicket, "align": "end", "weight": "bold", "size": "sm", "color": "#666666" }
+                                    { "type": "text", "text": "รายการแจ้งซ่อม", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
+                                    { "type": "text", "text": fTicket, "align": "end", "weight": "bold", "size": "sm", "color": "#FFFFFF" }
                                 ]
                             },
                             "body": {
                                 "type": "box",
                                 "layout": "vertical",
                                 "contents": [
-                                    // --- ส่วนที่มีสีพื้นหลัง (สถานะ และ คิว) ---
                                     {
                                         "type": "box",
                                         "layout": "vertical",
-                                        "backgroundColor": "#FBCEB1", // สี Accent Peach
+                                        "backgroundColor": "#FBCEB1",
                                         "paddingAll": "lg",
                                         "cornerRadius": "md",
                                         "contents": [
-                                            {
-                                                "type": "text",
-                                                "text": "สถานะ: รอดำเนินการ",
-                                                "weight": "bold",
-                                                "size": "md",
-                                                "color": "#000080"
-                                            },
-                                            {
-                                                "type": "text",
-                                                "text": "คิวที่รอขณะนี้: " + fQueue + " คิว",
-                                                "size": "sm",
-                                                "color": "#000080",
-                                                "margin": "sm"
-                                            }
+                                            { "type": "text", "text": "สถานะ: รอดำเนินการ", "weight": "bold", "size": "md", "color": "#000080" },
+                                            { "type": "text", "text": "คิวที่รอขณะนี้: " + fQueue + " คิว", "size": "sm", "color": "#000080", "margin": "sm" }
                                         ]
                                     },
-                                    // --- ส่วนข้อมูลสถานที่ และ ปัญหา ---
                                     {
                                         "type": "box",
                                         "layout": "vertical",
                                         "margin": "lg",
                                         "spacing": "sm",
                                         "contents": [
-                                            {
-                                                "type": "box",
-                                                "layout": "baseline",
-                                                "spacing": "sm",
-                                                "contents": [
-                                                    { "type": "text", "text": "สถานที่:", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                                                    { "type": "text", "text": fRoom, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
-                                                ]
-                                            },
-                                            {
-                                                "type": "box",
-                                                "layout": "baseline",
-                                                "spacing": "sm",
-                                                "contents": [
-                                                    { "type": "text", "text": "ปัญหา:", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                                                    { "type": "text", "text": fIssue, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
-                                                ]
-                                            }
+                                            { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
+                                                { "type": "text", "text": "สถานที่:", "color": "#aaaaaa", "size": "sm", "flex": 2 },
+                                                { "type": "text", "text": fRoom, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
+                                            ]},
+                                            { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
+                                                { "type": "text", "text": "ปัญหา:", "color": "#aaaaaa", "size": "sm", "flex": 2 },
+                                                { "type": "text", "text": fIssue, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
+                                            ]}
                                         ]
                                     }
                                 ]
@@ -230,7 +206,9 @@
                                 ]
                             },
                             "styles": {
-                                "header": { "separator": true }
+                                "header": {
+                                    "backgroundColor": "#000080" // พื้นหลัง Header สีน้ำเงินเข้ม
+                                }
                             }
                         }
                     }]);
