@@ -149,6 +149,9 @@
                 const fRoom = String(roomVal || "-");
                 const fQueue = String(resData.pendingCount !== undefined ? resData.pendingCount : "0");
             
+                // ทำการ Encode เลข Ticket เพื่อป้องกันเครื่องหมาย # ทำระบบพัง
+                const safeTicket = encodeURIComponent(fTicket);
+            
                 try {
                     await liff.sendMessages([{
                         "type": "flex",
@@ -159,10 +162,9 @@
                                 "type": "box",
                                 "layout": "vertical",
                                 "contents": [
-                                    { "type": "text", "text": "✅ บันทึกข้อมูลสำเร็จ", "weight": "bold", "size": "md", "color": "#000080" },
+                                    { "type": "text", "text": "✅ บันทึกข้อมูลสำเร็จ", "weight": "bold", "color": "#000080" },
                                     { "type": "text", "text": "เลขที่: " + fTicket, "margin": "md", "weight": "bold" },
                                     { "type": "text", "text": "สถานที่: " + fRoom, "size": "sm", "wrap": true },
-                                    { "type": "text", "text": "คิวที่รอ: " + fQueue + " คิว", "size": "xs", "color": "#888888", "margin": "sm" },
                                     {
                                         "type": "button",
                                         "style": "primary",
@@ -172,8 +174,7 @@
                                         "action": {
                                             "type": "postback",
                                             "label": "🔄 อัปเดตสถานะ",
-                                            "data": "action=checkStatus&tid=" + fTicket
-                                            // *** ตัด displayText ออก เพื่อความเสถียรสูงสุด ***
+                                            "data": "action=checkStatus&tid=" + safeTicket
                                         }
                                     }
                                 ]
@@ -181,10 +182,10 @@
                         }
                     }]);
                 } catch (err) {
-                    // แผนสำรองสุดท้าย ถ้า Postback ตัวนี้ยังไม่ยอมขึ้น
+                    // หากยังไม่ขึ้นอีก เราจะลองส่งแบบ "ไม่มีตัวแปร fTicket ใน Data" เพื่อพิสูจน์
                     await liff.sendMessages([{
                         "type": "text",
-                        "text": "✅ บันทึกสำเร็จ!\nเลขที่: " + fTicket + "\n(ระบบปุ่มกดขัดข้อง)"
+                        "text": "✅ บันทึกสำเร็จ!\nเลขที่: " + fTicket + "\n(ยังพบปัญหาที่ Postback Data)"
                     }]);
                 }
             }
