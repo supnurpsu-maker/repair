@@ -146,72 +146,37 @@
                 // --- ส่วนส่ง Flex Message (ปรับปรุงเพื่อความชัวร์ 100%) ---
             if (liff.isInClient()) {
                 const fTicket = String(resData.ticketId || "N/A");
-                const fQueue = String(resData.pendingCount !== undefined ? resData.pendingCount : "0");
-                const fRoom = String(roomVal || "-");
-                const fIssue = String(issueVal || "-");
             
                 try {
                     await liff.sendMessages([{
                         "type": "flex",
                         "altText": "แจ้งซ่อมสำเร็จ: " + fTicket,
                         "contents": {
-                            "type": "bubble",
-                            "header": {
-                                "type": "box",
-                                "layout": "vertical",
-                                "backgroundColor": "#000080",
-                                "contents": [
-                                    { "type": "text", "text": "รายการแจ้งซ่อมสำเร็จ", "color": "#FFFFFF", "weight": "bold", "size": "md" }
-                                ]
-                            },
-                            "body": {
-                                "type": "box",
-                                "layout": "vertical",
-                                "spacing": "md",
-                                "contents": [
-                                    {
-                                        "type": "box",
-                                        "layout": "vertical",
-                                        "backgroundColor": "#E8F0FE",
-                                        "paddingAll": "md",
-                                        "cornerRadius": "md",
-                                        "contents": [
-                                            { "type": "text", "text": "Ticket: " + fTicket, "weight": "bold", "color": "#000080" },
-                                            { "type": "text", "text": "คิวที่รอ: " + fQueue + " คิว", "size": "sm", "margin": "xs" }
-                                        ]
-                                    },
-                                    {
-                                        "type": "text",
-                                        "text": "สถานที่: " + fRoom,
-                                        "size": "sm",
-                                        "wrap": true
-                                    }
-                                ]
-                            },
-                            "footer": {
-                                "type": "box",
-                                "layout": "vertical",
-                                "contents": [
-                                    {
-                                        "type": "button",
-                                        "style": "primary",
-                                        "color": "#000080",
-                                        "action": {
-                                            "type": "postback",
-                                            "label": "🔄 อัปเดตสถานะ",
-                                            "data": "action=checkStatus&tid=" + fTicket,
-                                            "displayText": "เช็คสถานะงาน #" + fTicket
-                                        }
-                                    }
-                                ]
-                            }
+                          "type": "bubble",
+                          "body": {
+                            "type": "box",
+                            "layout": "vertical",
+                            "contents": [
+                              {
+                                "type": "text",
+                                "text": "แจ้งซ่อมสำเร็จ",
+                                "weight": "bold",
+                                "color": "#000080"
+                              },
+                              {
+                                "type": "text",
+                                "text": "Ticket: " + fTicket
+                              }
+                            ]
+                          }
                         }
                     }]);
+                    console.log("Flex Sent!");
                 } catch (err) {
-                    // หากยังเป็นข้อความธรรมดา แปลว่าสิทธิ์ chat_message.write มีปัญหา
+                    // หากยังตกมาที่นี่ แสดงว่ามีปัญหาที่ตัวแปรหรือสิทธิ์
                     await liff.sendMessages([{
                         "type": "text",
-                        "text": "✅ บันทึกสำเร็จ!\nเลขที่แจ้ง: " + fTicket + "\nคิวที่รอ: " + fQueue
+                        "text": "ทดสอบระบบ: " + fTicket + " (Flex ยังไม่ทำงาน)"
                     }]);
                 }
             }
