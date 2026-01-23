@@ -67,7 +67,6 @@
 </div>
 
 <script>
-    // --- แก้ไขค่า LIFF_ID และ URL ให้เป็นของคุณ ---
     const LIFF_ID = "2008875334-eZXiyz43"; 
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbztvCSDdsgd2eTPZ_Ihfr3DgPX9ry6e00_vjl5C67g-px0g6U-YMb3V1eRL_ULwa4n7/exec"; 
     const REVIEW_LIFF_URL = "https://liff.line.me/2008875334-d6l72Uox"; 
@@ -121,32 +120,29 @@
             };
 
             const response = await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(payload) });
-            const resText = await response.text(); // อ่านเป็น Text เพื่อป้องกัน JSON parse error
+            const resText = await response.text();
             console.log("Raw Response:", resText);
 
             let resData;
             try {
                 resData = JSON.parse(resText);
             } catch (jsonErr) {
-                // ถ้า parse ไม่ได้ แต่มีคำว่า "ok" ใน text แสดงว่าสำเร็จแต่มีขยะติดมา
                 if (resText.includes('"result":"ok"')) {
-                    alert("บันทึกข้อมูลสำเร็จ (ระบบกำลังส่งข้อมูลเข้าแชท)");
+                    alert("แจ้งซ่อมสำเร็จ (กำลังปิดหน้าต่าง)");
                     liff.closeWindow();
                     return;
                 }
-                throw new Error("รูปแบบข้อมูลผิดพลาด: " + resText);
+                throw new Error("Data Error: " + resText);
             }
 
             if (resData.result === "ok") {
-                /const currentQueue = resData.pendingCount !== undefined ? resData.pendingCount : "0";
-
-                / เตรียมตัวแปรให้เป็น String ทั้งหมดก่อนเข้าโครงสร้าง Flex
+                // จัดการข้อมูลให้เป็น String ทุกตัวป้องกัน Flex พัง
                 const fTicket = String(resData.ticketId || "N/A");
                 const fQueue = String(resData.pendingCount !== undefined ? resData.pendingCount : "0");
                 const fRoom = String(roomVal || "-");
                 const fIssue = String(issueVal || "-");
                 const fRow = String(resData.row || "");
-                
+
                 if (liff.isInClient()) {
                     try {
                         await liff.sendMessages([{
@@ -186,7 +182,7 @@
                                                 "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "cornerRadius": "md", "paddingAll": "sm",
                                                 "contents": [
                                                     {
-                                                        "type": "text", "text": "⭐" + String(s), // บังคับเป็น String
+                                                        "type": "text", "text": "⭐" + String(s),
                                                         "size": "sm", "align": "center", "weight": "bold", "color": "#555555",
                                                         "action": {
                                                             "type": "uri", "label": "star",
@@ -216,8 +212,7 @@
                             }
                         }]);
                     } catch (err) {
-                        console.error("Flex Error:", err);
-                        // ถ้าพังจริงๆ ถึงจะส่ง Text
+                        console.error("Flex Send Failed:", err);
                         await liff.sendMessages([{ "type": "text", "text": "แจ้งซ่อมสำเร็จ!\nเลขที่: " + fTicket }]);
                     }
                 }
