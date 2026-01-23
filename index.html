@@ -135,38 +135,107 @@
 
         if (res.result === "ok") {
             // ป้องกันค่าว่างด้วยการใส่ ||
+            const fRoom = document.getElementById('room').value;
+            const fIssue = document.getElementById('issue').value;
             const fTicket = String(res.ticketId || "No ID");
             const fQueue = String(res.pendingCount || "0");
-
+            
             if (liff.isInClient()) {
                 try {
-                    // ส่ง Flex แบบโครงสร้างพื้นฐานที่สุด (ตัดความซับซ้อนออกก่อน)
                     await liff.sendMessages([{
                         "type": "flex",
                         "altText": "แจ้งซ่อมสำเร็จ: " + fTicket,
                         "contents": {
-                          "type": "bubble",
-                          "body": {
-                            "type": "box",
-                            "layout": "vertical",
-                            "contents": [
-                              { "type": "text", "text": "✅ บันทึกข้อมูลเรียบร้อย", "weight": "bold", "size": "lg", "color": "#000080" },
-                              { "type": "box", "layout": "vertical", "margin": "md", "contents": [
-                                { "type": "text", "text": "เลขที่: " + fTicket, "size": "sm", "weight": "bold" },
-                                { "type": "text", "text": "คิวรอ: " + fQueue + " คิว", "size": "sm", "color": "#666666" }
-                              ]},
-                              { "type": "button", "margin": "xl", "style": "primary", "color": "#000080", "action": {
-                                  "type": "uri",
-                                  "label": "ดูสถานะงาน",
-                                  "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket
-                              }}
-                            ]
-                          }
+                            "type": "bubble",
+                            "header": {
+                                "type": "box",
+                                "layout": "horizontal",
+                                "contents": [
+                                    { "type": "text", "text": "รายการแจ้งซ่อม", "weight": "bold", "color": "#000080", "size": "sm" },
+                                    { "type": "text", "text": fTicket, "align": "end", "weight": "bold", "size": "sm", "color": "#666666" }
+                                ]
+                            },
+                            "body": {
+                                "type": "box",
+                                "layout": "vertical",
+                                "contents": [
+                                    // --- ส่วนที่มีสีพื้นหลัง (สถานะ และ คิว) ---
+                                    {
+                                        "type": "box",
+                                        "layout": "vertical",
+                                        "backgroundColor": "#FBCEB1", // สี Accent Peach
+                                        "paddingAll": "lg",
+                                        "cornerRadius": "md",
+                                        "contents": [
+                                            {
+                                                "type": "text",
+                                                "text": "สถานะ: รอดำเนินการ",
+                                                "weight": "bold",
+                                                "size": "md",
+                                                "color": "#000080"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "text": "คิวที่รอขณะนี้: " + fQueue + " คิว",
+                                                "size": "sm",
+                                                "color": "#000080",
+                                                "margin": "sm"
+                                            }
+                                        ]
+                                    },
+                                    // --- ส่วนข้อมูลสถานที่ และ ปัญหา ---
+                                    {
+                                        "type": "box",
+                                        "layout": "vertical",
+                                        "margin": "lg",
+                                        "spacing": "sm",
+                                        "contents": [
+                                            {
+                                                "type": "box",
+                                                "layout": "baseline",
+                                                "spacing": "sm",
+                                                "contents": [
+                                                    { "type": "text", "text": "สถานที่:", "color": "#aaaaaa", "size": "sm", "flex": 2 },
+                                                    { "type": "text", "text": fRoom, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
+                                                ]
+                                            },
+                                            {
+                                                "type": "box",
+                                                "layout": "baseline",
+                                                "spacing": "sm",
+                                                "contents": [
+                                                    { "type": "text", "text": "ปัญหา:", "color": "#aaaaaa", "size": "sm", "flex": 2 },
+                                                    { "type": "text", "text": fIssue, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            "footer": {
+                                "type": "box",
+                                "layout": "vertical",
+                                "contents": [
+                                    {
+                                        "type": "button",
+                                        "style": "primary",
+                                        "color": "#000080",
+                                        "height": "sm",
+                                        "action": {
+                                            "type": "uri",
+                                            "label": "ดูสถานะงาน",
+                                            "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket
+                                        }
+                                    }
+                                ]
+                            },
+                            "styles": {
+                                "header": { "separator": true }
+                            }
                         }
                     }]);
-                } catch (flexErr) {
-                    // ถ้าพัง ให้โชว์ Error ออกมาตรงๆ เลยว่า LINE ไม่ยอมรับเพราะอะไร
-                    alert("LINE Flex Reject: " + JSON.stringify(flexErr));
+                } catch (err) {
+                    console.error(err);
                     await liff.sendMessages([{ "type": "text", "text": "✅ บันทึกสำเร็จ: " + fTicket }]);
                 }
             }
