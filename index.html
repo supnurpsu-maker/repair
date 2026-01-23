@@ -148,6 +148,7 @@
                 const fTicket = String(resData.ticketId || "N/A");
                 const fRoom = String(roomVal || "-");
                 const fIssue = String(issueVal || "-");
+                const fQueue = String(resData.pendingCount !== undefined ? resData.pendingCount : "0");
             
                 try {
                     await liff.sendMessages([{
@@ -169,17 +170,36 @@
                                 "spacing": "sm",
                                 "contents": [
                                     { "type": "text", "text": "เลขที่: " + fTicket, "weight": "bold", "size": "sm" },
+                                    { "type": "text", "text": "คิวที่รอขณะนี้: " + fQueue + " คิว", "size": "xs", "color": "#666666" },
                                     { "type": "separator", "margin": "md" },
-                                    { "type": "text", "text": "📍 สถานที่: " + fRoom, "size": "sm", "wrap": true },
+                                    { "type": "text", "text": "📍 สถานที่: " + fRoom, "size": "sm", "wrap": true, "margin": "md" },
                                     { "type": "text", "text": "🛠 ปัญหา: " + fIssue, "size": "sm", "wrap": true }
+                                ]
+                            },
+                            "footer": {
+                                "type": "box",
+                                "layout": "vertical",
+                                "contents": [
+                                    {
+                                        "type": "button",
+                                        "action": {
+                                            "type": "postback",
+                                            "label": "🔄 อัปเดตสถานะล่าสุด",
+                                            "data": "action=checkStatus&tid=" + fTicket,
+                                            "displayText": "ตรวจสอบสถานะงาน #" + fTicket
+                                        },
+                                        "style": "primary",
+                                        "color": "#000080"
+                                    }
                                 ]
                             }
                         }
                     }]);
                 } catch (err) {
+                    // หากใส่ปุ่มแล้วไม่ขึ้น แสดงว่าปัญหาอยู่ที่โครงสร้าง Footer/Postback
                     await liff.sendMessages([{
                         "type": "text",
-                        "text": "ขั้นตอนที่ 2 พัง: " + fTicket
+                        "text": "ขั้นตอนที่ 3 (ปุ่มกด) มีปัญหา: " + fTicket
                     }]);
                 }
             }
