@@ -95,7 +95,8 @@
         e.preventDefault();
         btn.disabled = true;
         loading.style.display = 'block';
-
+    
+        // 1. แปลงรูปภาพเป็น Base64 (ถ้ามี)
         const fileInput = document.getElementById('image');
         let base64 = "";
         if (fileInput.files.length > 0) {
@@ -106,78 +107,86 @@
                 reader.readAsDataURL(file);
             });
         }
-
+    
         const payload = {
             uid: profile.userId,
             displayName: profile.displayName,
-            room: document.getElementById('room').value,
-            phone: document.getElementById('phone').value,
+            room: document.getElementById('room').value || "-",
+            phone: document.getElementById('phone').value || "-",
             category: document.getElementById('category').value,
-            issue: document.getElementById('issue').value,
+            issue: document.getElementById('issue').value || "-",
             priority: document.getElementById('priority').value,
             imageBase64: base64
         };
-
+    
         try {
+            // 2. ส่งข้อมูลไปที่ GAS_URL
             const response = await fetch(GAS_URL, {
                 method: "POST",
                 body: JSON.stringify(payload)
             });
-            const res = await response.json();
-
-            if (res.result === "ok") {
-                const fTicket = res.ticketId;
-                const fQueue = res.pendingCount || "0";
-
+            const resData = await response.json();
+    
+            if (resData.result === "ok") {
+                const fTicket = String(resData.ticketId); // ป้องกันค่าไม่ใช่ String
+                const fQueue = String(resData.pendingCount || "0");
+    
                 if (liff.isInClient()) {
-                    // สร้าง Flex JSON ให้สะอาดที่สุดเพื่อป้องกัน Error
-                    const flexContents = {
-                        "type": "bubble",
-                        "body": {
-                            "type": "box",
-                            "layout": "vertical",
-                            "contents": [
-                                { "type": "text", "text": "✅ แจ้งซ่อมสำเร็จ", "weight": "bold", "size": "lg", "color": "#000080" },
-                                { "type": "box", "layout": "vertical", "margin": "md", "contents": [
-                                    { "type": "text", "text": "เลขรายการ: " + fTicket, "size": "sm", "weight": "bold" },
-                                    { "type": "text", "text": "คิวรอขณะนี้: " + fQueue + " คิว", "size": "sm", "color": "#666666" }
-                                ]},
-                                { "type": "text", "text": "ประเมินความพึงพอใจ", "margin": "lg", "size": "xs", "color": "#aaaaaa" },
-                                { "type": "box", "layout": "horizontal", "margin": "sm", "spacing": "sm", "contents": [1,2,3,4,5].map(n => ({
-                                    "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "paddingAll": "8px", "cornerRadius": "md",
-                                    "contents": [{ "type": "text", "text": "⭐", "align": "center", "size": "sm" }],
-                                    "action": { "type": "postback", "label": String(n), "data": "action=vote&tid=" + fTicket + "&score=" + n }
-                                }))},
-                                { "type": "button", "margin": "lg", "style": "primary", "color": "#000080", "height": "sm", "action": {
-                                    "type": "uri",
-                                    "label": "ติดตามสถานะงานซ่อม",
-                                    "uri": "https://liff.line.me/" + LIFF_ID_REVIEW + "?ticket=" + fTicket
-                                }}
-                            ]
-                        }
-                    };
-
-                    await liff.sendMessages([{
-                        "type": "flex",
-                        "altText": "แจ้งซ่อมสำเร็จ: " + fTicket,
-                        "contents": flexContents
-                    }]);
+                    try {
+                        // 3. โครงสร้าง Flex Message ที่ Clean และถูกต้องตามกฎ LINE
+                        await liff.sendMessages([{
+                            "type": "flex",
+                            "altText": "แจ้งซ่อมสำเร็จ: " + fTicket,
+                            "contents": {
+                              "type": "bubble",
+                              "body": {
+                                "type": "box",
+                                "layout": "vertical",
+                                "contents": [
+                                  { "type": "text", "text": "✅ แจ้งซ่อมสำเร็จ", "weight": "bold", "size": "lg", "color": "#000080" },
+                                  { "type": "box", "layout": "vertical", "margin": "lg", "spacing": "sm", "contents": [
+                                    { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
+                                      { "type": "text", "text": "เลขที่", "color": "#aaaaaa", "size": "sm", "flex": 2 },
+                                      { "type": "text", "text": fTicket, "wrap": true, "color": "#666666", "size": "sm", "flex": 5, "weight": "bold" }
+                                    ]},
+                                    { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
+                                      { "type": "text", "text": "คิวรอ", "color": "#aaaaaa", "size": "sm", "flex": 2 },
+                                      { "type": "text", "text": fQueue + " คิว", "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
+                                    ]}
+                                  ]},
+                                  { "type": "box", "layout": "vertical", "margin": "xl", "spacing": "sm", "contents": [
+                                    { "type": "text", "text": "ประเมินความพึงพอใจ", "size": "xs", "color": "#aaaaaa", "align": "center" },
+                                    { "type": "box", "layout": "horizontal", "spacing": "xs", "contents": [1,2,3,4,5].map(num => ({
+                                      "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "paddingAll": "8px", "cornerRadius": "md",
+                                      "contents": [{ "type": "text", "text": "⭐", "align": "center", "size": "sm" }],
+                                      "action": { "type": "postback", "label": String(num), "data": "action=vote&tid=" + fTicket + "&score=" + num }
+                                    }))}
+                                  ]},
+                                  { "type": "button", "margin": "xl", "style": "primary", "color": "#000080", "height": "sm", "action": {
+                                    "type": "uri", "label": "ติดตามสถานะงานซ่อม", "uri": "https://liff.line.me/" + LIFF_ID_REVIEW + "?ticket=" + fTicket
+                                  }}
+                                ]
+                              }
+                            }
+                        }]);
+                    } catch (flexErr) {
+                        console.error("Flex Error:", flexErr);
+                        // ถ้า Flex พัง ให้ส่งเป็น Text แทน (กันค้าง)
+                        await liff.sendMessages([{ "type": "text", "text": "✅ บันทึกสำเร็จ!\nเลขที่: " + fTicket }]);
+                    }
                 }
-                alert("บันทึกข้อมูลเรียบร้อย!");
+                alert("แจ้งซ่อมสำเร็จ! เลขที่: " + fTicket);
                 liff.closeWindow();
             } else {
-                alert("GAS Error: " + res.message);
+                alert("Error: " + resData.message);
             }
         } catch (err) {
-            console.error(err);
-            alert("ระบบบันทึกสำเร็จแต่ส่ง Flex ไม่ได้: " + err.message);
-            liff.closeWindow();
+            alert("เกิดข้อผิดพลาดในการเชื่อมต่อ: " + err.message);
         } finally {
             btn.disabled = false;
             loading.style.display = 'none';
         }
     };
-
     main();
 </script>
 
