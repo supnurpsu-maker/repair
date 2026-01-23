@@ -222,12 +222,11 @@
                     // ดึงค่าจากฟอร์มมาแสดงใน Flex
                     // ดึงค่าจากฟอร์ม
                     // 1. ดึงค่าและล้างอักขระพิเศษที่อาจทำให้ JSON พัง
+                    // 1. ดึงค่าและล้างอักขระพิเศษ
                     const fRoom = (document.getElementById('room').value || "-").replace(/"/g, "'").replace(/\n/g, " ");
                     const fIssue = (document.getElementById('issue').value || "-").replace(/"/g, "'").replace(/\n/g, " ");
                     const fTicket = String(res.ticketId || "No ID");
                     const fQueue = String(res.pendingCount || "0");
-                    
-                    // 2. เตรียม URL สำหรับปุ่มดูสถานะ
                     const trackUrl = "https://liff.line.me/" + (typeof LIFF_ID_TRACK !== 'undefined' ? LIFF_ID_TRACK : "") + "?ticket=" + fTicket;
                     
                     if (liff.isInClient()) {
@@ -283,21 +282,13 @@
                                                 "layout": "horizontal",
                                                 "margin": "md",
                                                 "spacing": "sm",
-                                                "contents": [1, 2, 3, 4, 5].map(function(n) {
-                                                    return {
-                                                        "type": "box",
-                                                        "layout": "vertical",
-                                                        "contents": [
-                                                            { "type": "text", "text": "⭐", "size": "sm", "align": "center" },
-                                                            { "type": "text", "text": String(n), "size": "xs", "align": "center", "weight": "bold", "color": "#000080" }
-                                                        ],
-                                                        "action": {
-                                                            "type": "postback",
-                                                            "label": n + " คะแนน",
-                                                            "data": "action=vote&tid=" + fTicket + "&score=" + n
-                                                        }
-                                                    };
-                                                })
+                                                "contents": [
+                                                    { "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "cornerRadius": "md", "paddingAll": "4px", "contents": [{ "type": "text", "text": "⭐1", "size": "xxs", "align": "center", "weight": "bold", "color": "#000080" }], "action": { "type": "postback", "label": "1 ดาว", "data": "action=vote&tid=" + fTicket + "&score=1" } },
+                                                    { "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "cornerRadius": "md", "paddingAll": "4px", "contents": [{ "type": "text", "text": "⭐2", "size": "xxs", "align": "center", "weight": "bold", "color": "#000080" }], "action": { "type": "postback", "label": "2 ดาว", "data": "action=vote&tid=" + fTicket + "&score=2" } },
+                                                    { "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "cornerRadius": "md", "paddingAll": "4px", "contents": [{ "type": "text", "text": "⭐3", "size": "xxs", "align": "center", "weight": "bold", "color": "#000080" }], "action": { "type": "postback", "label": "3 ดาว", "data": "action=vote&tid=" + fTicket + "&score=3" } },
+                                                    { "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "cornerRadius": "md", "paddingAll": "4px", "contents": [{ "type": "text", "text": "⭐4", "size": "xxs", "align": "center", "weight": "bold", "color": "#000080" }], "action": { "type": "postback", "label": "4 ดาว", "data": "action=vote&tid=" + fTicket + "&score=4" } },
+                                                    { "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "cornerRadius": "md", "paddingAll": "4px", "contents": [{ "type": "text", "text": "⭐5", "size": "xxs", "align": "center", "weight": "bold", "color": "#000080" }], "action": { "type": "postback", "label": "5 ดาว", "data": "action=vote&tid=" + fTicket + "&score=5" } }
+                                                ]
                                             }
                                         ]
                                     },
@@ -318,15 +309,12 @@
                                             }
                                         ]
                                     },
-                                    "styles": {
-                                        "header": { "backgroundColor": "#000080" }
-                                    }
+                                    "styles": { "header": { "backgroundColor": "#000080" } }
                                 }
                             }]);
                         } catch (err) {
                             console.error("Flex Error:", err);
-                            // แสดง Alert เพื่อดูว่าค้างที่ตรงไหน
-                            alert("ส่ง Flex ไม่สำเร็จ: " + err.message);
+                            alert("Flex Error: " + err.message);
                             await liff.sendMessages([{ "type": "text", "text": "✅ บันทึกสำเร็จ: " + fTicket }]);
                         }
                     }
