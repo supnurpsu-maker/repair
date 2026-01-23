@@ -261,17 +261,7 @@
                                     {
                                         "type": "text", "text": "ปัญหา: " + fIssue, "size": "xs", "color": "#666666", "wrap": true
                                     },
-                                    { "type": "separator" },
-                                    {
-                                        "type": "box", "layout": "horizontal", "spacing": "xs",
-                                        "contents": [1, 2, 3, 4, 5].map(function(i) {
-                                            return {
-                                                "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "paddingAll": "xs", "cornerRadius": "sm",
-                                                "contents": [{ "type": "text", "text": "⭐" + i, "align": "center", "size": "xs" }],
-                                                "action": { "type": "postback", "label": String(i), "data": "v=" + i + "&t=" + fTicket }
-                                            };
-                                        })
-                                    }
+                                    
                                 ]
                             },
                             "footer": {
