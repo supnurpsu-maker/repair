@@ -94,93 +94,93 @@
     };
 
     form.onsubmit = async (e) => {
-        e.preventDefault();
-        btn.disabled = true;
-        loading.style.display = 'block';
+    e.preventDefault();
+    btn.disabled = true;
+    loading.style.display = 'block';
 
-        const fileInput = document.getElementById('image');
-        let base64 = "";
-        if (fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            base64 = await new Promise(resolve => {
-                const reader = new FileReader();
-                reader.onload = (ev) => resolve(ev.target.result.split(',')[1]);
-                reader.readAsDataURL(file);
-            });
-        }
+    // ดึงรูปภาพ (เหมือนเดิม)
+    const fileInput = document.getElementById('image');
+    let base64 = "";
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        base64 = await new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = (ev) => resolve(ev.target.result.split(',')[1]);
+            reader.readAsDataURL(file);
+        });
+    }
 
-        const payload = {
-            uid: profile.userId,
-            displayName: profile.displayName,
-            room: document.getElementById('room').value,
-            phone: document.getElementById('phone').value,
-            category: document.getElementById('category').value,
-            issue: document.getElementById('issue').value,
-            priority: document.getElementById('priority').value,
-            imageBase64: base64
-        };
-
-        try {
-            const response = await fetch(GAS_URL, {
-                method: "POST",
-                body: JSON.stringify(payload)
-            });
-            const res = await response.json();
-
-            if (res.result === "ok") {
-                const fTicket = res.ticketId;
-                const fQueue = res.pendingCount || "0";
-
-                if (liff.isInClient()) {
-                    try {
-                        // โครงสร้าง Flex แบบ Standard บังคับ Layout ทุกชั้น
-                        await liff.sendMessages([{
-                            "type": "flex",
-                            "altText": "แจ้งซ่อมสำเร็จ: " + fTicket,
-                            "contents": {
-                                "type": "bubble",
-                                "body": {
-                                    "type": "box",
-                                    "layout": "vertical",
-                                    "contents": [
-                                        { "type": "text", "text": "✅ แจ้งซ่อมสำเร็จ", "weight": "bold", "size": "lg", "color": "#000080" },
-                                        { "type": "box", "layout": "vertical", "margin": "md", "contents": [
-                                            { "type": "text", "text": "เลขรายการ: " + fTicket, "size": "sm", "weight": "bold" },
-                                            { "type": "text", "text": "คิวรอขณะนี้: " + fQueue + " คิว", "size": "sm", "color": "#666666" }
-                                        ]},
-                                        { "type": "text", "text": "ประเมินความพึงพอใจ", "margin": "lg", "size": "xs", "color": "#aaaaaa", "align": "center" },
-                                        { "type": "box", "layout": "horizontal", "margin": "sm", "spacing": "sm", "contents": [1,2,3,4,5].map(n => ({
-                                            "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "paddingAll": "8px", "cornerRadius": "md",
-                                            "contents": [{ "type": "text", "text": "⭐", "align": "center", "size": "sm" }],
-                                            "action": { "type": "postback", "label": String(n), "data": "action=vote&tid=" + fTicket + "&score=" + n }
-                                        }))},
-                                        { "type": "button", "margin": "lg", "style": "primary", "color": "#000080", "height": "sm", "action": {
-                                            "type": "uri",
-                                            "label": "ติดตามสถานะงานซ่อม",
-                                            "uri": "https://liff.line.me/" + LIFF_ID_REVIEW + "?ticket=" + fTicket
-                                        }}
-                                    ]
-                                }
-                            }
-                        }]);
-                    } catch (flexErr) {
-                        console.error("Flex Message Error:", flexErr);
-                        await liff.sendMessages([{ "type": "text", "text": "✅ แจ้งซ่อมสำเร็จ!\nเลขรายการ: " + fTicket }]);
-                    }
-                }
-                alert("บันทึกข้อมูลและส่งข้อความเรียบร้อย!");
-                liff.closeWindow();
-            } else {
-                alert("Error จากระบบ: " + res.message);
-            }
-        } catch (err) {
-            alert("บันทึกสำเร็จ แต่การส่ง Flex ผิดพลาด: " + err.message);
-            liff.closeWindow();
-        } finally {
-            btn.disabled = false;
-            loading.style.display = 'none';
-        }
+    const payload = {
+        uid: profile.userId,
+        displayName: profile.displayName,
+        room: document.getElementById('room').value,
+        phone: document.getElementById('phone').value,
+        category: document.getElementById('category').value,
+        issue: document.getElementById('issue').value,
+        priority: document.getElementById('priority').value,
+        imageBase64: base64
     };
+
+    try {
+        const response = await fetch(GAS_URL, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        });
+        const resData = await response.json();
+
+        if (resData.result === "ok") {
+            const fTicket = String(resData.ticketId || "No-ID");
+            const fQueue = String(resData.pendingCount || "0");
+
+            if (liff.isInClient()) {
+                try {
+                    // --- Flex แบบลดความซับซ้อนที่สุด (Minimalist) ---
+                    await liff.sendMessages([{
+                        "type": "flex",
+                        "altText": "แจ้งซ่อม: " + fTicket,
+                        "contents": {
+                            "type": "bubble",
+                            "body": {
+                                "type": "box",
+                                "layout": "vertical",
+                                "contents": [
+                                    { "type": "text", "text": "✅ บันทึกสำเร็จ", "weight": "bold", "size": "lg" },
+                                    { "type": "text", "text": "เลขที่: " + fTicket, "margin": "md" },
+                                    { "type": "text", "text": "คิวรอ: " + fQueue + " คิว", "size": "sm", "color": "#999999" },
+                                    {
+                                        "type": "button",
+                                        "margin": "xl",
+                                        "style": "primary",
+                                        "color": "#000080",
+                                        "action": {
+                                            "type": "uri",
+                                            "label": "ดูสถานะงาน",
+                                            "uri": "https://liff.line.me/" + LIFF_ID_REVIEW.trim() + "?ticket=" + fTicket
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }]);
+                } catch (flexErr) {
+                    // *** จุดสำคัญ: แสดง Error จริงๆ จาก LINE ให้เราเห็น ***
+                    console.error("LINE Flex Error:", flexErr);
+                    alert("LINE Reject Flex: " + flexErr.message + "\n(ตรวจสอบ Scopes ใน LINE Developers)");
+                    
+                    // ส่ง Text สำรอง
+                    await liff.sendMessages([{ "type": "text", "text": "✅ บันทึกสำเร็จ\nเลขที่: " + fTicket }]);
+                }
+            }
+            alert("แจ้งซ่อมสำเร็จ! เลขที่: " + fTicket);
+            liff.closeWindow();
+        }
+    } catch (err) {
+        alert("GAS Error: " + err.message);
+    } finally {
+        btn.disabled = false;
+        loading.style.display = 'none';
+    }
+};
 
     main();
 </script>
