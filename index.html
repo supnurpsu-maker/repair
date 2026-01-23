@@ -146,28 +146,63 @@
                 // --- ส่วนส่ง Flex Message (ปรับปรุงเพื่อความชัวร์ 100%) ---
             if (liff.isInClient()) {
                 const fTicket = String(resData.ticketId || "N/A");
-                
+                const fRoom = String(roomVal || "-");
+                const fIssue = String(issueVal || "-");
+                const fQueue = String(resData.pendingCount !== undefined ? resData.pendingCount : "0");
+            
                 try {
                     await liff.sendMessages([{
                         "type": "flex",
                         "altText": "แจ้งซ่อมสำเร็จ: " + fTicket,
                         "contents": {
                             "type": "bubble",
+                            "header": {
+                                "type": "box",
+                                "layout": "vertical",
+                                "backgroundColor": "#000080",
+                                "contents": [
+                                    { "type": "text", "text": "บันทึกข้อมูลเรียบร้อย", "color": "#FFFFFF", "weight": "bold", "size": "md" }
+                                ]
+                            },
                             "body": {
                                 "type": "box",
                                 "layout": "vertical",
+                                "spacing": "md",
                                 "contents": [
-                                    { "type": "text", "text": "✅ ทดสอบปุ่ม URI", "weight": "bold" },
-                                    { "type": "text", "text": "Ticket: " + fTicket, "margin": "sm" },
+                                    {
+                                        "type": "box",
+                                        "layout": "horizontal",
+                                        "contents": [
+                                            { "type": "text", "text": "เลขที่แจ้ง:", "size": "sm", "color": "#888888", "flex": 2 },
+                                            { "type": "text", "text": fTicket, "size": "sm", "weight": "bold", "flex": 4 }
+                                        ]
+                                    },
+                                    {
+                                        "type": "box",
+                                        "layout": "vertical",
+                                        "backgroundColor": "#F0F0F0",
+                                        "paddingAll": "md",
+                                        "cornerRadius": "md",
+                                        "contents": [
+                                            { "type": "text", "text": "📍 สถานที่: " + fRoom, "size": "sm", "wrap": true },
+                                            { "type": "text", "text": "🛠 ปัญหา: " + fIssue, "size": "sm", "wrap": true, "margin": "xs" }
+                                        ]
+                                    },
+                                    { "type": "text", "text": "คิวที่รอขณะนี้: " + fQueue + " คิว", "size": "xs", "color": "#999999", "align": "center" }
+                                ]
+                            },
+                            "footer": {
+                                "type": "box",
+                                "layout": "vertical",
+                                "contents": [
                                     {
                                         "type": "button",
                                         "style": "primary",
                                         "color": "#000080",
-                                        "margin": "lg",
                                         "action": {
-                                            "type": "uri",
-                                            "label": "เปิด Google",
-                                            "uri": "https://www.google.com"
+                                            "type": "message",
+                                            "label": "🔄 ตรวจสอบสถานะล่าสุด",
+                                            "text": "เช็คสถานะงาน " + fTicket
                                         }
                                     }
                                 ]
@@ -177,7 +212,7 @@
                 } catch (err) {
                     await liff.sendMessages([{
                         "type": "text",
-                        "text": "3.3 (URI) ก็ยังพัง: " + fTicket
+                        "text": "✅ บันทึกสำเร็จ!\nเลขที่: " + fTicket + "\nคิวที่รอ: " + fQueue
                     }]);
                 }
             }
