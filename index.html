@@ -146,9 +146,11 @@
                 // --- ส่วนส่ง Flex Message (ปรับปรุงเพื่อความชัวร์ 100%) ---
             if (liff.isInClient()) {
                 const fTicket = String(resData.ticketId || "N/A");
-                const botId = "@YOUR_BOT_ID"; // ** เปลี่ยนเป็น ID บอทของคุณ **
+                const fRoom = String(roomVal || "-");
+                const fProblem = String(problemVal || "-");
+                const fQueue = String(resData.pendingCount !== undefined ? resData.pendingCount : "0");
+                const botId = "@YOUR_BOT_ID"; // ** อย่าลืมเปลี่ยนเป็น ID บอทของคุณ **
             
-                // ฟังก์ชันช่วยสร้างลิงก์สำหรับส่งข้อความประเมินผล
                 const voteLink = (score) => `https://line.me/R/oaMessage/${botId}/?ประเมิน%20${fTicket}%20ได้%20${score}%20ดาว`;
             
                 try {
@@ -157,71 +159,98 @@
                         "altText": "แจ้งซ่อมสำเร็จ: " + fTicket,
                         "contents": {
                             "type": "bubble",
-                            "header": {
-                                "type": "box",
-                                "layout": "vertical",
-                                "backgroundColor": "#000080",
-                                "contents": [
-                                    { "type": "text", "text": "บันทึกข้อมูลเรียบร้อย", "color": "#FFFFFF", "weight": "bold", "size": "sm" }
-                                ]
-                            },
                             "body": {
                                 "type": "box",
                                 "layout": "vertical",
-                                "spacing": "md",
+                                "paddingAll": "0px",
                                 "contents": [
-                                    { "type": "text", "text": fTicket, "weight": "bold", "size": "xl" },
-                                    { "type": "text", "text": "กรุณาประเมินความพึงพอใจด้านล่างนี้", "size": "xs", "color": "#aaaaaa" },
-                                    
-                                    // --- ส่วนของแถบดาว 1-5 ---
+                                    // --- ส่วนหัวรายการแจ้งซ่อม ---
                                     {
                                         "type": "box",
                                         "layout": "horizontal",
-                                        "margin": "md",
-                                        "spacing": "sm",
-                                        "contents": [1, 2, 3, 4, 5].map(num => ({
-                                            "type": "box",
-                                            "layout": "vertical",
-                                            "contents": [
-                                                { "type": "text", "text": "⭐", "align": "center", "size": "md" },
-                                                { "type": "text", "text": String(num), "align": "center", "size": "xs", "weight": "bold", "color": "#000080" }
-                                            ],
-                                            "paddingAll": "sm",
-                                            "cornerRadius": "md",
-                                            "backgroundColor": "#F0F0F0",
-                                            "action": {
-                                                "type": "uri",
-                                                "label": String(num),
-                                                "uri": voteLink(num)
-                                            }
-                                        }))
+                                        "paddingAll": "20px",
+                                        "contents": [
+                                            { "type": "text", "text": "รายการแจ้งซ่อม", "weight": "bold", "size": "md", "flex": 1 },
+                                            { "type": "text", "text": fTicket, "weight": "bold", "size": "md", "align": "end", "color": "#000080" }
+                                        ]
                                     },
-                                    // -----------------------
-            
-                                    { "type": "separator", "margin": "lg" },
+                                    // --- ส่วนแถบสีสถานะและคิว (Background Blue) ---
                                     {
-                                        "type": "text",
-                                        "text": "🔄 ตรวจสอบสถานะงาน",
-                                        "color": "#0000FF",
-                                        "align": "center",
-                                        "size": "sm",
-                                        "decoration": "underline",
-                                        "margin": "md",
-                                        "action": {
-                                            "type": "uri",
-                                            "label": "status",
-                                            "uri": `https://line.me/R/oaMessage/${botId}/?เช็คสถานะ%20${fTicket}`
-                                        }
+                                        "type": "box",
+                                        "layout": "vertical",
+                                        "backgroundColor": "#F4F7FF",
+                                        "paddingAll": "15px",
+                                        "contents": [
+                                            {
+                                                "type": "box",
+                                                "layout": "horizontal",
+                                                "contents": [
+                                                    { "type": "text", "text": "สถานะ :", "size": "sm", "color": "#555555", "flex": 2 },
+                                                    { "type": "text", "text": "รอดำเนินการ", "size": "sm", "weight": "bold", "color": "#000080", "flex": 3 }
+                                                ]
+                                            },
+                                            {
+                                                "type": "box",
+                                                "layout": "horizontal",
+                                                "margin": "sm",
+                                                "contents": [
+                                                    { "type": "text", "text": "คิวที่รอขณะนี้ :", "size": "sm", "color": "#555555", "flex": 2 },
+                                                    { "type": "text", "text": fQueue + " คิว", "size": "sm", "weight": "bold", "color": "#000080", "flex": 3 }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    // --- ส่วนรายละเอียด สถานที่/ปัญหา ---
+                                    {
+                                        "type": "box",
+                                        "layout": "vertical",
+                                        "paddingAll": "20px",
+                                        "spacing": "xs",
+                                        "contents": [
+                                            { "type": "text", "text": "สถานที่", "size": "xs", "color": "#aaaaaa", "weight": "bold" },
+                                            { "type": "text", "text": fRoom, "size": "sm", "wrap": true, "margin": "xs" },
+                                            { "type": "text", "text": "ปัญหา", "size": "xs", "color": "#aaaaaa", "weight": "bold", "margin": "lg" },
+                                            { "type": "text", "text": fProblem, "size": "sm", "wrap": true, "margin": "xs" }
+                                        ]
+                                    },
+                                    // --- ส่วนประเมินดาว ---
+                                    {
+                                        "type": "box",
+                                        "layout": "vertical",
+                                        "paddingAll": "20px",
+                                        "paddingTop": "0px",
+                                        "contents": [
+                                            { "type": "text", "text": "ประเมินความพึงพอใจ", "size": "xs", "align": "center", "color": "#aaaaaa" },
+                                            {
+                                                "type": "box",
+                                                "layout": "horizontal",
+                                                "margin": "md",
+                                                "spacing": "sm",
+                                                "contents": [1, 2, 3, 4, 5].map(num => ({
+                                                    "type": "box",
+                                                    "layout": "vertical",
+                                                    "backgroundColor": "#F0F0F0",
+                                                    "cornerRadius": "md",
+                                                    "paddingAll": "8px",
+                                                    "contents": [
+                                                        { "type": "text", "text": "⭐", "align": "center", "size": "sm" },
+                                                        { "type": "text", "text": String(num), "align": "center", "size": "xxs", "weight": "bold" }
+                                                    ],
+                                                    "action": {
+                                                        "type": "uri",
+                                                        "label": String(num),
+                                                        "uri": voteLink(num)
+                                                    }
+                                                }))
+                                            }
+                                        ]
                                     }
                                 ]
                             }
                         }
                     }]);
                 } catch (err) {
-                    await liff.sendMessages([{
-                        "type": "text",
-                        "text": "✅ บันทึกสำเร็จ: " + fTicket + "\nกรุณาให้คะแนนโดยพิมพ์ 'ประเมิน " + fTicket + " ได้ (1-5) ดาว'"
-                    }]);
+                    await liff.sendMessages([{ "type": "text", "text": "บันทึกสำเร็จ: " + fTicket }]);
                 }
             }
                 alert("แจ้งซ่อมสำเร็จ!");
