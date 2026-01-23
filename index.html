@@ -37,10 +37,14 @@
         <input type="tel" id="phone" required>
         <label for="category">หมวดหมู่ปัญหา</label>
         <select id="category" required>
-            <option value="Hardware">Hardware</option>
-            <option value="Software">Software</option>
-            <option value="Network">Network</option>
-            <option value="Other">อื่นๆ</option>
+          <option value="">-- เลือก --</option>
+          <option value="Computer AIO">Computer AIO</option>
+          <option value="Laptop">Laptop</option>
+          <option value="Network">Network</option>
+          <option value="PSU Passport">PSU Passport</option>
+          <option value="ZOOM/UC-Phone">ZOOM/UC-Phone</option>
+          <option value="CCTV/FingerPrint Scan">CCTV/FingerPrint Scan</option>
+          <option value="Others">Others</option>
         </select>
         <label for="issue">ปัญหาที่พบ / อาการ</label>
         <textarea id="issue" rows="3" required></textarea>
@@ -62,7 +66,7 @@
     // ==========================================
     // ส่วนตั้งค่า
     // ==========================================
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxWLErClBzuTa0qlxJiZghPtAhCpi3Vx7J0B-X5lSrZhAfyEcziabLiZNs31zSnSpdt/exec"; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyS2EqD5mkQQuwWVfL6YkOOrLT9LOL_XpHG2Z7trU2jWIz-6k21pVYm7H4NsO8lN2Ph/exec"; 
     const LIFF_ID_MAIN = "2008875334-eZXiyz43";
     const LIFF_ID_REVIEW = "2008875334-d6l72Uox";
     const LIFF_ID_TRACK = "2008875334-wOYUvNha";
