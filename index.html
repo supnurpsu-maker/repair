@@ -219,6 +219,7 @@
 
                 if (res.result === "ok") {
                     // ป้องกันค่าว่างด้วยการใส่ ||
+                    // ดึงค่าจากฟอร์มมาแสดงใน Flex
                     const fRoom = document.getElementById('room').value;
                     const fIssue = document.getElementById('issue').value;
                     const fTicket = String(res.ticketId || "No ID");
@@ -232,40 +233,69 @@
                                 "contents": {
                                     "type": "bubble",
                                     "header": {
-                                        "type": "box", "layout": "horizontal",
+                                        "type": "box",
+                                        "layout": "horizontal",
                                         "contents": [
                                             { "type": "text", "text": "รายการแจ้งซ่อม", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
                                             { "type": "text", "text": fTicket, "align": "end", "weight": "bold", "size": "sm", "color": "#FFFFFF" }
                                         ]
                                     },
                                     "body": {
-                                        "type": "box", "layout": "vertical",
+                                        "type": "box",
+                                        "layout": "vertical",
                                         "contents": [
+                                            // --- ส่วนที่มีสีพื้นหลัง (สถานะ และ คิว) ---
                                             {
-                                                "type": "box", "layout": "vertical", "backgroundColor": "#FBCEB1", "paddingAll": "lg", "cornerRadius": "md",
+                                                "type": "box",
+                                                "layout": "vertical",
+                                                "backgroundColor": "#FBCEB1",
+                                                "paddingAll": "lg",
+                                                "cornerRadius": "md",
                                                 "contents": [
                                                     { "type": "text", "text": "สถานะ: รอดำเนินการ", "weight": "bold", "size": "md", "color": "#000080" },
                                                     { "type": "text", "text": "คิวที่รอขณะนี้: " + fQueue + " คิว", "size": "sm", "color": "#000080", "margin": "sm" }
                                                 ]
                                             },
-                                            // --- เพิ่มส่วนประเมินดาว ---
+                                            // --- ส่วนข้อมูลสถานที่ และ ปัญหา ---
                                             {
                                                 "type": "box",
                                                 "layout": "vertical",
-                                                "margin": "xl",
+                                                "margin": "lg",
                                                 "spacing": "sm",
                                                 "contents": [
                                                     {
-                                                        "type": "text",
-                                                        "text": "รบกวนให้คะแนนเมื่อดำเนินการเสร็จสิ้น",
-                                                        "size": "xs",
-                                                        "color": "#aaaaaa",
-                                                        "align": "center"
+                                                        "type": "box",
+                                                        "layout": "baseline",
+                                                        "spacing": "sm",
+                                                        "contents": [
+                                                            { "type": "text", "text": "สถานที่:", "color": "#aaaaaa", "size": "sm", "flex": 2 },
+                                                            { "type": "text", "text": fRoom, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
+                                                        ]
                                                     },
                                                     {
                                                         "type": "box",
+                                                        "layout": "baseline",
+                                                        "spacing": "sm",
+                                                        "contents": [
+                                                            { "type": "text", "text": "ปัญหา:", "color": "#aaaaaa", "size": "sm", "flex": 2 },
+                                                            { "type": "text", "text": fIssue, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            // --- ส่วนประเมินดาว (เพิ่มตามความต้องการล่าสุด) ---
+                                            { "type": "separator", "margin": "xl" },
+                                            {
+                                                "type": "box",
+                                                "layout": "vertical",
+                                                "margin": "md",
+                                                "spacing": "sm",
+                                                "contents": [
+                                                    { "type": "text", "text": "รบกวนให้คะแนนเมื่อดำเนินการเสร็จสิ้น", "size": "xs", "color": "#aaaaaa", "align": "center" },
+                                                    {
+                                                        "type": "box",
                                                         "layout": "horizontal",
-                                                        "spacing": "md",
+                                                        "margin": "sm",
                                                         "contents": [1, 2, 3, 4, 5].map(n => ({
                                                             "type": "text",
                                                             "text": "⭐",
@@ -279,24 +309,34 @@
                                                         }))
                                                     }
                                                 ]
-                                            },
-                                            "footer": {
-                                                "type": "box", "layout": "vertical",
-                                                "contents": [
-                                                    {
-                                                        "type": "button", "style": "primary", "color": "#000080", "height": "sm",
-                                                        "action": {
-                                                            "type": "uri", "label": "ดูสถานะงาน",
-                                                            "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket
-                                                        }
-                                                    }
-                                                ]
-                                            },
-                                            "styles": { "header": { "backgroundColor": "#000080" } }
-                                        }
-                                }]);
+                                            }
+                                        ]
+                                    },
+                                    "footer": {
+                                        "type": "box",
+                                        "layout": "vertical",
+                                        "contents": [
+                                            {
+                                                "type": "button",
+                                                "style": "primary",
+                                                "color": "#000080",
+                                                "height": "sm",
+                                                "action": {
+                                                    "type": "uri",
+                                                    "label": "ดูสถานะงาน",
+                                                    "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    "styles": {
+                                        "header": { "backgroundColor": "#000080" }
+                                    }
+                                }
+                            }]);
                         } catch (err) {
-                            console.error(err);
+                            console.error("Flex Error:", err);
+                            // Fallback ส่งเป็นข้อความธรรมดาถ้า Flex มีปัญหา
                             await liff.sendMessages([{ "type": "text", "text": "✅ บันทึกสำเร็จ: " + fTicket }]);
                         }
                     }
