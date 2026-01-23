@@ -147,7 +147,6 @@
             if (liff.isInClient()) {
                 const fTicket = String(resData.ticketId || "N/A");
                 const fRoom = String(roomVal || "-");
-                const fIssue = String(issueVal || "-");
             
                 try {
                     await liff.sendMessages([{
@@ -159,31 +158,33 @@
                                 "type": "box",
                                 "layout": "vertical",
                                 "contents": [
-                                    { "type": "text", "text": "เลขที่แจ้ง: " + fTicket, "weight": "bold" },
-                                    { "type": "text", "text": "สถานที่: " + fRoom, "size": "sm", "wrap": true, "margin": "md" },
-                                    { "type": "text", "text": "ปัญหา: " + fIssue, "size": "sm", "wrap": true },
+                                    { "type": "text", "text": "✅ แจ้งซ่อมสำเร็จ", "weight": "bold", "color": "#000080", "size": "lg" },
+                                    { "type": "text", "text": "เลขที่: " + fTicket, "margin": "sm" },
+                                    { "type": "text", "text": "สถานที่: " + fRoom, "size": "sm", "color": "#666666" },
                                     { "type": "separator", "margin": "lg" },
                                     {
-                                        "type": "button",
-                                        "height": "sm",
+                                        "type": "text",
+                                        "text": "คลิกที่นี่เพื่ออัปเดตสถานะ",
+                                        "margin": "lg",
+                                        "align": "center",
+                                        "color": "#0000FF",
+                                        "decoration": "underline",
+                                        "size": "sm",
                                         "action": {
                                             "type": "postback",
                                             "label": "อัปเดตสถานะ",
                                             "data": "action=checkStatus&tid=" + fTicket
-                                        },
-                                        "style": "primary",
-                                        "color": "#000080",
-                                        "margin": "md"
+                                        }
                                     }
                                 ]
                             }
                         }
                     }]);
                 } catch (err) {
-                    // หากยังไม่ขึ้น ผมจะพาตรวจสอบ "ตัวแปร" ที่ส่งไปใน Data ครับ
+                    // หากชุดนี้ยังไม่ขึ้น แสดงว่าปัญหาอยู่ที่โครงสร้าง "action" ภายใน data
                     await liff.sendMessages([{
                         "type": "text",
-                        "text": "3.1 ยังมีปัญหาที่ปุ่ม: " + fTicket
+                        "text": "3.2 (Text Action) มีปัญหา: " + fTicket
                     }]);
                 }
             }
