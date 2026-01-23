@@ -221,10 +221,13 @@
                     // ป้องกันค่าว่างด้วยการใส่ ||
                     // ดึงค่าจากฟอร์มมาแสดงใน Flex
                     // ดึงค่าจากฟอร์ม
-                    const fRoom = document.getElementById('room').value || "-";
-                    const fIssue = document.getElementById('issue').value || "-";
+                    // 1. ดึงค่าและล้างอักขระพิเศษที่อาจทำให้ JSON พัง
+                    const fRoom = (document.getElementById('room').value || "-").replace(/"/g, "'").replace(/\n/g, " ");
+                    const fIssue = (document.getElementById('issue').value || "-").replace(/"/g, "'").replace(/\n/g, " ");
                     const fTicket = String(res.ticketId || "No ID");
                     const fQueue = String(res.pendingCount || "0");
+                    
+                    // 2. เตรียม URL สำหรับปุ่มดูสถานะ
                     const trackUrl = "https://liff.line.me/" + (typeof LIFF_ID_TRACK !== 'undefined' ? LIFF_ID_TRACK : "") + "?ticket=" + fTicket;
                     
                     if (liff.isInClient()) {
@@ -280,20 +283,21 @@
                                                 "layout": "horizontal",
                                                 "margin": "md",
                                                 "spacing": "sm",
-                                                "contents": [1, 2, 3, 4, 5].map(n => ({
-                                                    "type": "box",
-                                                    "layout": "vertical",
-                                                    "spacing": "none",
-                                                    "contents": [
-                                                        { "type": "text", "text": "⭐", "size": "sm", "align": "center" },
-                                                        { "type": "text", "text": String(n), "size": "xs", "align": "center", "weight": "bold", "color": "#000080" }
-                                                    ],
-                                                    "action": {
-                                                        "type": "postback",
-                                                        "label": n + " ดาว",
-                                                        "data": "action=vote&tid=" + fTicket + "&score=" + n
-                                                    }
-                                                }))
+                                                "contents": [1, 2, 3, 4, 5].map(function(n) {
+                                                    return {
+                                                        "type": "box",
+                                                        "layout": "vertical",
+                                                        "contents": [
+                                                            { "type": "text", "text": "⭐", "size": "sm", "align": "center" },
+                                                            { "type": "text", "text": String(n), "size": "xs", "align": "center", "weight": "bold", "color": "#000080" }
+                                                        ],
+                                                        "action": {
+                                                            "type": "postback",
+                                                            "label": n + " คะแนน",
+                                                            "data": "action=vote&tid=" + fTicket + "&score=" + n
+                                                        }
+                                                    };
+                                                })
                                             }
                                         ]
                                     },
@@ -321,6 +325,8 @@
                             }]);
                         } catch (err) {
                             console.error("Flex Error:", err);
+                            // แสดง Alert เพื่อดูว่าค้างที่ตรงไหน
+                            alert("ส่ง Flex ไม่สำเร็จ: " + err.message);
                             await liff.sendMessages([{ "type": "text", "text": "✅ บันทึกสำเร็จ: " + fTicket }]);
                         }
                     }
