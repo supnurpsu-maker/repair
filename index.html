@@ -147,6 +147,7 @@
             if (liff.isInClient()) {
                 const fTicket = String(resData.ticketId || "N/A");
                 const fRoom = String(roomVal || "-");
+                const fQueue = String(resData.pendingCount !== undefined ? resData.pendingCount : "0");
             
                 try {
                     await liff.sendMessages([{
@@ -158,38 +159,31 @@
                                 "type": "box",
                                 "layout": "vertical",
                                 "contents": [
-                                    {
-                                        "type": "text",
-                                        "text": "✅ บันทึกสำเร็จ: " + fTicket,
-                                        "weight": "bold"
-                                    },
-                                    {
-                                        "type": "text",
-                                        "text": "สถานที่: " + fRoom,
-                                        "size": "sm",
-                                        "margin": "md"
-                                    },
+                                    { "type": "text", "text": "✅ บันทึกข้อมูลสำเร็จ", "weight": "bold", "size": "md", "color": "#000080" },
+                                    { "type": "text", "text": "เลขที่: " + fTicket, "margin": "md", "weight": "bold" },
+                                    { "type": "text", "text": "สถานที่: " + fRoom, "size": "sm", "wrap": true },
+                                    { "type": "text", "text": "คิวที่รอ: " + fQueue + " คิว", "size": "xs", "color": "#888888", "margin": "sm" },
                                     {
                                         "type": "button",
+                                        "style": "primary",
+                                        "color": "#000080",
+                                        "margin": "lg",
+                                        "height": "sm",
                                         "action": {
-                                            "type": "uri",
-                                            "label": "เช็คสถานะ (Link)",
-                                            "uri": "https://www.google.com" 
-                                        },
-                                        "style": "secondary",
-                                        "margin": "lg"
+                                            "type": "message",
+                                            "label": "ตรวจสอบสถานะล่าสุด",
+                                            "text": "เช็คสถานะ " + fTicket
+                                        }
                                     }
                                 ]
                             }
                         }
                     }]);
-                    console.log("Flex Sent Successfully");
                 } catch (err) {
-                    // ถ้าตกมาตรงนี้ แสดงว่า JSON ข้างบนยังมีจุดที่ LINE ไม่ชอบ
-                    console.error("Flex Error:", err);
+                    // หากตัวนี้ไม่ขึ้น แสดงว่าปัญหาอยู่ที่ Message Action
                     await liff.sendMessages([{
                         "type": "text",
-                        "text": "✅ บันทึกสำเร็จ!\nเลขที่: " + fTicket
+                        "text": "ขั้นตอนที่ 5 มีปัญหา (Message Action): " + fTicket
                     }]);
                 }
             }
