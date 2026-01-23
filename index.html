@@ -224,96 +224,104 @@
                 const res = await response.json();
 
                 if (res.result === "ok") {
-                    // --- เตรียมข้อมูลสำหรับ Flex ---
-                    var fRoom = (document.getElementById('room').value || "-").replace(/"/g, "").replace(/\n/g, " ");
-                    var fIssue = (document.getElementById('issue').value || "-").replace(/"/g, "").replace(/\n/g, " ");
+                    // 1. เตรียมข้อมูลแบบ Clean ที่สุด
+                    var fRoom = (document.getElementById('room').value || "-").replace(/[\\"\n\r]/g, "");
+                    var fIssue = (document.getElementById('issue').value || "-").replace(/[\\"\n\r]/g, "");
                     var fTicket = String(res.ticketId || "No ID");
                     var fQueue = String(res.pendingCount || "0");
-
-                    var trackUrl = "https://line.me";
-                    if (typeof LIFF_ID_TRACK !== 'undefined') {
-                        trackUrl = "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket;
-                    }
-
+                    
+                    var trackUrl = "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket;
+                
                     if (liff.isInClient()) {
-                        // สร้าง Flex Message แบบ Manual (5 ปุ่ม) เพื่อความเสถียรสูงสุด
-                        const flexMessage = {
-                            "type": "flex",
-                            "altText": "บิลแจ้งซ่อม: " + fTicket,
-                            "contents": {
-                                "type": "bubble",
-                                "header": {
-                                    "type": "box", "layout": "horizontal", "backgroundColor": "#000080",
-                                    "contents": [
-                                        { "type": "text", "text": "แจ้งซ่อมสำเร็จ", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
-                                        { "type": "text", "text": fTicket, "align": "end", "weight": "bold", "color": "#FFFFFF", "size": "sm" }
-                                    ]
-                                },
-                                "body": {
-                                    "type": "box", "layout": "vertical",
-                                    "contents": [
-                                        {
-                                            "type": "box", "layout": "vertical", "backgroundColor": "#FBCEB1", "cornerRadius": "md", "paddingAll": "md",
-                                            "contents": [
-                                                { "type": "text", "text": "สถานะ: รอดำเนินการ", "weight": "bold", "color": "#000080" },
-                                                { "type": "text", "text": "คิวที่รอ: " + fQueue + " คิว", "size": "xs", "color": "#000080", "margin": "xs" }
-                                            ]
-                                        },
-                                        {
-                                            "type": "box", "layout": "vertical", "margin": "lg", "spacing": "sm",
-                                            "contents": [
-                                                {
-                                                    "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
-                                                        { "type": "text", "text": "สถานที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
-                                                        { "type": "text", "text": fRoom, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
-                                                    ]
-                                                },
-                                                {
-                                                    "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
-                                                        { "type": "text", "text": "ปัญหา:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
-                                                        { "type": "text", "text": fIssue, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
-                                                    ]
+                        // 2. สร้างโครงสร้าง Flex Message (เน้นความเรียบง่ายตามมาตรฐาน LINE)
+                        const flexPayload = {
+                            "type": "bubble",
+                            "header": {
+                                "type": "box", "layout": "horizontal", "backgroundColor": "#000080",
+                                "contents": [
+                                    { "type": "text", "text": "แจ้งซ่อมสำเร็จ", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
+                                    { "type": "text", "text": fTicket, "align": "end", "weight": "bold", "color": "#FFFFFF", "size": "sm" }
+                                ]
+                            },
+                            "body": {
+                                "type": "box", "layout": "vertical", "spacing": "md",
+                                "contents": [
+                                    {
+                                        "type": "box", "layout": "vertical", "backgroundColor": "#FBCEB1", "cornerRadius": "md", "paddingAll": "md",
+                                        "contents": [
+                                            { "type": "text", "text": "สถานะ: รอดำเนินการ", "weight": "bold", "color": "#000080" },
+                                            { "type": "text", "text": "คิวที่รอ: " + fQueue + " คิว", "size": "xs", "color": "#000080", "margin": "xs" }
+                                        ]
+                                    },
+                                    {
+                                        "type": "box", "layout": "vertical", "spacing": "sm",
+                                        "contents": [
+                                            { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
+                                                { "type": "text", "text": "สถานที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
+                                                { "type": "text", "text": fRoom, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
+                                            ]},
+                                            { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
+                                                { "type": "text", "text": "ปัญหา:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
+                                                { "type": "text", "text": fIssue, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
+                                            ]}
+                                        ]
+                                    },
+                                    { "type": "separator" },
+                                    { "type": "text", "text": "รบกวนให้คะแนนความพึงพอใจ", "size": "xxs", "color": "#aaaaaa", "align": "center" },
+                                    {
+                                        "type": "box",
+                                        "layout": "horizontal",
+                                        "spacing": "xs",
+                                        "contents": [1, 2, 3, 4, 5].map(function(n) {
+                                            return {
+                                                "type": "box",
+                                                "layout": "vertical",
+                                                "backgroundColor": "#F0F0F0",
+                                                "cornerRadius": "sm",
+                                                "paddingAll": "xs",
+                                                "contents": [
+                                                    { "type": "text", "text": "⭐", "size": "xxs", "align": "center" },
+                                                    { "type": "text", "text": String(n), "size": "xs", "align": "center", "weight": "bold" }
+                                                ],
+                                                "action": {
+                                                    "type": "postback",
+                                                    "label": n + " stars",
+                                                    "data": "action=vote&tid=" + fTicket + "&score=" + n
                                                 }
-                                            ]
-                                        },
-                                        { "type": "separator", "margin": "lg" },
-                                        { "type": "text", "text": "ให้คะแนนเมื่องานเสร็จสิ้น", "size": "xxs", "color": "#aaaaaa", "align": "center", "margin": "md" },
-                                        {
-                                            "type": "box", "layout": "horizontal", "margin": "sm", "spacing": "xs", "justifyContent": "center",
-                                            "contents": [
-                                                { "type": "box", "layout": "vertical", "backgroundColor": "#F5F5F5", "cornerRadius": "sm", "width": "40px", "paddingAll": "xs", "contents": [{ "type": "text", "text": "⭐", "size": "xs", "align": "center" }, { "type": "text", "text": "1", "size": "xs", "align": "center", "weight": "bold", "color": "#000080" }], "action": { "type": "postback", "label": "1 ดาว", "data": "action=vote&tid=" + fTicket + "&score=1" } },
-                                                { "type": "box", "layout": "vertical", "backgroundColor": "#F5F5F5", "cornerRadius": "sm", "width": "40px", "paddingAll": "xs", "contents": [{ "type": "text", "text": "⭐", "size": "xs", "align": "center" }, { "type": "text", "text": "2", "size": "xs", "align": "center", "weight": "bold", "color": "#000080" }], "action": { "type": "postback", "label": "2 ดาว", "data": "action=vote&tid=" + fTicket + "&score=2" } },
-                                                { "type": "box", "layout": "vertical", "backgroundColor": "#F5F5F5", "cornerRadius": "sm", "width": "40px", "paddingAll": "xs", "contents": [{ "type": "text", "text": "⭐", "size": "xs", "align": "center" }, { "type": "text", "text": "3", "size": "xs", "align": "center", "weight": "bold", "color": "#000080" }], "action": { "type": "postback", "label": "3 ดาว", "data": "action=vote&tid=" + fTicket + "&score=3" } },
-                                                { "type": "box", "layout": "vertical", "backgroundColor": "#F5F5F5", "cornerRadius": "sm", "width": "40px", "paddingAll": "xs", "contents": [{ "type": "text", "text": "⭐", "size": "xs", "align": "center" }, { "type": "text", "text": "4", "size": "xs", "align": "center", "weight": "bold", "color": "#000080" }], "action": { "type": "postback", "label": "4 ดาว", "data": "action=vote&tid=" + fTicket + "&score=4" } },
-                                                { "type": "box", "layout": "vertical", "backgroundColor": "#F5F5F5", "cornerRadius": "sm", "width": "40px", "paddingAll": "xs", "contents": [{ "type": "text", "text": "⭐", "size": "xs", "align": "center" }, { "type": "text", "text": "5", "size": "xs", "align": "center", "weight": "bold", "color": "#000080" }], "action": { "type": "postback", "label": "5 ดาว", "data": "action=vote&tid=" + fTicket + "&score=5" } }
-                                            ]
-                                        }
-                                    ]
-                                },
-                                "footer": {
-                                    "type": "box", "layout": "vertical",
-                                    "contents": [{
-                                        "type": "button", "style": "primary", "color": "#000080", "height": "sm",
+                                            };
+                                        })
+                                    }
+                                ]
+                            },
+                            "footer": {
+                                "type": "box", "layout": "vertical",
+                                "contents": [
+                                    {
+                                        "type": "button",
+                                        "style": "primary",
+                                        "color": "#000080",
+                                        "height": "sm",
                                         "action": { "type": "uri", "label": "ติดตามสถานะ", "uri": trackUrl }
-                                    }]
-                                }
+                                    }
+                                ]
                             }
                         };
-
-                        // ส่ง Flex Message และรอให้เสร็จก่อนปิดหน้าต่าง
-                        liff.sendMessages([flexMessage])
-                            .then(() => {
-                                liff.closeWindow(); // ปิดเมื่อส่งเสร็จแล้วเท่านั้น
-                            })
-                            .catch((err) => {
-                                alert("Error sending Flex: " + err.message);
-                                liff.closeWindow(); // ปิดแม้จะ error
-                            });
-
+                
+                        // 3. ส่งข้อความและจัดการลำดับการปิดหน้าต่างให้ดี
+                        liff.sendMessages([{
+                            "type": "flex",
+                            "altText": "แจ้งซ่อมสำเร็จ " + fTicket,
+                            "contents": flexPayload
+                        }]).then(function() {
+                            liff.closeWindow();
+                        }).catch(function(err) {
+                            alert("Flex Error: " + JSON.stringify(err));
+                            liff.closeWindow();
+                        });
+                
                     } else {
-                        // กรณีไม่ได้เปิดใน LINE
-                        alert("บันทึกสำเร็จ (กรุณาเปิดใน LINE เพื่อรับการแจ้งเตือน)");
-                        window.location.reload();
+                        alert("แจ้งซ่อมสำเร็จ! (Ticket: " + fTicket + ")");
+                        location.reload();
                     }
                 }
             } catch (err) {
