@@ -146,28 +146,81 @@
                 // --- ส่วนส่ง Flex Message (ปรับปรุงเพื่อความชัวร์ 100%) ---
             if (liff.isInClient()) {
                 const fTicket = String(resData.ticketId || "N/A");
-                
-                // สร้างลิงก์ที่กดแล้ว "ส่งข้อความ" เข้าแชททันที (ไม่ต้องเลือกแชทซ้ำ)
-                // ใช้ LINE Scheme: line://oaMessage/{บอทไอดี}/?{ข้อความ}
-                // หมายเหตุ: ต้องใส่ LINE ID ของบอทคุณ (เช่น @123abcd)
-                const botId = "@350yemrv"; // ** อย่าลืมเปลี่ยนตรงนี้เป็น ID บอทคุณนะครับ **
-                const checkMsg = encodeURIComponent("เช็คสถานะ " + fTicket);
-                const quickLink = "https://line.me/R/oaMessage/" + botId + "/?" + checkMsg;
+                const botId = "@YOUR_BOT_ID"; // ** เปลี่ยนเป็น ID บอทของคุณ **
+            
+                // ฟังก์ชันช่วยสร้างลิงก์สำหรับส่งข้อความประเมินผล
+                const voteLink = (score) => `https://line.me/R/oaMessage/${botId}/?ประเมิน%20${fTicket}%20ได้%20${score}%20ดาว`;
             
                 try {
                     await liff.sendMessages([{
-                        "type": "text",
-                        "text": "✅ บันทึกข้อมูลสำเร็จ!\n\n" +
-                                "เลขที่แจ้ง: " + fTicket + "\n" +
-                                "สถานที่: " + String(roomVal || "-") + "\n\n" +
-                                "👇 กดที่ลิงก์ด้านล่างเพื่อดูสถานะ:\n" +
-                                quickLink
+                        "type": "flex",
+                        "altText": "แจ้งซ่อมสำเร็จ: " + fTicket,
+                        "contents": {
+                            "type": "bubble",
+                            "header": {
+                                "type": "box",
+                                "layout": "vertical",
+                                "backgroundColor": "#000080",
+                                "contents": [
+                                    { "type": "text", "text": "บันทึกข้อมูลเรียบร้อย", "color": "#FFFFFF", "weight": "bold", "size": "sm" }
+                                ]
+                            },
+                            "body": {
+                                "type": "box",
+                                "layout": "vertical",
+                                "spacing": "md",
+                                "contents": [
+                                    { "type": "text", "text": fTicket, "weight": "bold", "size": "xl" },
+                                    { "type": "text", "text": "กรุณาประเมินความพึงพอใจด้านล่างนี้", "size": "xs", "color": "#aaaaaa" },
+                                    
+                                    // --- ส่วนของแถบดาว 1-5 ---
+                                    {
+                                        "type": "box",
+                                        "layout": "horizontal",
+                                        "margin": "md",
+                                        "spacing": "sm",
+                                        "contents": [1, 2, 3, 4, 5].map(num => ({
+                                            "type": "box",
+                                            "layout": "vertical",
+                                            "contents": [
+                                                { "type": "text", "text": "⭐", "align": "center", "size": "md" },
+                                                { "type": "text", "text": String(num), "align": "center", "size": "xs", "weight": "bold", "color": "#000080" }
+                                            ],
+                                            "paddingAll": "sm",
+                                            "cornerRadius": "md",
+                                            "backgroundColor": "#F0F0F0",
+                                            "action": {
+                                                "type": "uri",
+                                                "label": String(num),
+                                                "uri": voteLink(num)
+                                            }
+                                        }))
+                                    },
+                                    // -----------------------
+            
+                                    { "type": "separator", "margin": "lg" },
+                                    {
+                                        "type": "text",
+                                        "text": "🔄 ตรวจสอบสถานะงาน",
+                                        "color": "#0000FF",
+                                        "align": "center",
+                                        "size": "sm",
+                                        "decoration": "underline",
+                                        "margin": "md",
+                                        "action": {
+                                            "type": "uri",
+                                            "label": "status",
+                                            "uri": `https://line.me/R/oaMessage/${botId}/?เช็คสถานะ%20${fTicket}`
+                                        }
+                                    }
+                                ]
+                            }
+                        }
                     }]);
                 } catch (err) {
-                    // แผนสำรองสุดท้ายจริงๆ
                     await liff.sendMessages([{
                         "type": "text",
-                        "text": "บันทึกสำเร็จ: " + fTicket
+                        "text": "✅ บันทึกสำเร็จ: " + fTicket + "\nกรุณาให้คะแนนโดยพิมพ์ 'ประเมิน " + fTicket + " ได้ (1-5) ดาว'"
                     }]);
                 }
             }
