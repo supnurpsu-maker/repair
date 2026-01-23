@@ -224,17 +224,10 @@
                 const res = await response.json();
 
                 if (res.result === "ok") {
-                    // 1. ดึงข้อมูลและล้างค่าให้สะอาดที่สุด (อนุญาตเฉพาะตัวอักษรและตัวเลข)
                     var fRoom = (document.getElementById('room').value || "-").replace(/[^a-zA-Z0-9ก-๙\s]/g, "");
                     var fIssue = (document.getElementById('issue').value || "-").replace(/[^a-zA-Z0-9ก-๙\s]/g, "");
                     var fTicket = String(res.ticketId || "ID");
-                    var fQueue = String(res.pendingCount || "0");
-                    
-                    // สร้าง URL แบบระบุค่าตายตัวเพื่อทดสอบ (ถ้าผ่านค่อยกลับมาแก้)
-                    var trackUrl = "https://liff.line.me/" + LIFF_ID_TRACK; 
-                
-                    // เช็กค่าใน Console (กด F12 ดูใน Browser ถ้าทดสอบผ่านคอม)
-                    console.log("Payload Check:", { fTicket, fRoom, fIssue, trackUrl });
+                    var trackUrl = "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket;
                 
                     if (liff.isInClient()) {
                         const flexPayload = {
@@ -255,36 +248,37 @@
                                             { "type": "text", "text": "สถานะ: รอดำเนินการ", "color": "#000080", "weight": "bold" }
                                         ]
                                     },
+                                    { "type": "text", "text": "สถานที่: " + fRoom, "size": "xs", "color": "#666666", "wrap": true },
+                                    { "type": "text", "text": "ปัญหา: " + fIssue, "size": "xs", "color": "#666666", "wrap": true },
+                                    { "type": "separator" },
+                                    { "type": "text", "text": "ให้คะแนนความพึงพอใจ", "size": "xxs", "color": "#aaaaaa", "align": "center" },
                                     {
-                                        "type": "text", "text": "สถานที่: " + fRoom, "size": "xs", "color": "#666666", "wrap": true
-                                    },
-                                    {
-                                        "type": "text", "text": "ปัญหา: " + fIssue, "size": "xs", "color": "#666666", "wrap": true
-                                    },
-                                    
+                                        "type": "box",
+                                        "layout": "horizontal",
+                                        "spacing": "xs",
+                                        "contents": [1, 2, 3, 4, 5].map(function(i) {
+                                            return {
+                                                "type": "button",
+                                                "height": "sm",
+                                                "style": "secondary",
+                                                "color": "#F0F0F0",
+                                                "action": { "type": "postback", "label": "⭐" + i, "data": "v=" + i + "&t=" + fTicket }
+                                            };
+                                        })
+                                    }
                                 ]
                             },
                             "footer": {
                                 "type": "box", "layout": "vertical",
                                 "contents": [
-                                    { "type": "button", "style": "primary", "color": "#000080", "action": { "type": "uri", "label": "ติดตาม", "uri": trackUrl } }
+                                    { "type": "button", "style": "primary", "color": "#000080", "action": { "type": "uri", "label": "ติดตามสถานะ", "uri": trackUrl } }
                                 ]
                             }
                         };
                 
-                        liff.sendMessages([{
-                            "type": "flex",
-                            "altText": "แจ้งซ่อม " + fTicket,
-                            "contents": flexPayload
-                        }])
-                        .then(function() {
-                            liff.closeWindow();
-                        })
-                        .catch(function(err) {
-                            // ถ้า Error 400 จะโชว์ตรงนี้
-                            alert("Error 400 Detail: " + JSON.stringify(err));
-                        });
-                
+                        liff.sendMessages([{ "type": "flex", "altText": "แจ้งซ่อม " + fTicket, "contents": flexPayload }])
+                            .then(function() { liff.closeWindow(); })
+                            .catch(function(err) { alert("Error: " + err.code); });
                     } else {
                         alert("สำเร็จ! Ticket: " + fTicket);
                         location.reload();
