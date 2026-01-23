@@ -14,221 +14,215 @@
         #userImg { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--primary); margin-right: 15px; }
         form { padding: 20px; }
         label { display: block; margin-top: 15px; font-weight: bold; color: var(--primary); }
-        input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
-        input:focus, select:focus, textarea:focus { border-color: var(--primary); }
-        .btn-submit { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 18px; margin-top: 25px; cursor: pointer; transition: 0.3s; font-weight: bold; }
-        .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
-        #loading { display: none; text-align: center; color: var(--primary); margin-top: 15px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; margin-top: 25px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; }
+        button:disabled { background: #ccc; }
+        #loading { display: none; text-align: center; margin-top: 10px; color: var(--primary); font-weight: bold; }
+        .img-preview { width: 100%; margin-top: 10px; border-radius: 8px; display: none; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <div class="header"><h2>แบบฟอร์มแจ้งซ่อม IT</h2></div>
+    <div class="header">
+        <h2 style="margin:0;">ระบบแจ้งความต้องการใช้งบริการงานสารสนเทศ</h2>
+    </div>
     <div class="profile-bar">
         <img id="userImg" src="" alt="Profile">
-        <div id="userName">กำลังโหลดโปรไฟล์...</div>
+        <span id="userName" style="font-weight:bold;">Loading...</span>
     </div>
     
     <form id="repairForm">
-        <label>📍 ห้อง / สถานที่</label>
-        <input type="text" id="room" placeholder="ระบุตึก หรือเลขห้อง" required>
-        
-        <label>📞 เบอร์ติดต่อ</label>
-        <input type="tel" id="phone" placeholder="ระบุเบอร์โทรศัพท์" required>
-        
-        <label>🛠 ประเภทบริการ</label>
-        <select id="category" required>
-            <option value="Computer AIO">Computer AIO</option>
-            <option value="Laptop">Laptop</option>
-            <option value="Network">Network</option>
-            <option value="PSU Passport">PSU Passport</option>
-            <option value="ZOOM/UC-Phone">ZOOM/UC-Phone</option>
-            <option value="CCTV/FingerPrint Scan">CCTV/FingerPrint Scan</option>
-            <option value="Others">Others</option>
+        <label for="room">สถานที่ / เบอร์โต๊ะ</label>
+        <input type="text" id="room" placeholder="ระบุสถานที่..." required>
+
+        <label for="phone">เบอร์โทรศัพท์ติดต่อ</label>
+        <input type="tel" id="phone" placeholder="ระบุเบอร์โทร..." required>
+
+        <label for="category">หมวดหมู่ปัญหา</label>        
+         <select id="category" required>
+              <option value="">-- เลือก --</option>
+              <option value="Computer AIO">Computer AIO</option>
+              <option value="Laptop">Laptop</option>
+              <option value="Network">Network</option>
+              <option value="PSU Passport">PSU Passport</option>
+              <option value="ZOOM/UC-Phone">ZOOM/UC-Phone</option>
+              <option value="CCTV/FingerPrint Scan">CCTV/FingerPrint Scan</option>
+              <option value="Others">Others</option>
         </select>
-        
-        <label>💡 รายละเอียดปัญหา</label>
-        <textarea id="issue" rows="3" placeholder="ระบุรายละเอียดอาการเสีย" required></textarea>
-        
-        <label>🚨 ความเร่งด่วน</label>
+        <label for="issue">ปัญหาที่พบ / อาการ</label>
+        <textarea id="issue" rows="3" placeholder="อธิบายปัญหา..." required></textarea>
+
+        <label for="priority">ความเร่งด่วน</label>
         <select id="priority">
             <option value="ปกติ">ปกติ</option>
             <option value="ด่วน">ด่วน</option>
             <option value="ด่วนที่สุด">ด่วนที่สุด</option>
         </select>
-        
-        <label>📸 รูปภาพประกอบ (ถ้ามี)</label>
-        <input type="file" id="imageFile" accept="image/*">
-        
-        <button type="submit" class="btn-submit" id="btnSub">ยืนยันการแจ้งซ่อม</button>
-        <div id="loading">⏳ กำลังประมวลผลและส่งข้อมูล...</div>
+
+        <label for="image">แนบรูปภาพ (ถ้ามี)</label>
+        <input type="file" id="image" accept="image/*">
+        <img id="preview" class="img-preview">
+
+        <button type="submit" id="submitBtn">ส่งข้อมูลแจ้งซ่อม</button>
+        <div id="loading">กำลังส่งข้อมูล กรุณารอครู่เดียว...</div>
     </form>
 </div>
 
 <script>
-    const LIFF_ID = "2008875334-eZXiyz43"; 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyDgqVFhVhFRMOKaotCbe8i9GdBOGK2pXkJwEejfC8moCnI3dc1XQ3UIelkPo7edF_g/exec"; 
-    const REVIEW_LIFF_URL = "https://liff.line.me/2008875334-d6l72Uox"; 
+    const LIFF_ID = "https://liff.line.me/2008875334-eZXiyz43"; // **ใส่ LIFF ID ของคุณที่นี่**
+    const form = document.getElementById('repairForm');
+    const btn = document.getElementById('submitBtn');
+    const loading = document.getElementById('loading');
+    const preview = document.getElementById('preview');
+    let profile = null;
 
     async function main() {
-        try {
-            await liff.init({ liffId: LIFF_ID });
-            if (!liff.isLoggedIn()) {
-                liff.login();
-            } else {
-                const profile = await liff.getProfile();
-                document.getElementById('userName').innerText = profile.displayName;
-                document.getElementById('userImg').src = profile.pictureUrl || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-            }
-        } catch (err) {
-            console.error("LIFF Initialization failed", err);
+        await liff.init({ liffId: LIFF_ID });
+        if (liff.isLoggedIn()) {
+            profile = await liff.getProfile();
+            document.getElementById('userImg').src = profile.pictureUrl;
+            document.getElementById('userName').innerText = profile.displayName;
+        } else {
+            liff.login();
         }
     }
 
-    document.getElementById('repairForm').addEventListener('submit', async (e) => {
+    document.getElementById('image').onchange = function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                preview.src = event.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    form.onsubmit = async (e) => {
         e.preventDefault();
-        const btn = document.getElementById('btnSub');
-        const loading = document.getElementById('loading');
         btn.disabled = true;
         loading.style.display = 'block';
 
-        try {
-            const profile = await liff.getProfile();
-            let base64 = "";
-            const file = document.getElementById('imageFile').files[0];
-            if (file) {
-                base64 = await new Promise((res) => {
-                    const r = new FileReader();
-                    r.onload = () => res(r.result.split(',')[1]);
-                    r.readAsDataURL(file);
-                });
-            }
+        const roomVal = document.getElementById('room').value;
+        const issueVal = document.getElementById('issue').value;
+        const fileInput = document.getElementById('image');
+        let base64 = "";
 
-            const roomVal = document.getElementById('room').value;
-            const issueVal = document.getElementById('issue').value;
-
-            const payload = {
-                uid: profile.userId,
-                displayName: profile.displayName,
-                room: roomVal,
-                phone: document.getElementById('phone').value,
-                category: document.getElementById('category').value,
-                issue: issueVal,
-                priority: document.getElementById('priority').value,
-                imageBase64: base64
-            };
-
-            const response = await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(payload) });
-            const resText = await response.text();
-            console.log("Raw Response:", resText);
-
-            let resData;
-            try {
-                resData = JSON.parse(resText);
-            } catch (jsonErr) {
-                if (resText.includes('"result":"ok"')) {
-                    alert("แจ้งซ่อมสำเร็จ (กำลังปิดหน้าต่าง)");
-                    liff.closeWindow();
-                    return;
-                }
-                throw new Error("Data Error: " + resText);
-            }
-
-            // ในส่วน .withSuccessHandler(async (resData) => { ... })
-            if (resData.result === "ok") {
-                const fTicket = resData.ticketId;
-                const fQueue = resData.pendingCount;
-                const fRoom = typeof roomVal !== 'undefined' ? roomVal : "-";
-                const fProblem = typeof issueVal !== 'undefined' ? issueVal : "-";
-            
-                if (liff.isInClient()) {
-                    try {
-                        await liff.sendMessages([{
-                            "type": "flex",
-                            "altText": "แจ้งซ่อมสำเร็จ: " + fTicket,
-                            "contents": {
-                                "type": "bubble",
-                                "body": {
-                                    "type": "box", "layout": "vertical", "paddingAll": "0px",
-                                    "contents": [
-                                        {
-                                            "type": "box", "layout": "horizontal", "paddingAll": "20px",
-                                            "contents": [
-                                                { "type": "text", "text": "รายการแจ้งซ่อม", "weight": "bold", "size": "md", "flex": 1 },
-                                                { "type": "text", "text": fTicket, "weight": "bold", "size": "md", "align": "end", "color": "#000080" }
-                                            ]
-                                        },
-                                        {
-                                            "type": "box", "layout": "vertical", "backgroundColor": "#F4F7FF", "paddingAll": "15px",
-                                            "contents": [
-                                                {
-                                                    "type": "box", "layout": "horizontal",
-                                                    "contents": [
-                                                        { "type": "text", "text": "สถานะ :", "size": "sm", "color": "#555555", "flex": 2 },
-                                                        { "type": "text", "text": "รอดำเนินการ", "size": "sm", "weight": "bold", "color": "#000080", "flex": 3 }
-                                                    ]
-                                                },
-                                                {
-                                                    "type": "box", "layout": "horizontal", "margin": "sm",
-                                                    "contents": [
-                                                        { "type": "text", "text": "คิวที่รอขณะนี้ :", "size": "sm", "color": "#555555", "flex": 2 },
-                                                        { "type": "text", "text": fQueue + " คิว", "size": "sm", "weight": "bold", "color": "#000080", "flex": 3 }
-                                                    ]
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            "type": "box", "layout": "vertical", "paddingAll": "20px", "spacing": "xs",
-                                            "contents": [
-                                                { "type": "text", "text": "สถานที่ :", "size": "xs", "color": "#aaaaaa", "weight": "bold" },
-                                                { "type": "text", "text": fRoom, "size": "sm", "wrap": true },
-                                                { "type": "text", "text": "ปัญหา :", "size": "xs", "color": "#aaaaaa", "weight": "bold", "margin": "lg" },
-                                                { "type": "text", "text": fProblem, "size": "sm", "wrap": true }
-                                            ]
-                                        },
-                                        {
-                                            "type": "box", "layout": "vertical", "paddingAll": "20px", "paddingTop": "0px",
-                                            "contents": [
-                                                { "type": "text", "text": "ประเมินความพึงพอใจ", "size": "xs", "align": "center", "color": "#aaaaaa" },
-                                                {
-                                                    "type": "box", "layout": "horizontal", "margin": "md", "spacing": "sm",
-                                                    "contents": [1, 2, 3, 4, 5].map(num => ({
-                                                        "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "cornerRadius": "md", "paddingAll": "8px",
-                                                        "contents": [
-                                                            { "type": "text", "text": "⭐", "align": "center", "size": "sm" },
-                                                            { "type": "text", "text": String(num), "align": "center", "size": "xxs", "weight": "bold" }
-                                                        ],
-                                                        "action": { 
-                                                            "type": "postback", 
-                                                            "data": `action=vote&tid=${fTicket}&score=${num}`
-                                                        }
-                                                    }))
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            }
-                        }]);
-                    } catch (err) { console.error(err); }
-                }
-                alert("แจ้งซ่อมสำเร็จ!");
-                liff.closeWindow();
-            }
-            else {
-                alert("Error: " + resData.message);
-            }
-        } catch (err) {
-            console.error(err);
-            alert("เกิดข้อผิดพลาด: " + err.message);
-        } finally {
-            btn.disabled = false;
-            loading.style.display = 'none';
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            base64 = await new Promise(resolve => {
+                reader.onload = (ev) => resolve(ev.target.result.split(',')[1]);
+                reader.readAsDataURL(file);
+            });
         }
-    });
+
+        const payload = {
+            uid: profile.userId,
+            displayName: profile.displayName,
+            room: roomVal,
+            phone: document.getElementById('phone').value,
+            category: document.getElementById('category').value,
+            issue: issueVal,
+            priority: document.getElementById('priority').value,
+            imageBase64: base64
+        };
+
+        google.script.run
+            .withSuccessHandler(async (resData) => {
+                if (resData.result === "ok") {
+                    const fTicket = resData.ticketId;
+                    const fQueue = resData.pendingCount;
+
+                    if (liff.isInClient()) {
+                        try {
+                            await liff.sendMessages([{
+                                "type": "flex",
+                                "altText": "แจ้งซ่อมสำเร็จ: " + fTicket,
+                                "contents": {
+                                    "type": "bubble",
+                                    "body": {
+                                        "type": "box", "layout": "vertical", "paddingAll": "0px",
+                                        "contents": [
+                                            {
+                                                "type": "box", "layout": "horizontal", "paddingAll": "20px",
+                                                "contents": [
+                                                    { "type": "text", "text": "รายการแจ้งซ่อม", "weight": "bold", "size": "md", "flex": 1 },
+                                                    { "type": "text", "text": fTicket, "weight": "bold", "size": "md", "align": "end", "color": "#000080" }
+                                                ]
+                                            },
+                                            {
+                                                "type": "box", "layout": "vertical", "backgroundColor": "#F4F7FF", "paddingAll": "15px",
+                                                "contents": [
+                                                    {
+                                                        "type": "box", "layout": "horizontal",
+                                                        "contents": [
+                                                            { "type": "text", "text": "สถานะ :", "size": "sm", "color": "#555555", "flex": 2 },
+                                                            { "type": "text", "text": "รอดำเนินการ", "size": "sm", "weight": "bold", "color": "#000080", "flex": 3 }
+                                                        ]
+                                                    },
+                                                    {
+                                                        "type": "box", "layout": "horizontal", "margin": "sm",
+                                                        "contents": [
+                                                            { "type": "text", "text": "คิวที่รอขณะนี้ :", "size": "sm", "color": "#555555", "flex": 2 },
+                                                            { "type": "text", "text": fQueue + " คิว", "size": "sm", "weight": "bold", "color": "#000080", "flex": 3 }
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "type": "box", "layout": "vertical", "paddingAll": "20px", "spacing": "xs",
+                                                "contents": [
+                                                    { "type": "text", "text": "สถานที่ :", "size": "xs", "color": "#aaaaaa", "weight": "bold" },
+                                                    { "type": "text", "text": roomVal, "size": "sm", "wrap": true },
+                                                    { "type": "text", "text": "ปัญหา :", "size": "xs", "color": "#aaaaaa", "weight": "bold", "margin": "lg" },
+                                                    { "type": "text", "text": issueVal, "size": "sm", "wrap": true }
+                                                ]
+                                            },
+                                            {
+                                                "type": "box", "layout": "vertical", "paddingAll": "20px", "paddingTop": "0px",
+                                                "contents": [
+                                                    { "type": "text", "text": "ประเมินความพึงพอใจ", "size": "xs", "align": "center", "color": "#aaaaaa" },
+                                                    {
+                                                        "type": "box", "layout": "horizontal", "margin": "md", "spacing": "sm",
+                                                        "contents": [1, 2, 3, 4, 5].map(num => ({
+                                                            "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "cornerRadius": "md", "paddingAll": "8px",
+                                                            "contents": [
+                                                                { "type": "text", "text": "⭐", "align": "center", "size": "sm" },
+                                                                { "type": "text", "text": String(num), "align": "center", "size": "xxs", "weight": "bold" }
+                                                            ],
+                                                            "action": { 
+                                                                "type": "postback", 
+                                                                "data": `action=vote&tid=${fTicket}&score=${num}`
+                                                            }
+                                                        }))
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }]);
+                        } catch (err) {
+                            console.error("Flex Send Error:", err);
+                        }
+                    }
+                    alert("แจ้งซ่อมสำเร็จ! เลขที่รายการ: " + fTicket);
+                    liff.closeWindow();
+                } else {
+                    alert("เกิดข้อผิดพลาด: " + resData.message);
+                }
+            })
+            .withFailureHandler((err) => {
+                alert("ระบบขัดข้อง: " + err);
+            })
+            .doPost(payload); // เรียกฟังก์ชัน doPost ใน GAS
+    };
 
     main();
 </script>
+
 </body>
 </html>
