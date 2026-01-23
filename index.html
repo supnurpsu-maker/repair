@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -151,7 +150,7 @@
         // ==========================================
         // ส่วนตั้งค่า
         // ==========================================
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbwUQL9hU2YoKZXf0Fgt-hSlOcMqIiFCGWSe3k4hdvYc9BKhJ4BoMUQb-_fu0qlr1m2u/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbz6Y7LEPjRj5f9ZTXdPirxBNsFvd4SmRdxawaAeamA45-oggxsqBjt7icGA17-azQH6/exec";
         const LIFF_ID_MAIN = "2008875334-eZXiyz43";
         const LIFF_ID_REVIEW = "2008875334-d6l72Uox";
         const LIFF_ID_TRACK = "2008875334-wOYUvNha";
@@ -250,39 +249,52 @@
                                                 ]
                                             },
                                             // --- เพิ่มส่วนประเมินดาว ---
-                                            { "type": "text", "text": "ประเมินความพึงพอใจ (เมื่อจบงาน)", "margin": "xl", "size": "xs", "color": "#aaaaaa", "align": "center" },
                                             {
-                                                "type": "box", "layout": "horizontal", "margin": "md", "spacing": "sm",
-                                                "contents": [1, 2, 3, 4, 5].map(n => ({
-                                                    "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "paddingAll": "8px", "cornerRadius": "md",
-                                                    "contents": [
-                                                        { "type": "text", "text": "⭐", "align": "center", "size": "xs" },
-                                                        { "type": "text", "text": String(n), "align": "center", "size": "xxs", "weight": "bold", "color": "#000080" }
-                                                    ],
-                                                    "action": {
-                                                        "type": "postback",
-                                                        "label": String(n),
-                                                        "data": "action=vote&tid=" + fTicket + "&score=" + n
+                                                "type": "box",
+                                                "layout": "vertical",
+                                                "margin": "xl",
+                                                "spacing": "sm",
+                                                "contents": [
+                                                    {
+                                                        "type": "text",
+                                                        "text": "รบกวนให้คะแนนเมื่อดำเนินการเสร็จสิ้น",
+                                                        "size": "xs",
+                                                        "color": "#aaaaaa",
+                                                        "align": "center"
+                                                    },
+                                                    {
+                                                        "type": "box",
+                                                        "layout": "horizontal",
+                                                        "spacing": "md",
+                                                        "contents": [1, 2, 3, 4, 5].map(n => ({
+                                                            "type": "text",
+                                                            "text": "⭐",
+                                                            "size": "xl",
+                                                            "align": "center",
+                                                            "action": {
+                                                                "type": "postback",
+                                                                "label": n + " ดาว",
+                                                                "data": "action=vote&tid=" + fTicket + "&score=" + n
+                                                            }
+                                                        }))
                                                     }
-                                                }))
-                                            }
-                                        ]
-                                    },
-                                    "footer": {
-                                        "type": "box", "layout": "vertical",
-                                        "contents": [
-                                            {
-                                                "type": "button", "style": "primary", "color": "#000080", "height": "sm",
-                                                "action": {
-                                                    "type": "uri", "label": "ดูสถานะงาน",
-                                                    "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    "styles": { "header": { "backgroundColor": "#000080" } }
-                                }
-                            }]);
+                                                ]
+                                            },
+                                            "footer": {
+                                                "type": "box", "layout": "vertical",
+                                                "contents": [
+                                                    {
+                                                        "type": "button", "style": "primary", "color": "#000080", "height": "sm",
+                                                        "action": {
+                                                            "type": "uri", "label": "ดูสถานะงาน",
+                                                            "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket
+                                                        }
+                                                    }
+                                                ]
+                                            },
+                                            "styles": { "header": { "backgroundColor": "#000080" } }
+                                        }
+                                }]);
                         } catch (err) {
                             console.error(err);
                             await liff.sendMessages([{ "type": "text", "text": "✅ บันทึกสำเร็จ: " + fTicket }]);
