@@ -226,6 +226,9 @@
                     const fTicket = String(res.ticketId || "No ID");
                     const fQueue = String(res.pendingCount || "0");
                     
+                    // ตรวจสอบค่า LIFF_ID_TRACK ก่อนส่ง เพื่อป้องกัน URI พัง
+                    const trackUrl = "https://liff.line.me/" + (typeof LIFF_ID_TRACK !== 'undefined' ? LIFF_ID_TRACK : "") + "?ticket=" + fTicket;
+                    
                     if (liff.isInClient()) {
                         try {
                             await liff.sendMessages([{
@@ -263,19 +266,13 @@
                                                 "spacing": "sm",
                                                 "contents": [
                                                     {
-                                                        "type": "box",
-                                                        "layout": "baseline",
-                                                        "spacing": "sm",
-                                                        "contents": [
+                                                        "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
                                                             { "type": "text", "text": "สถานที่:", "color": "#aaaaaa", "size": "sm", "flex": 2 },
                                                             { "type": "text", "text": fRoom, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
                                                         ]
                                                     },
                                                     {
-                                                        "type": "box",
-                                                        "layout": "baseline",
-                                                        "spacing": "sm",
-                                                        "contents": [
+                                                        "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
                                                             { "type": "text", "text": "ปัญหา:", "color": "#aaaaaa", "size": "sm", "flex": 2 },
                                                             { "type": "text", "text": fIssue, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
                                                         ]
@@ -288,12 +285,13 @@
                                                 "type": "box",
                                                 "layout": "horizontal",
                                                 "margin": "md",
+                                                "spacing": "xs",
                                                 "contents": [
-                                                    { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "postback", "data": "action=vote&tid=" + fTicket + "&score=1", "label": "1" } },
-                                                    { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "postback", "data": "action=vote&tid=" + fTicket + "&score=2", "label": "2" } },
-                                                    { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "postback", "data": "action=vote&tid=" + fTicket + "&score=3", "label": "3" } },
-                                                    { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "postback", "data": "action=vote&tid=" + fTicket + "&score=4", "label": "4" } },
-                                                    { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "postback", "data": "action=vote&tid=" + fTicket + "&score=5", "label": "5" } }
+                                                    { "type": "box", "layout": "vertical", "contents": [{ "type": "text", "text": "⭐", "size": "xl", "align": "center" }], "action": { "type": "postback", "data": "action=vote&tid="+fTicket+"&score=1", "label": "1" } },
+                                                    { "type": "box", "layout": "vertical", "contents": [{ "type": "text", "text": "⭐", "size": "xl", "align": "center" }], "action": { "type": "postback", "data": "action=vote&tid="+fTicket+"&score=2", "label": "2" } },
+                                                    { "type": "box", "layout": "vertical", "contents": [{ "type": "text", "text": "⭐", "size": "xl", "align": "center" }], "action": { "type": "postback", "data": "action=vote&tid="+fTicket+"&score=3", "label": "3" } },
+                                                    { "type": "box", "layout": "vertical", "contents": [{ "type": "text", "text": "⭐", "size": "xl", "align": "center" }], "action": { "type": "postback", "data": "action=vote&tid="+fTicket+"&score=4", "label": "4" } },
+                                                    { "type": "box", "layout": "vertical", "contents": [{ "type": "text", "text": "⭐", "size": "xl", "align": "center" }], "action": { "type": "postback", "data": "action=vote&tid="+fTicket+"&score=5", "label": "5" } }
                                                 ]
                                             }
                                         ]
@@ -310,16 +308,17 @@
                                                 "action": {
                                                     "type": "uri",
                                                     "label": "ดูสถานะงาน",
-                                                    "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket
+                                                    "uri": trackUrl
                                                 }
                                             }
                                         ]
                                     },
-                                    "styles": { "header": { "backgroundColor": "#000080" } }
+                                    "styles": {
+                                        "header": { "backgroundColor": "#000080" }
+                                    }
                                 }
                             }]);
                         } catch (err) {
-                            // หากยัง Error ให้แจ้งเตือนดูว่า Error อะไร
                             alert("Flex Error: " + err.message);
                             await liff.sendMessages([{ "type": "text", "text": "✅ บันทึกสำเร็จ: " + fTicket }]);
                         }
