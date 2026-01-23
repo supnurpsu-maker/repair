@@ -127,69 +127,42 @@
             method: "POST",
             body: JSON.stringify(payload)
         });
-        const res = await response.json();
+        const res = await response.json(); // ใช้ res ตามที่คุณสะดวก
 
         if (res.result === "ok") {
-            const fTicket = res.ticketId;
-            const fQueue = res.pendingCount || "0";
-        
+            // ป้องกันค่าว่างด้วยการใส่ ||
+            const fTicket = String(res.ticketId || "No ID");
+            const fQueue = String(res.pendingCount || "0");
+
             if (liff.isInClient()) {
                 try {
+                    // ส่ง Flex แบบโครงสร้างพื้นฐานที่สุด (ตัดความซับซ้อนออกก่อน)
                     await liff.sendMessages([{
                         "type": "flex",
                         "altText": "แจ้งซ่อมสำเร็จ: " + fTicket,
                         "contents": {
-                            "type": "bubble",
-                            "body": {
-                                "type": "box",
-                                "layout": "vertical",
-                                "contents": [
-                                    { "type": "text", "text": "✅ รับเรื่องเรียบร้อย", "weight": "bold", "size": "xl", "color": "#000080" },
-                                    { "type": "box", "layout": "vertical", "margin": "lg", "spacing": "sm", "contents": [
-                                        { "type": "box", "layout": "baseline", "contents": [
-                                            { "type": "text", "text": "เลขที่รายการ", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                                            { "type": "text", "text": fTicket, "weight": "bold", "size": "sm", "color": "#000080", "flex": 4 }
-                                        ]},
-                                        { "type": "box", "layout": "baseline", "contents": [
-                                            { "type": "text", "text": "คิวที่รอ", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                                            { "type": "text", "text": fQueue + " คิว", "size": "sm", "color": "#666666", "flex": 4 }
-                                        ]}
-                                    ]},
-                                    
-                                    // --- ส่วนที่ 1: ระบบประเมินด่วน (Postback) ---
-                                    { "type": "separator", "margin": "xl" },
-                                    { "type": "text", "text": "ประเมินความพึงพอใจการแจ้งซ่อม", "margin": "md", "size": "xs", "color": "#aaaaaa", "align": "center" },
-                                    { "type": "box", "layout": "horizontal", "margin": "md", "spacing": "xs", "contents": [1,2,3,4,5].map(n => ({
-                                        "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "paddingAll": "8px", "cornerRadius": "md",
-                                        "contents": [{ "type": "text", "text": "⭐", "align": "center", "size": "sm" }],
-                                        "action": { 
-                                            "type": "postback", 
-                                            "label": String(n), 
-                                            "data": "action=vote&tid=" + fTicket + "&score=" + n 
-                                        }
-                                    }))},
-        
-                                    // --- ส่วนที่ 2: ปุ่มดูสถานะงาน (Link ไป track.html) ---
-                                    { "type": "button", "margin": "xl", "style": "primary", "color": "#000080", "height": "sm", "action": {
-                                        "type": "uri",
-                                        "label": "ดูสถานะงาน",
-                                        "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket
-                                    }},
-                                    
-                                    // --- (ตัวเลือกเสริม) ถ้าต้องการปุ่มประเมินแบบละเอียดแยกต่างหาก ---
-                                    /*
-                                    { "type": "button", "margin": "sm", "style": "secondary", "height": "sm", "action": {
-                                        "type": "uri",
-                                        "label": "ประเมินแบบละเอียด",
-                                        "uri": "https://liff.line.me/" + LIFF_ID_REVIEW + "?ticket=" + fTicket
-                                    }}
-                                    */
-                                ]
-                            }
+                          "type": "bubble",
+                          "body": {
+                            "type": "box",
+                            "layout": "vertical",
+                            "contents": [
+                              { "type": "text", "text": "✅ บันทึกข้อมูลเรียบร้อย", "weight": "bold", "size": "lg", "color": "#000080" },
+                              { "type": "box", "layout": "vertical", "margin": "md", "contents": [
+                                { "type": "text", "text": "เลขที่: " + fTicket, "size": "sm", "weight": "bold" },
+                                { "type": "text", "text": "คิวรอ: " + fQueue + " คิว", "size": "sm", "color": "#666666" }
+                              ]},
+                              { "type": "button", "margin": "xl", "style": "primary", "color": "#000080", "action": {
+                                  "type": "uri",
+                                  "label": "ดูสถานะงาน",
+                                  "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket
+                              }}
+                            ]
+                          }
                         }
                     }]);
-                } catch (err) {
-                    console.error(err);
+                } catch (flexErr) {
+                    // ถ้าพัง ให้โชว์ Error ออกมาตรงๆ เลยว่า LINE ไม่ยอมรับเพราะอะไร
+                    alert("LINE Flex Reject: " + JSON.stringify(flexErr));
                     await liff.sendMessages([{ "type": "text", "text": "✅ บันทึกสำเร็จ: " + fTicket }]);
                 }
             }
