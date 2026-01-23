@@ -127,9 +127,9 @@
             method: "POST",
             body: JSON.stringify(payload)
         });
-        const resData = await response.json();
+        const res = await response.json();
 
-        if (resData.result === "ok") {
+        if (res.result === "ok") {
             const fTicket = res.ticketId;
             const fQueue = res.pendingCount || "0";
         
