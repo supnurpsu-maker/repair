@@ -220,11 +220,12 @@
                 if (res.result === "ok") {
                     // ป้องกันค่าว่างด้วยการใส่ ||
                     // ดึงค่าจากฟอร์มมาแสดงใน Flex
-                    const fRoom = document.getElementById('room').value;
-                    const fIssue = document.getElementById('issue').value;
+                    // ดึงค่าจากฟอร์ม
+                    const fRoom = document.getElementById('room').value || "-";
+                    const fIssue = document.getElementById('issue').value || "-";
                     const fTicket = String(res.ticketId || "No ID");
                     const fQueue = String(res.pendingCount || "0");
-
+                    
                     if (liff.isInClient()) {
                         try {
                             await liff.sendMessages([{
@@ -244,7 +245,6 @@
                                         "type": "box",
                                         "layout": "vertical",
                                         "contents": [
-                                            // --- ส่วนที่มีสีพื้นหลัง (สถานะ และ คิว) ---
                                             {
                                                 "type": "box",
                                                 "layout": "vertical",
@@ -256,7 +256,6 @@
                                                     { "type": "text", "text": "คิวที่รอขณะนี้: " + fQueue + " คิว", "size": "sm", "color": "#000080", "margin": "sm" }
                                                 ]
                                             },
-                                            // --- ส่วนข้อมูลสถานที่ และ ปัญหา ---
                                             {
                                                 "type": "box",
                                                 "layout": "vertical",
@@ -283,31 +282,18 @@
                                                     }
                                                 ]
                                             },
-                                            // --- ส่วนประเมินดาว (เพิ่มตามความต้องการล่าสุด) ---
                                             { "type": "separator", "margin": "xl" },
+                                            { "type": "text", "text": "รบกวนให้คะแนนเมื่อดำเนินการเสร็จสิ้น", "size": "xs", "color": "#aaaaaa", "align": "center", "margin": "md" },
                                             {
                                                 "type": "box",
-                                                "layout": "vertical",
+                                                "layout": "horizontal",
                                                 "margin": "md",
-                                                "spacing": "sm",
                                                 "contents": [
-                                                    { "type": "text", "text": "รบกวนให้คะแนนเมื่อดำเนินการเสร็จสิ้น", "size": "xs", "color": "#aaaaaa", "align": "center" },
-                                                    {
-                                                        "type": "box",
-                                                        "layout": "horizontal",
-                                                        "margin": "sm",
-                                                        "contents": [1, 2, 3, 4, 5].map(n => ({
-                                                            "type": "text",
-                                                            "text": "⭐",
-                                                            "size": "xl",
-                                                            "align": "center",
-                                                            "action": {
-                                                                "type": "postback",
-                                                                "label": n + " ดาว",
-                                                                "data": "action=vote&tid=" + fTicket + "&score=" + n
-                                                            }
-                                                        }))
-                                                    }
+                                                    { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "postback", "data": "action=vote&tid=" + fTicket + "&score=1", "label": "1" } },
+                                                    { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "postback", "data": "action=vote&tid=" + fTicket + "&score=2", "label": "2" } },
+                                                    { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "postback", "data": "action=vote&tid=" + fTicket + "&score=3", "label": "3" } },
+                                                    { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "postback", "data": "action=vote&tid=" + fTicket + "&score=4", "label": "4" } },
+                                                    { "type": "text", "text": "⭐", "size": "xl", "align": "center", "action": { "type": "postback", "data": "action=vote&tid=" + fTicket + "&score=5", "label": "5" } }
                                                 ]
                                             }
                                         ]
@@ -329,14 +315,12 @@
                                             }
                                         ]
                                     },
-                                    "styles": {
-                                        "header": { "backgroundColor": "#000080" }
-                                    }
+                                    "styles": { "header": { "backgroundColor": "#000080" } }
                                 }
                             }]);
                         } catch (err) {
-                            console.error("Flex Error:", err);
-                            // Fallback ส่งเป็นข้อความธรรมดาถ้า Flex มีปัญหา
+                            // หากยัง Error ให้แจ้งเตือนดูว่า Error อะไร
+                            alert("Flex Error: " + err.message);
                             await liff.sendMessages([{ "type": "text", "text": "✅ บันทึกสำเร็จ: " + fTicket }]);
                         }
                     }
