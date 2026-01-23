@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -6,223 +7,300 @@
     <title>IT Service Request</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        :root { --primary: #000080; --accent: #FBCEB1; --bg: #f4f7fa; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); padding: 20px; margin: 0; }
-        .card { background: white; max-width: 500px; margin: 10px auto; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,128,0.1); overflow: hidden; }
-        .header { background: var(--primary); color: white; padding: 20px; text-align: center; }
-        .profile-bar { display: flex; align-items: center; background: var(--accent); padding: 12px 20px; }
-        #userImg { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--primary); margin-right: 15px; }
-        form { padding: 20px; }
-        label { display: block; margin-top: 15px; font-weight: bold; color: var(--primary); }
-        input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; margin-top: 25px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; }
-        button:disabled { background: #ccc; }
-        #loading { display: none; text-align: center; margin-top: 10px; color: var(--primary); font-weight: bold; }
-        .img-preview { width: 100%; margin-top: 10px; border-radius: 8px; display: none; border: 1px solid #ccc; }
+        :root {
+            --primary: #000080;
+            --accent: #FBCEB1;
+            --bg: #f4f7fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            padding: 20px;
+            margin: 0;
+        }
+
+        .card {
+            background: white;
+            max-width: 500px;
+            margin: 10px auto;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,128,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .profile-bar {
+            display: flex;
+            align-items: center;
+            background: var(--accent);
+            padding: 12px 20px;
+        }
+
+        #userImg {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            margin-right: 15px;
+        }
+
+        form {
+            padding: 20px;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px;
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+            button:disabled {
+                background: #ccc;
+            }
+
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .img-preview {
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 8px;
+            display: none;
+            border: 1px solid #ccc;
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <div class="header"><h2 style="margin:0;">แจ้งซ่อมอุปกรณ์ IT</h2></div>
-    <div class="profile-bar">
-        <img id="userImg" src="" alt="Profile">
-        <span id="userName" style="font-weight:bold;">กำลังโหลด...</span>
+    <div class="card">
+        <div class="header"><h2 style="margin:0;">แจ้งซ่อมอุปกรณ์ IT</h2></div>
+        <div class="profile-bar">
+            <img id="userImg" src="" alt="Profile">
+            <span id="userName" style="font-weight:bold;">กำลังโหลด...</span>
+        </div>
+
+        <form id="repairForm">
+            <label for="room">สถานที่ / เบอร์โต๊ะ</label>
+            <input type="text" id="room" required>
+            <label for="phone">เบอร์โทรศัพท์ติดต่อ</label>
+            <input type="tel" id="phone" required>
+            <label for="category">หมวดหมู่ปัญหา</label>
+            <select id="category" required>
+                <option value="">-- เลือก --</option>
+                <option value="Computer AIO">Computer AIO</option>
+                <option value="Laptop">Laptop</option>
+                <option value="Network">Network</option>
+                <option value="PSU Passport">PSU Passport</option>
+                <option value="ZOOM/UC-Phone">ZOOM/UC-Phone</option>
+                <option value="CCTV/FingerPrint Scan">CCTV/FingerPrint Scan</option>
+                <option value="Others">Others</option>
+            </select>
+            <label for="issue">ปัญหาที่พบ / อาการ</label>
+            <textarea id="issue" rows="3" required></textarea>
+            <label for="priority">ความเร่งด่วน</label>
+            <select id="priority">
+                <option value="ปกติ">ปกติ</option>
+                <option value="ด่วน">ด่วน</option>
+                <option value="ด่วนที่สุด">ด่วนที่สุด</option>
+            </select>
+            <label for="image">แนบรูปภาพ (ถ้ามี)</label>
+            <input type="file" id="image" accept="image/*">
+            <img id="preview" class="img-preview">
+            <button type="submit" id="submitBtn">ส่งข้อมูลแจ้งซ่อม</button>
+            <div id="loading">🚀 กำลังบันทึกข้อมูล...</div>
+        </form>
     </div>
-    
-    <form id="repairForm">
-        <label for="room">สถานที่ / เบอร์โต๊ะ</label>
-        <input type="text" id="room" required>
-        <label for="phone">เบอร์โทรศัพท์ติดต่อ</label>
-        <input type="tel" id="phone" required>
-        <label for="category">หมวดหมู่ปัญหา</label>
-        <select id="category" required>
-          <option value="">-- เลือก --</option>
-          <option value="Computer AIO">Computer AIO</option>
-          <option value="Laptop">Laptop</option>
-          <option value="Network">Network</option>
-          <option value="PSU Passport">PSU Passport</option>
-          <option value="ZOOM/UC-Phone">ZOOM/UC-Phone</option>
-          <option value="CCTV/FingerPrint Scan">CCTV/FingerPrint Scan</option>
-          <option value="Others">Others</option>
-        </select>
-        <label for="issue">ปัญหาที่พบ / อาการ</label>
-        <textarea id="issue" rows="3" required></textarea>
-        <label for="priority">ความเร่งด่วน</label>
-        <select id="priority">
-            <option value="ปกติ">ปกติ</option>
-            <option value="ด่วน">ด่วน</option>
-            <option value="ด่วนที่สุด">ด่วนที่สุด</option>
-        </select>
-        <label for="image">แนบรูปภาพ (ถ้ามี)</label>
-        <input type="file" id="image" accept="image/*">
-        <img id="preview" class="img-preview">
-        <button type="submit" id="submitBtn">ส่งข้อมูลแจ้งซ่อม</button>
-        <div id="loading">🚀 กำลังบันทึกข้อมูล...</div>
-    </form>
-</div>
 
-<script>
-    // ==========================================
-    // ส่วนตั้งค่า
-    // ==========================================
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwUQL9hU2YoKZXf0Fgt-hSlOcMqIiFCGWSe3k4hdvYc9BKhJ4BoMUQb-_fu0qlr1m2u/exec"; 
-    const LIFF_ID_MAIN = "2008875334-eZXiyz43";
-    const LIFF_ID_REVIEW = "2008875334-d6l72Uox";
-    const LIFF_ID_TRACK = "2008875334-wOYUvNha";
-    // ==========================================
+    <script>
+        // ==========================================
+        // ส่วนตั้งค่า
+        // ==========================================
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwUQL9hU2YoKZXf0Fgt-hSlOcMqIiFCGWSe3k4hdvYc9BKhJ4BoMUQb-_fu0qlr1m2u/exec";
+        const LIFF_ID_MAIN = "2008875334-eZXiyz43";
+        const LIFF_ID_REVIEW = "2008875334-d6l72Uox";
+        const LIFF_ID_TRACK = "2008875334-wOYUvNha";
+        // ==========================================
 
-    const form = document.getElementById('repairForm');
-    const btn = document.getElementById('submitBtn');
-    const loading = document.getElementById('loading');
-    let profile = null;
+        const form = document.getElementById('repairForm');
+        const btn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+        let profile = null;
 
-    async function main() {
-        await liff.init({ liffId: LIFF_ID_MAIN });
-        if (liff.isLoggedIn()) {
-            profile = await liff.getProfile();
-            document.getElementById('userImg').src = profile.pictureUrl;
-            document.getElementById('userName').innerText = profile.displayName;
-        } else { liff.login(); }
-    }
-
-    document.getElementById('image').onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (ev) => { 
-                document.getElementById('preview').src = ev.target.result;
-                document.getElementById('preview').style.display = 'block';
-            };
-            reader.readAsDataURL(file);
+        async function main() {
+            await liff.init({ liffId: LIFF_ID_MAIN });
+            if (liff.isLoggedIn()) {
+                profile = await liff.getProfile();
+                document.getElementById('userImg').src = profile.pictureUrl;
+                document.getElementById('userName').innerText = profile.displayName;
+            } else { liff.login(); }
         }
-    };
 
-    form.onsubmit = async (e) => {
-    e.preventDefault();
-    btn.disabled = true;
-    loading.style.display = 'block';
+        document.getElementById('image').onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    document.getElementById('preview').src = ev.target.result;
+                    document.getElementById('preview').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        };
 
-    // ดึงรูปภาพ (เหมือนเดิม)
-    const fileInput = document.getElementById('image');
-    let base64 = "";
-    if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        base64 = await new Promise(resolve => {
-            const reader = new FileReader();
-            reader.onload = (ev) => resolve(ev.target.result.split(',')[1]);
-            reader.readAsDataURL(file);
-        });
-    }
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            btn.disabled = true;
+            loading.style.display = 'block';
 
-    const payload = {
-        uid: profile.userId,
-        displayName: profile.displayName,
-        room: document.getElementById('room').value,
-        phone: document.getElementById('phone').value,
-        category: document.getElementById('category').value,
-        issue: document.getElementById('issue').value,
-        priority: document.getElementById('priority').value,
-        imageBase64: base64
-    };
+            // ดึงรูปภาพ (เหมือนเดิม)
+            const fileInput = document.getElementById('image');
+            let base64 = "";
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                base64 = await new Promise(resolve => {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => resolve(ev.target.result.split(',')[1]);
+                    reader.readAsDataURL(file);
+                });
+            }
 
-    try {
-        const response = await fetch(GAS_URL, {
-            method: "POST",
-            body: JSON.stringify(payload)
-        });
-        const res = await response.json(); // ใช้ res ตามที่คุณสะดวก
+            const payload = {
+                uid: profile.userId,
+                displayName: profile.displayName,
+                room: document.getElementById('room').value,
+                phone: document.getElementById('phone').value,
+                category: document.getElementById('category').value,
+                issue: document.getElementById('issue').value,
+                priority: document.getElementById('priority').value,
+                imageBase64: base64
+            };
 
-        if (res.result === "ok") {
-            // ป้องกันค่าว่างด้วยการใส่ ||
-            const fRoom = document.getElementById('room').value;
-            const fIssue = document.getElementById('issue').value;
-            const fTicket = String(res.ticketId || "No ID");
-            const fQueue = String(res.pendingCount || "0");
-            
-            if (liff.isInClient()) {
-                try {
-                    await liff.sendMessages([{
-                        "type": "flex",
-                        "altText": "แจ้งซ่อมสำเร็จ: " + fTicket,
-                        "contents": {
-                            "type": "bubble",
-                            "header": {
-                                "type": "box", "layout": "horizontal",
-                                "contents": [
-                                    { "type": "text", "text": "รายการแจ้งซ่อม", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
-                                    { "type": "text", "text": fTicket, "align": "end", "weight": "bold", "size": "sm", "color": "#FFFFFF" }
-                                ]
-                            },
-                            "body": {
-                                "type": "box", "layout": "vertical",
-                                "contents": [
-                                    {
-                                        "type": "box", "layout": "vertical", "backgroundColor": "#FBCEB1", "paddingAll": "lg", "cornerRadius": "md",
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
+                const res = await response.json(); // ใช้ res ตามที่คุณสะดวก
+
+                if (res.result === "ok") {
+                    // ป้องกันค่าว่างด้วยการใส่ ||
+                    const fRoom = document.getElementById('room').value;
+                    const fIssue = document.getElementById('issue').value;
+                    const fTicket = String(res.ticketId || "No ID");
+                    const fQueue = String(res.pendingCount || "0");
+
+                    if (liff.isInClient()) {
+                        try {
+                            await liff.sendMessages([{
+                                "type": "flex",
+                                "altText": "แจ้งซ่อมสำเร็จ: " + fTicket,
+                                "contents": {
+                                    "type": "bubble",
+                                    "header": {
+                                        "type": "box", "layout": "horizontal",
                                         "contents": [
-                                            { "type": "text", "text": "สถานะ: รอดำเนินการ", "weight": "bold", "size": "md", "color": "#000080" },
-                                            { "type": "text", "text": "คิวที่รอขณะนี้: " + fQueue + " คิว", "size": "sm", "color": "#000080", "margin": "sm" }
+                                            { "type": "text", "text": "รายการแจ้งซ่อม", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
+                                            { "type": "text", "text": fTicket, "align": "end", "weight": "bold", "size": "sm", "color": "#FFFFFF" }
                                         ]
                                     },
-                                    // --- เพิ่มส่วนประเมินดาว ---
-                                    { "type": "text", "text": "ประเมินความพึงพอใจ (เมื่อจบงาน)", "margin": "xl", "size": "xs", "color": "#aaaaaa", "align": "center" },
-                                    {
-                                        "type": "box", "layout": "horizontal", "margin": "md", "spacing": "sm",
-                                        "contents": [1, 2, 3, 4, 5].map(n => ({
-                                            "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "paddingAll": "8px", "cornerRadius": "md",
-                                            "contents": [
-                                                { "type": "text", "text": "⭐", "align": "center", "size": "xs" },
-                                                { "type": "text", "text": String(n), "align": "center", "size": "xxs", "weight": "bold", "color": "#000080" }
-                                            ],
-                                            "action": {
-                                                "type": "postback",
-                                                "label": String(n),
-                                                "data": "action=vote&tid=" + fTicket + "&score=" + n
+                                    "body": {
+                                        "type": "box", "layout": "vertical",
+                                        "contents": [
+                                            {
+                                                "type": "box", "layout": "vertical", "backgroundColor": "#FBCEB1", "paddingAll": "lg", "cornerRadius": "md",
+                                                "contents": [
+                                                    { "type": "text", "text": "สถานะ: รอดำเนินการ", "weight": "bold", "size": "md", "color": "#000080" },
+                                                    { "type": "text", "text": "คิวที่รอขณะนี้: " + fQueue + " คิว", "size": "sm", "color": "#000080", "margin": "sm" }
+                                                ]
+                                            },
+                                            // --- เพิ่มส่วนประเมินดาว ---
+                                            { "type": "text", "text": "ประเมินความพึงพอใจ (เมื่อจบงาน)", "margin": "xl", "size": "xs", "color": "#aaaaaa", "align": "center" },
+                                            {
+                                                "type": "box", "layout": "horizontal", "margin": "md", "spacing": "sm",
+                                                "contents": [1, 2, 3, 4, 5].map(n => ({
+                                                    "type": "box", "layout": "vertical", "backgroundColor": "#F0F0F0", "paddingAll": "8px", "cornerRadius": "md",
+                                                    "contents": [
+                                                        { "type": "text", "text": "⭐", "align": "center", "size": "xs" },
+                                                        { "type": "text", "text": String(n), "align": "center", "size": "xxs", "weight": "bold", "color": "#000080" }
+                                                    ],
+                                                    "action": {
+                                                        "type": "postback",
+                                                        "label": String(n),
+                                                        "data": "action=vote&tid=" + fTicket + "&score=" + n
+                                                    }
+                                                }))
                                             }
-                                        }))
-                                    }
-                                ]
-                            },
-                            "footer": {
-                                "type": "box", "layout": "vertical",
-                                "contents": [
-                                    {
-                                        "type": "button", "style": "primary", "color": "#000080", "height": "sm",
-                                        "action": {
-                                            "type": "uri", "label": "ดูสถานะงาน",
-                                            "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket
-                                        }
-                                    }
-                                ]
-                            },
-                            "styles": { "header": { "backgroundColor": "#000080" } }
-                        }
-                    },
-                            "styles": {
-                                "header": {
-                                    "backgroundColor": "#000080" // พื้นหลัง Header สีน้ำเงินเข้ม
+                                        ]
+                                    },
+                                    "footer": {
+                                        "type": "box", "layout": "vertical",
+                                        "contents": [
+                                            {
+                                                "type": "button", "style": "primary", "color": "#000080", "height": "sm",
+                                                "action": {
+                                                    "type": "uri", "label": "ดูสถานะงาน",
+                                                    "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    "styles": { "header": { "backgroundColor": "#000080" } }
                                 }
-                            }
+                            }]);
+                        } catch (err) {
+                            console.error(err);
+                            await liff.sendMessages([{ "type": "text", "text": "✅ บันทึกสำเร็จ: " + fTicket }]);
                         }
-                    }]);
-                } catch (err) {
-                    console.error(err);
-                    await liff.sendMessages([{ "type": "text", "text": "✅ บันทึกสำเร็จ: " + fTicket }]);
+                    }
+                    alert("แจ้งซ่อมสำเร็จ!");
+                    liff.closeWindow();
                 }
+            } catch (err) {
+                alert("GAS Error: " + err.message);
+            } finally {
+                btn.disabled = false;
+                loading.style.display = 'none';
             }
-            alert("แจ้งซ่อมสำเร็จ!");
-            liff.closeWindow();
-        }
-    } catch (err) {
-        alert("GAS Error: " + err.message);
-    } finally {
-        btn.disabled = false;
-        loading.style.display = 'none';
-    }
-};
+        };
 
-    main();
-</script>
+        main();
+    </script>
 
 </body>
 </html>
