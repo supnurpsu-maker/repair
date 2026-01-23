@@ -146,8 +146,7 @@
                 // --- ส่วนส่ง Flex Message (ปรับปรุงเพื่อความชัวร์ 100%) ---
             if (liff.isInClient()) {
                 const fTicket = String(resData.ticketId || "N/A");
-                const fRoom = String(roomVal || "-");
-            
+                
                 try {
                     await liff.sendMessages([{
                         "type": "flex",
@@ -158,22 +157,17 @@
                                 "type": "box",
                                 "layout": "vertical",
                                 "contents": [
-                                    { "type": "text", "text": "✅ แจ้งซ่อมสำเร็จ", "weight": "bold", "color": "#000080", "size": "lg" },
-                                    { "type": "text", "text": "เลขที่: " + fTicket, "margin": "sm" },
-                                    { "type": "text", "text": "สถานที่: " + fRoom, "size": "sm", "color": "#666666" },
-                                    { "type": "separator", "margin": "lg" },
+                                    { "type": "text", "text": "✅ ทดสอบปุ่ม URI", "weight": "bold" },
+                                    { "type": "text", "text": "Ticket: " + fTicket, "margin": "sm" },
                                     {
-                                        "type": "text",
-                                        "text": "คลิกที่นี่เพื่ออัปเดตสถานะ",
+                                        "type": "button",
+                                        "style": "primary",
+                                        "color": "#000080",
                                         "margin": "lg",
-                                        "align": "center",
-                                        "color": "#0000FF",
-                                        "decoration": "underline",
-                                        "size": "sm",
                                         "action": {
-                                            "type": "postback",
-                                            "label": "อัปเดตสถานะ",
-                                            "data": "action=checkStatus&tid=" + fTicket
+                                            "type": "uri",
+                                            "label": "เปิด Google",
+                                            "uri": "https://www.google.com"
                                         }
                                     }
                                 ]
@@ -181,10 +175,9 @@
                         }
                     }]);
                 } catch (err) {
-                    // หากชุดนี้ยังไม่ขึ้น แสดงว่าปัญหาอยู่ที่โครงสร้าง "action" ภายใน data
                     await liff.sendMessages([{
                         "type": "text",
-                        "text": "3.2 (Text Action) มีปัญหา: " + fTicket
+                        "text": "3.3 (URI) ก็ยังพัง: " + fTicket
                     }]);
                 }
             }
