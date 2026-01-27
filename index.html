@@ -224,66 +224,72 @@
                 const res = await response.json();
 
                 if (res.result === "ok") {
-                    var fRoom = (document.getElementById('room').value || "-").replace(/[^a-zA-Z0-9ก-๙\s]/g, "");
-                    var fIssue = (document.getElementById('issue').value || "-").replace(/[^a-zA-Z0-9ก-๙\s]/g, "");
-                    var fTicket = String(res.ticketId || "ID");
-                    var trackUrl = "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket;
-                
-                    if (liff.isInClient()) {
-                        const flexPayload = {
-                            "type": "bubble",
-                            "header": {
-                                "type": "box", "layout": "horizontal", "backgroundColor": "#000080",
-                                "contents": [
-                                    { "type": "text", "text": "แจ้งซ่อมสำเร็จ", "color": "#FFFFFF", "size": "sm", "weight": "bold" },
-                                    { "type": "text", "text": fTicket, "color": "#FFFFFF", "size": "sm", "align": "end" }
-                                ]
-                            },
-                            "body": {
-                                "type": "box", "layout": "vertical", "spacing": "md",
-                                "contents": [
-                                    {
-                                        "type": "box", "layout": "vertical", "backgroundColor": "#FBCEB1", "paddingAll": "md", "cornerRadius": "md",
-                                        "contents": [
-                                            { "type": "text", "text": "สถานะ: รอดำเนินการ", "color": "#000080", "weight": "bold" }
-                                        ]
-                                    },
-                                    { "type": "text", "text": "สถานที่: " + fRoom, "size": "xs", "color": "#666666", "wrap": true },
-                                    { "type": "text", "text": "ปัญหา: " + fIssue, "size": "xs", "color": "#666666", "wrap": true },
-                                    { "type": "separator" },
-                                    { "type": "text", "text": "ให้คะแนนความพึงพอใจ", "size": "xxs", "color": "#aaaaaa", "align": "center" },
-                                    {
-                                        "type": "box",
-                                        "layout": "horizontal",
-                                        "spacing": "xs",
-                                        "contents": [1, 2, 3, 4, 5].map(function(i) {
-                                            return {
-                                                "type": "button",
-                                                "height": "sm",
-                                                "style": "secondary",
-                                                "color": "#F0F0F0",
-                                                "action": { "type": "postback", "label": "⭐" + i, "data": "v=" + i + "&t=" + fTicket }
-                                            };
-                                        })
-                                    }
-                                ]
-                            },
-                            "footer": {
-                                "type": "box", "layout": "vertical",
-                                "contents": [
-                                    { "type": "button", "style": "primary", "color": "#000080", "action": { "type": "uri", "label": "ติดตามสถานะ", "uri": trackUrl } }
-                                ]
-                            }
-                        };
-                
-                        liff.sendMessages([{ "type": "flex", "altText": "แจ้งซ่อม " + fTicket, "contents": flexPayload }])
-                            .then(function() { liff.closeWindow(); })
-                            .catch(function(err) { alert("Error: " + err.code); });
-                    } else {
-                        alert("สำเร็จ! Ticket: " + fTicket);
-                        location.reload();
-                    }
+                // 1. Clean ข้อมูลเข้มข้น
+                var fRoom = (document.getElementById('room').value || "-").replace(/[^a-zA-Z0-9ก-๙\s]/g, "");
+                var fIssue = (document.getElementById('issue').value || "-").replace(/[^a-zA-Z0-9ก-๙\s]/g, "");
+                var fTicket = String(res.ticketId || "ID");
+                var trackUrl = "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket;
+            
+                if (liff.isInClient()) {
+                    const flexPayload = {
+                        "type": "bubble",
+                        "header": {
+                            "type": "box", "layout": "horizontal", "backgroundColor": "#000080",
+                            "contents": [
+                                { "type": "text", "text": "แจ้งซ่อมสำเร็จ", "color": "#FFFFFF", "size": "sm", "weight": "bold" },
+                                { "type": "text", "text": fTicket, "color": "#FFFFFF", "size": "sm", "align": "end" }
+                            ]
+                        },
+                        "body": {
+                            "type": "box", "layout": "vertical", "spacing": "md",
+                            "contents": [
+                                {
+                                    "type": "box", "layout": "vertical", "backgroundColor": "#FBCEB1", "paddingAll": "md", "cornerRadius": "md",
+                                    "contents": [
+                                        { "type": "text", "text": "สถานะ: รอดำเนินการ", "color": "#000080", "weight": "bold" }
+                                    ]
+                                },
+                                { "type": "text", "text": "สถานที่: " + fRoom, "size": "xs", "color": "#666666", "wrap": true },
+                                { "type": "text", "text": "ปัญหา: " + fIssue, "size": "xs", "color": "#666666", "wrap": true },
+                                { "type": "separator" },
+                                { "type": "text", "text": "คลิกดาวเพื่อให้คะแนน", "size": "xxs", "color": "#aaaaaa", "align": "center" },
+                                {
+                                    "type": "box",
+                                    "layout": "horizontal",
+                                    "contents": [1, 2, 3, 4, 5].map(function(i) {
+                                        return {
+                                            "type": "text",
+                                            "text": "⭐" + i,
+                                            "align": "center",
+                                            "size": "md",
+                                            "weight": "bold",
+                                            "color": "#000080",
+                                            "action": {
+                                                "type": "postback",
+                                                "label": String(i),
+                                                "data": "v=" + i + "&t=" + fTicket
+                                            }
+                                        };
+                                    })
+                                }
+                            ]
+                        },
+                        "footer": {
+                            "type": "box", "layout": "vertical",
+                            "contents": [
+                                { "type": "button", "style": "primary", "color": "#000080", "action": { "type": "uri", "label": "ติดตามสถานะ", "uri": trackUrl } }
+                            ]
+                        }
+                    };
+            
+                    liff.sendMessages([{ "type": "flex", "altText": "แจ้งซ่อม " + fTicket, "contents": flexPayload }])
+                        .then(function() { liff.closeWindow(); })
+                        .catch(function(err) { alert("Error Detail: " + JSON.stringify(err)); });
+                } else {
+                    alert("สำเร็จ! Ticket: " + fTicket);
+                    location.reload();
                 }
+            }
             } catch (err) {
                 alert("เกิดข้อผิดพลาด: " + err.message);
             } finally {
