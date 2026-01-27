@@ -255,8 +255,8 @@
                     
                     // 2. สร้างลิงก์ติดตามสถานะ (เชื่อมกับ track.html)
                     // รูปแบบ: LIFF_ID_TRACK + ?ticket=TICKET_ID
-                    var trackUrl = "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket;
-                
+                    // var trackUrl = "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket;
+                    var trackUrl = "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(fTicket);
                     if (liff.isInClient()) {
                         // 3. ส่ง Flex Message เข้าห้องแชท
                         const flexPayload = {
