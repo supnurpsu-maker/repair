@@ -21,118 +21,83 @@
 
         .search-card {
             background: white; padding: 20px; border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px;
         }
 
-        .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; font-size: 14px; margin-bottom: 8px; color: #555; }
-        
-        .search-row { display: flex; gap: 10px; }
-        select { 
-            width: 100px; padding: 12px; border: 1.5px solid #eee; 
-            border-radius: 10px; font-size: 16px; background: #fafafa;
-        }
-        input { 
-            flex: 1; padding: 12px; border: 1.5px solid #eee; 
-            border-radius: 10px; font-size: 16px; background: #fafafa;
+        select, input {
+            width: 100%; padding: 12px; margin: 8px 0;
+            border: 1px solid #ddd; border-radius: 10px; font-size: 16px;
         }
 
         .btn-search {
-            width: 100%; padding: 14px; background: var(--primary);
+            width: 100%; padding: 12px; background: var(--primary);
             color: white; border: none; border-radius: 10px;
-            font-size: 16px; font-weight: 600; cursor: pointer;
+            font-size: 16px; font-weight: 600; margin-top: 10px;
         }
 
-        #result { display: none; margin-top: 10px; }
-        .result-card {
-            background: white; border-radius: 15px;
-            overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            position: relative;
+        .result-box {
+            background: white; padding: 20px; border-radius: 15px;
+            display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
-        .res-header {
-            background: #f0f0ff; padding: 15px;
-            display: flex; justify-content: space-between; align-items: center;
+
+        .badge {
+            display: inline-block; padding: 5px 15px;
+            border-radius: 20px; font-size: 14px; color: white; margin-bottom: 10px;
         }
-        .res-body { padding: 15px; }
-        .info-item { display: flex; margin-bottom: 12px; font-size: 14px; line-height: 1.4; }
-        .info-label { width: 100px; color: #888; flex-shrink: 0; }
-        .info-value { color: #333; font-weight: 400; word-break: break-word; }
+        .st-1 { background: #6c757d; } /* รอดำเนินการ */
+        .st-2 { background: #007bff; } /* กำลังดำเนินการ */
+        .st-3 { background: #fd7e14; } /* จัดจ้างร้านภายนอก */
+        .st-4 { background: #28a745; } /* ดำเนินการเรียบร้อยแล้ว */
 
-        .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .st-1 { background: #fff3cd; color: #856404; } /* รอดำเนินการ */
-        .st-2 { background: #cfe2ff; color: #084298; } /* กำลังดำเนินการ */
-        .st-3 { background: #e2e3e5; color: #41464b; } /* จัดจ้างภายนอก */
-        .st-4 { background: #d1e7dd; color: #0f5132; } /* ดำเนินการเรียบร้อยแล้ว */
+        .info-row { display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .info-label { color: #666; font-size: 14px; }
+        .info-value { font-weight: 600; color: #333; text-align: right; }
 
-        #btnArea { padding: 0 15px 15px 15px; }
         .btn-review {
-            width: 100%; padding: 14px; background: var(--success);
-            color: white; border: none; border-radius: 10px;
-            font-size: 16px; font-weight: 600; cursor: pointer;
-            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+            width: 100%; padding: 12px; background: #ffc107;
+            color: #000; border: none; border-radius: 10px;
+            font-size: 16px; font-weight: 600; margin-top: 15px;
         }
 
-        #loader { display: none; text-align: center; padding: 20px; color: var(--primary); font-weight: bold; }
+        #loader { display: none; text-align: center; margin: 20px 0; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header-box">
-        <h2 style="margin:0; font-size: 20px;">ติดตามงานซ่อม</h2>
-        <p style="margin:5px 0 0; font-size: 12px; opacity: 0.9;">ระบุหมายเลขงานเพื่อตรวจสอบสถานะ</p>
+        <h2 style="margin:0">ติดตามสถานะงาน</h2>
+        <p style="margin:5px 0 0; opacity:0.8; font-size:14px">ตรวจสอบความคืบหน้าการแจ้งซ่อม</p>
     </div>
 
-    <div class="search-card">
-        <div class="input-group">
-            <label>เลือกแผนกและกรอกหมายเลข</label>
-            <div class="search-row">
-                <select id="deptSelect">
-                    <option value="">เลือก</option>
-                </select>
-                <input type="number" id="numInput" placeholder="เช่น 1 หรือ 001" inputmode="numeric">
-            </div>
-        </div>
-        <button class="btn-search" onclick="searchTicket()">ตรวจสอบสถานะ</button>
+    <div id="searchSection" class="search-card">
+        <label>เลือกแผนก</label>
+        <select id="deptSelect"><option value="">-- เลือกแผนก --</option></select>
+        <label>หมายเลขงาน</label>
+        <input type="number" id="numInput" placeholder="ตัวอย่าง: 1">
+        <button class="btn-search" onclick="searchTicket()">🔍 ค้นหาสถานะ</button>
     </div>
 
-    <div id="loader">⏳ กำลังค้นหาข้อมูล...</div>
+    <div id="loader">⏳ กำลังโหลดข้อมูล...</div>
 
-    <div id="result">
-        <div class="result-card">
-            <div class="res-header">
-                <strong id="dispId" style="color:var(--primary); font-size: 18px;"></strong>
-                <span id="dispBadge" class="badge"></span>
-            </div>
-            <div class="res-body">
-                <div class="info-item">
-                    <div class="info-label">📍 สถานที่:</div>
-                    <div class="info-value" id="dispRoom"></div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">🔧 อาการ:</div>
-                    <div class="info-value" id="dispIssue"></div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">👤 ช่างดูแล:</div>
-                    <div class="info-value" id="dispAdmin" style="color:blue; font-weight:600;"></div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">🕒 แจ้งเมื่อ:</div>
-                    <div class="info-value" id="dispTime"></div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">⚠️ ความเร่งด่วน:</div>
-                    <div class="info-value" id="dispPrio" style="font-weight: 600;"></div>
-                </div>
-            </div>
-            <div id="btnArea"></div>
+    <div id="result" class="result-box">
+        <div style="text-align: center;">
+            <div id="dispBadge" class="badge"></div>
+            <h3 id="dispId" style="margin: 5px 0; color: var(--primary);"></h3>
         </div>
+        
+        <div class="info-row"><span class="info-label">สถานที่:</span><span id="dispRoom" class="info-value"></span></div>
+        <div class="info-row"><span class="info-label">ความเร่งด่วน:</span><span id="dispPrio" class="info-value"></span></div>
+        <div class="info-row"><span class="info-label">รายละเอียด:</span><span id="dispIssue" class="info-value"></span></div>
+        <div class="info-row"><span class="info-label">ช่างรับผิดชอบ:</span><span id="dispAdmin" class="info-value"></span></div>
+        <div class="info-row"><span class="info-label">อัปเดตล่าสุด:</span><span id="dispTime" class="info-value" style="font-size:12px"></span></div>
+
+        <div id="btnArea"></div>
     </div>
 </div>
 
 <script>
-    const URL_GAS = "https://script.google.com/macros/s/AKfycbxuPWwXJCrdFV_-I1tXq1oEBBnD-CBOGb4Y0MeuPUzdeGuRz4RkbJjqENAGmuhr0Rsz/exec";
+    const URL_GAS = "https://script.google.com/macros/s/AKfycbyR1CjzjPXwVDXY--61hChyPkjXUY1sNG7jqZs1iHcjrPnEEcYrgILJcKbosuNGcMh3/exec";
     const LIFF_ID_TRACK = "2008875334-wOYUvNha";
     const LIFF_ID_REVIEW = "2008875334-d6l72Uox"; 
     let myUid = "";
@@ -140,35 +105,33 @@
     async function init() {
         try {
             await liff.init({ liffId: LIFF_ID_TRACK });
-            if (!liff.isLoggedIn()) {
-                liff.login();
-                return;
-            }
+            if (!liff.isLoggedIn()) { liff.login(); return; }
             const profile = await liff.getProfile();
             myUid = profile.userId;
             
             await loadDepts();
 
-            // --- ส่วนที่เพิ่มใหม่: ตรวจสอบพารามิเตอร์จาก URL ---
+            // ////////////////////////////////////////////////////////////
+            // // [หน้าที่ 1] ใช้ในส่วนการทำงานของระบบ "ส่ง Flex อัตโนมัติ" //
+            // ////////////////////////////////////////////////////////////
             const urlParams = new URLSearchParams(window.location.search);
-            const ticketFromUrl = urlParams.get('ticket'); // รับค่าจาก ?ticket=แผนก#001
+            const ticketIdFromUrl = urlParams.get('ticket'); // รับค่า แผนก#001 จากปุ่มในแชท
 
-            if (ticketFromUrl) {
-                // เข้าสู่โหมด Auto: ค้นหาและส่ง Flex ทันที
-                autoSearchAndSendFlex(ticketFromUrl);
+            if (ticketIdFromUrl) {
+                autoSearchAndSendFlex(ticketIdFromUrl);
             }
         } catch (e) { console.error(e); }
     }
 
-    // ฟังก์ชันใหม่สำหรับจัดการส่ง Flex อัตโนมัติ
+    // ฟังก์ชันใหม่: ดึงข้อมูลและส่ง Flex อัปเดตสถานะทันที
     async function autoSearchAndSendFlex(fullTicketId) {
         document.getElementById('loader').style.display = 'block';
+        document.getElementById('searchSection').style.display = 'none'; // ซ่อนหน้าค้นหาเพื่อไม่ให้สับสน
         try {
             const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(fullTicketId)}&uid=${myUid}`);
             const data = await res.json();
 
             if (data.found) {
-                // ส่ง Flex Message กลับเข้าไปในแชท
                 await liff.sendMessages([{
                     "type": "flex",
                     "altText": "อัปเดตสถานะ " + fullTicketId,
@@ -181,16 +144,17 @@
                         "body": {
                             "type": "box", "layout": "vertical", "spacing": "md",
                             "contents": [
-                                { "type": "text", "text": "หมายเลข: " + fullTicketId, "weight": "bold", "size": "md" },
+                                { "type": "text", "text": "หมายเลขงาน: " + fullTicketId, "weight": "bold", "size": "md" },
                                 { 
-                                    "type": "box", "layout": "vertical", "backgroundColor": (data.status === "ดำเนินการเรียบร้อยแล้ว" ? "#d1e7dd" : "#eee"), 
+                                    "type": "box", "layout": "vertical", 
+                                    "backgroundColor": (data.status === "ดำเนินการเรียบร้อยแล้ว" ? "#d1e7dd" : "#eeeeee"), 
                                     "paddingAll": "md", "cornerRadius": "md",
                                     "contents": [{ "type": "text", "text": "สถานะ: " + data.status, "weight": "bold", "align": "center", "color": (data.status === "ดำเนินการเรียบร้อยแล้ว" ? "#0f5132" : "#000080") }]
                                 },
                                 { "type": "text", "text": "📍 สถานที่: " + data.room, "size": "xs" },
                                 { "type": "text", "text": "🔧 ปัญหา: " + data.issue, "size": "xs", "wrap": true },
                                 { "type": "text", "text": "👤 ช่างดูแล: " + data.admin, "size": "xs", "color": "#0000ff", "weight": "bold" },
-                                { "type": "separator" },
+                                { "type": "separator", "margin": "md" },
                                 { "type": "text", "text": "อัปเดตเมื่อ: " + data.time, "size": "xxs", "color": "#aaaaaa", "align": "end" }
                             ]
                         }
@@ -198,16 +162,20 @@
                 }]);
                 liff.closeWindow(); // ส่งเสร็จแล้วปิดหน้าต่างทันที
             } else {
-                alert("ไม่พบข้อมูลหมายเลข " + fullTicketId);
+                alert("ไม่พบข้อมูลหมายเลข " + fullTicketId + " หรือคุณไม่ใช่เจ้าของรายการ");
                 document.getElementById('loader').style.display = 'none';
+                document.getElementById('searchSection').style.display = 'block';
             }
         } catch (e) {
             console.error(e);
             document.getElementById('loader').style.display = 'none';
+            document.getElementById('searchSection').style.display = 'block';
         }
     }
 
-    // --- ฟังก์ชันเดิมทั้งหมด (ห้ามลบ) ---
+    // ////////////////////////////////////////////////////////////
+    // // [หน้าที่ 2] ฟังก์ชันเดิมทั้งหมดของคุณ (Manual Search)     //
+    // ////////////////////////////////////////////////////////////
     async function loadDepts() {
         try {
             const res = await fetch(`${URL_GAS}?action=getPrefixes`);
@@ -224,7 +192,6 @@
     async function searchTicket() {
         const dept = document.getElementById('deptSelect').value;
         const num = document.getElementById('numInput').value.trim();
-
         if (!dept || !num) return alert("กรุณาเลือกแผนกและระบุหมายเลขงาน");
 
         document.getElementById('btnArea').innerHTML = "";
@@ -246,10 +213,9 @@
 
                 const prioElem = document.getElementById('dispPrio');
                 prioElem.innerText = data.priority;
-                
-                if (data.priority === "ด่วนที่สุด") { prioElem.style.color = "#ff4d4d"; } 
-                else if (data.priority === "ด่วน") { prioElem.style.color = "#ffa500"; } 
-                else { prioElem.style.color = "#2ecc71"; }
+                if (data.priority === "ด่วนที่สุด") prioElem.style.color = "#ff4d4d";
+                else if (data.priority === "ด่วน") prioElem.style.color = "#ffa500";
+                else prioElem.style.color = "#2ecc71";
 
                 const badge = document.getElementById('dispBadge');
                 badge.innerText = data.status;
@@ -271,11 +237,8 @@
             } else {
                 alert(`ไม่พบรายการ ${fullTicketId} หรือคุณไม่ใช่เจ้าของรายการนี้`);
             }
-        } catch (e) { 
-            alert("เกิดข้อผิดพลาดในการโหลดข้อมูล"); 
-        } finally {
-            document.getElementById('loader').style.display = 'none';
-        }
+        } catch (e) { alert("เกิดข้อผิดพลาดในการโหลดข้อมูล"); }
+        finally { document.getElementById('loader').style.display = 'none'; }
     }
 
     function getStatusClass(s) {
