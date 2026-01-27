@@ -98,99 +98,89 @@
 </div>
 
 <script>
-    // ********** ส่วนตั้งค่า (ตรวจสอบ LIFF ID ให้ถูกต้อง) **********
+    // ********** ตั้งค่า Config (ตรวจสอบให้ตรงกับที่ใช้งานจริง) **********
     const URL_GAS = "https://script.google.com/macros/s/AKfycbyR1CjzjPXwVDXY--61hChyPkjXUY1sNG7jqZs1iHcjrPnEEcYrgILJcKbosuNGcMh3/exec";
     const LIFF_ID_TRACK = "2008875334-wOYUvNha";
     const LIFF_ID_REVIEW = "2008875334-d6l72Uox"; 
-    // *********************************************************
+    // ************************************************************
 
     let myUid = "";
 
     async function init() {
         try {
-            // 1. เริ่มต้น LIFF
             await liff.init({ liffId: LIFF_ID_TRACK });
-            if (!liff.isLoggedIn()) {
-                liff.login();
-                return;
-            }
-
-            // 2. ดึง Profile เพื่อเอา UID (สำคัญมากสำหรับการเช็คสิทธิ์)
+            if (!liff.isLoggedIn()) { liff.login(); return; }
+            
+            // ดึง Profile เพื่อเอา UID มาใช้เช็คสิทธิ์ (ถ้าไม่มี UID ทาง GAS จะส่ง found: false กลับมา)
             const profile = await liff.getProfile();
             myUid = profile.userId;
 
-            // 3. ตรวจสอบพารามิเตอร์ใน URL (?ticket=...)
             const urlParams = new URLSearchParams(window.location.search);
             const ticketFromUrl = urlParams.get('ticket');
 
             if (ticketFromUrl) {
-                // ถ้ามี Ticket ส่งมา (เช่นกดจาก Flex Message) ให้ดึงข้อมูลทันที
-                // ใช้ decodeURIComponent เพื่อป้องกันปัญหาเครื่องหมาย # เพี้ยน
-                autoProcess(decodeURIComponent(ticketFromUrl));
+                // กรณีคลิกมาจาก Flex Message:
+                // decodeURIComponent ช่วยให้เครื่องหมาย # ใน IT#050 ไม่ผิดเพี้ยน
+                const cleanTicket = decodeURIComponent(ticketFromUrl).trim();
+                autoProcess(cleanTicket);
             } else {
-                // ถ้าไม่มี Ticket ให้โหลดหน้าค้นหาปกติ
                 loadDepts();
             }
-        } catch (e) {
-            alert("LIFF Error: " + e.message);
-        }
+        } catch (e) { alert("Error Init: " + e.message); }
     }
 
-    // ฟังก์ชันสำหรับดึงข้อมูลอัตโนมัติ (จาก Flex Message)
+    // ฟังก์ชันดึงข้อมูลอัตโนมัติ
     async function autoProcess(tid) {
         document.getElementById('searchSection').style.display = 'none';
         document.getElementById('loader').style.display = 'block';
 
         try {
-            // เรียกไปที่ GAS โดยส่งทั้ง Ticket ID และ UID
-            const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(tid)}&uid=${myUid}`);
+            // ส่งไปหา GAS: ตรวจสอบว่า tid และ uid ถูกต้อง
+            const fetchUrl = `${URL_GAS}?action=track&tid=${encodeURIComponent(tid)}&uid=${myUid}`;
+            const res = await fetch(fetchUrl);
             const data = await res.json();
 
             if (data.found) {
-                // ถ้าเจอข้อมูล ให้แสดงผลด้วยฟังก์ชันเดียวกับ Manual Search
                 renderResult(tid, data);
             } else {
-                // ถ้าไม่เจอ (อาจจะเพราะ UID ไม่ตรง) ให้เด้งไปหน้าค้นหาเอง
-                alert(`ไม่พบรายการ ${tid} หรือคุณไม่ใช่เจ้าของรายการนี้`);
+                // กรณีหาไม่เจอ ให้แสดงปุ่มค้นหาเองเผื่อไว้
+                alert("ไม่พบข้อมูลรายการ: " + tid + "\nหรือคุณไม่ใช่เจ้าของรายการนี้");
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('searchSection').style.display = 'block';
                 loadDepts();
             }
         } catch (e) {
-            alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+            alert("เชื่อมต่อผิดพลาด");
             document.getElementById('loader').style.display = 'none';
             document.getElementById('searchSection').style.display = 'block';
         }
     }
 
-    // ฟังก์ชันค้นหาด้วยตนเอง (Manual Search)
+    // ฟังก์ชันค้นหาด้วยตนเอง
     async function manualSearch() {
         const dept = document.getElementById('deptSelect').value;
         const num = document.getElementById('numInput').value;
-        if (!dept || !num) return alert("กรุณาระบุแผนกและเลขที่งาน");
+        if (!dept || !num) return alert("กรุณากรอกข้อมูลให้ครบถ้วน");
 
-        const fullTicketId = `${dept}#${num.padStart(3, '0')}`;
+        // สร้าง Ticket ID รูปแบบเดียวกับใน Sheet (เช่น IT#001)
+        const fullId = `${dept}#${num.padStart(3, '0')}`.trim();
         
         document.getElementById('loader').style.display = 'block';
         document.getElementById('result').style.display = 'none';
 
         try {
-            const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(fullTicketId)}&uid=${myUid}`);
+            const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(fullId)}&uid=${myUid}`);
             const data = await res.json();
 
             if (data.found) {
-                renderResult(fullTicketId, data);
+                renderResult(fullId, data);
             } else {
-                alert(`ไม่พบรายการ ${fullTicketId} หรือคุณไม่ใช่เจ้าของรายการนี้`);
+                alert("ไม่พบข้อมูล " + fullId + " หรือ UID ของคุณไม่ตรงกับในระบบ");
             }
-        } catch (e) {
-            alert("เกิดข้อผิดพลาดในการโหลดข้อมูล");
-        } finally {
-            document.getElementById('loader').style.display = 'none';
-        }
+        } catch (e) { alert("เชื่อมต่อผิดพลาด"); }
+        finally { document.getElementById('loader').style.display = 'none'; }
     }
 
-    // ฟังก์ชันดึงรายชื่อแผนกมาใส่ใน Dropdown
     async function loadDepts() {
         try {
             const res = await fetch(`${URL_GAS}?action=getPrefixes`);
@@ -202,12 +192,9 @@
                 opt.value = p; opt.innerText = p;
                 sel.appendChild(opt);
             });
-        } catch (e) {
-            console.error("Load Depts Error:", e);
-        }
+        } catch(e) { console.error(e); }
     }
 
-    // ฟังก์ชันแสดงข้อมูลบนหน้าจอ
     function renderResult(tid, data) {
         document.getElementById('dispId').innerText = tid;
         document.getElementById('dispRoom').innerText = data.room || "-";
@@ -218,40 +205,27 @@
 
         const badge = document.getElementById('dispBadge');
         badge.innerText = data.status;
-        badge.className = 'badge ' + getStatusClass(data.status);
+        badge.className = 'badge ' + (
+            data.status === "รอดำเนินการ" ? "st-1" :
+            data.status === "กำลังดำเนินการ" ? "st-2" :
+            data.status === "จัดจ้างร้านภายนอก" ? "st-3" : "st-4"
+        );
 
-        // จัดการส่วนปุ่มประเมิน
         const btnArea = document.getElementById('btnArea');
-        btnArea.innerHTML = ""; // ล้างค่าเก่า
+        btnArea.innerHTML = "";
         if (data.status === "ดำเนินการเรียบร้อยแล้ว") {
             const btn = document.createElement('button');
             btn.className = "btn-review";
-            btn.innerHTML = "🌟 ประเมินความพึงพอใจ";
+            btn.innerText = "⭐ ให้คะแนนงานซ่อม";
             btn.onclick = () => {
-                liff.openWindow({
-                    url: `https://liff.line.me/${LIFF_ID_REVIEW}?row=${data.row}`,
-                    external: false
-                });
+                liff.openWindow({ url: `https://liff.me/${LIFF_ID_REVIEW}?row=${data.row}`, external: false });
             };
             btnArea.appendChild(btn);
         }
-
         document.getElementById('result').style.display = 'block';
         document.getElementById('loader').style.display = 'none';
     }
 
-    // ฟังก์ชันคืนชื่อ Class ของ CSS ตามสถานะ
-    function getStatusClass(s) {
-        switch(s) {
-            case "รอดำเนินการ": return "st-1";
-            case "กำลังดำเนินการ": return "st-2";
-            case "จัดจ้างร้านภายนอก": return "st-3";
-            case "ดำเนินการเรียบร้อยแล้ว": return "st-4";
-            default: return "st-1";
-        }
-    }
-
-    // เริ่มทำงานเมื่อเปิดหน้าเว็บ
     init();
 </script>
 </body>
