@@ -7,11 +7,12 @@
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #000080; --bg: #f8f9fa; --success: #28a745; }
+        :root { --primary: #000080; --bg: #f8f9fa; }
         * { box-sizing: border-box; font-family: 'Prompt', sans-serif; }
-        body { background-color: var(--bg); margin: 0; padding: 15px; overflow-x: hidden; }
+        body { background-color: var(--bg); margin: 0; padding: 15px; }
         .container { max-width: 100%; margin: auto; }
         
+        /* Header */
         .header-box {
             background: var(--primary); color: white;
             padding: 20px 15px; border-radius: 15px;
@@ -19,27 +20,26 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
+        /* Search Form */
         .search-card {
             background: white; padding: 20px; border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px;
         }
-
         select, input {
             width: 100%; padding: 12px; margin: 8px 0;
             border: 1px solid #ddd; border-radius: 10px; font-size: 16px;
         }
-
         .btn-search {
             width: 100%; padding: 12px; background: var(--primary);
             color: white; border: none; border-radius: 10px;
-            font-size: 16px; font-weight: 600; margin-top: 10px;
+            font-size: 16px; font-weight: 600; margin-top: 10px; cursor: pointer;
         }
 
+        /* Result Box */
         .result-box {
             background: white; padding: 20px; border-radius: 15px;
             display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
-
         .badge {
             display: inline-block; padding: 5px 15px;
             border-radius: 20px; font-size: 14px; color: white; margin-bottom: 10px;
@@ -53,13 +53,14 @@
         .info-label { color: #666; font-size: 14px; }
         .info-value { font-weight: 600; color: #333; text-align: right; }
 
+        /* Review Button */
         .btn-review {
             width: 100%; padding: 12px; background: #ffc107;
             color: #000; border: none; border-radius: 10px;
-            font-size: 16px; font-weight: 600; margin-top: 15px;
+            font-size: 16px; font-weight: 600; margin-top: 15px; cursor: pointer;
         }
 
-        #loader { display: none; text-align: center; margin: 20px 0; }
+        #loader { display: none; text-align: center; margin: 20px 0; color: var(--primary); }
     </style>
 </head>
 <body>
@@ -72,10 +73,10 @@
 
     <div id="searchSection" class="search-card">
         <label>เลือกแผนก</label>
-        <select id="deptSelect"><option value="">-- เลือกแผนก --</option></select>
+        <select id="deptSelect"><option value="">-- กำลังโหลด --</option></select>
         <label>หมายเลขงาน</label>
-        <input type="number" id="numInput" placeholder="ตัวอย่าง: 1">
-        <button class="btn-search" onclick="searchTicket()">🔍 ค้นหาสถานะ</button>
+        <input type="number" id="numInput" placeholder="เช่น: 1">
+        <button class="btn-search" onclick="manualSearch()">🔍 ค้นหาสถานะ</button>
     </div>
 
     <div id="loader">⏳ กำลังโหลดข้อมูล...</div>
@@ -97,9 +98,12 @@
 </div>
 
 <script>
+    // ********** ตั้งค่า Config ตรงนี้ครับ **********
     const URL_GAS = "https://script.google.com/macros/s/AKfycbyR1CjzjPXwVDXY--61hChyPkjXUY1sNG7jqZs1iHcjrPnEEcYrgILJcKbosuNGcMh3/exec";
     const LIFF_ID_TRACK = "2008875334-wOYUvNha";
     const LIFF_ID_REVIEW = "2008875334-d6l72Uox"; 
+    // ******************************************
+
     let myUid = "";
 
     async function init() {
@@ -108,147 +112,132 @@
             if (!liff.isLoggedIn()) { liff.login(); return; }
             const profile = await liff.getProfile();
             myUid = profile.userId;
-            
-            await loadDepts();
 
-            // ////////////////////////////////////////////////////////////
-            // // [หน้าที่ 1] ใช้ในส่วนการทำงานของระบบ "ส่ง Flex อัตโนมัติ" //
-            // ////////////////////////////////////////////////////////////
+            // ตรวจสอบว่ามี ?ticket=... ส่งมาใน URL หรือไม่ (Auto Mode)
             const urlParams = new URLSearchParams(window.location.search);
-            const ticketIdFromUrl = urlParams.get('ticket'); // รับค่า แผนก#001 จากปุ่มในแชท
+            const ticketFromUrl = urlParams.get('ticket');
 
-            if (ticketIdFromUrl) {
-                autoSearchAndSendFlex(ticketIdFromUrl);
+            if (ticketFromUrl) {
+                // ถ้ามีพารามิเตอร์ ticket ให้ทำ Auto Search & Send Flex
+                autoProcess(ticketFromUrl);
+            } else {
+                // ถ้าไม่มี ให้โหลด Dropdown แผนก สำหรับค้นหาเอง
+                loadDepts();
             }
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            alert("Error Init: " + e.message); 
+        }
     }
 
-    // ฟังก์ชันใหม่: ดึงข้อมูลและส่ง Flex อัปเดตสถานะทันที
-    async function autoSearchAndSendFlex(fullTicketId) {
+    // ฟังก์ชัน 1: Auto Process (ดึงข้อมูล -> ส่ง Flex -> ปิดหน้าต่าง)
+    async function autoProcess(tid) {
+        document.getElementById('searchSection').style.display = 'none';
         document.getElementById('loader').style.display = 'block';
-        document.getElementById('searchSection').style.display = 'none'; // ซ่อนหน้าค้นหาเพื่อไม่ให้สับสน
+
         try {
-            const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(fullTicketId)}&uid=${myUid}`);
+            const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(tid)}&uid=${myUid}`);
             const data = await res.json();
 
             if (data.found) {
+                // ส่ง Flex Message กลับไปในแชท
                 await liff.sendMessages([{
                     "type": "flex",
-                    "altText": "อัปเดตสถานะ " + fullTicketId,
+                    "altText": "สถานะงานซ่อม: " + tid,
                     "contents": {
                         "type": "bubble",
-                        "header": {
-                            "type": "box", "layout": "vertical", "backgroundColor": "#000080",
-                            "contents": [{ "type": "text", "text": "อัปเดตสถานะล่าสุด", "color": "#FFFFFF", "weight": "bold", "size": "sm" }]
-                        },
+                        "header": { "type": "box", "layout": "vertical", "backgroundColor": "#000080", "contents": [{ "type": "text", "text": "สถานะงานซ่อมล่าสุด", "color": "#ffffff", "weight": "bold" }] },
                         "body": {
                             "type": "box", "layout": "vertical", "spacing": "md",
                             "contents": [
-                                { "type": "text", "text": "หมายเลขงาน: " + fullTicketId, "weight": "bold", "size": "md" },
-                                { 
-                                    "type": "box", "layout": "vertical", 
-                                    "backgroundColor": (data.status === "ดำเนินการเรียบร้อยแล้ว" ? "#d1e7dd" : "#eeeeee"), 
-                                    "paddingAll": "md", "cornerRadius": "md",
-                                    "contents": [{ "type": "text", "text": "สถานะ: " + data.status, "weight": "bold", "align": "center", "color": (data.status === "ดำเนินการเรียบร้อยแล้ว" ? "#0f5132" : "#000080") }]
-                                },
-                                { "type": "text", "text": "📍 สถานที่: " + data.room, "size": "xs" },
-                                { "type": "text", "text": "🔧 ปัญหา: " + data.issue, "size": "xs", "wrap": true },
-                                { "type": "text", "text": "👤 ช่างดูแล: " + data.admin, "size": "xs", "color": "#0000ff", "weight": "bold" },
+                                { "type": "text", "text": tid, "weight": "bold", "size": "xl", "color": "#000080" },
+                                { "type": "text", "text": "สถานะ: " + data.status, "weight": "bold", "color": (data.status==="ดำเนินการเรียบร้อยแล้ว"?"#28a745":"#ff0000") },
                                 { "type": "separator", "margin": "md" },
-                                { "type": "text", "text": "อัปเดตเมื่อ: " + data.time, "size": "xxs", "color": "#aaaaaa", "align": "end" }
+                                { "type": "text", "text": "📍 " + data.room, "size": "sm" },
+                                { "type": "text", "text": "🔧 " + data.issue, "size": "sm", "wrap": true },
+                                { "type": "text", "text": "👤 ช่าง: " + data.admin, "size": "sm", "color": "#666666" }
                             ]
                         }
                     }
                 }]);
-                liff.closeWindow(); // ส่งเสร็จแล้วปิดหน้าต่างทันที
+                liff.closeWindow(); // ปิดหน้าต่างทันทีหลังส่งเสร็จ
             } else {
-                alert("ไม่พบข้อมูลหมายเลข " + fullTicketId + " หรือคุณไม่ใช่เจ้าของรายการ");
+                alert("ไม่พบข้อมูล หรือคุณไม่ใช่เจ้าของรายการนี้");
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('searchSection').style.display = 'block';
+                loadDepts();
             }
         } catch (e) {
-            console.error(e);
+            alert("เกิดข้อผิดพลาด: " + e.message);
             document.getElementById('loader').style.display = 'none';
             document.getElementById('searchSection').style.display = 'block';
         }
     }
 
-    // ////////////////////////////////////////////////////////////
-    // // [หน้าที่ 2] ฟังก์ชันเดิมทั้งหมดของคุณ (Manual Search)     //
-    // ////////////////////////////////////////////////////////////
+    // ฟังก์ชัน 2: Manual Search (User กรอกเอง)
+    async function manualSearch() {
+        const dept = document.getElementById('deptSelect').value;
+        const num = document.getElementById('numInput').value;
+        if (!dept || !num) return alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+
+        const fullId = `${dept}#${num.padStart(3, '0')}`; // สร้าง ID เช่น IT#001
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('result').style.display = 'none';
+
+        try {
+            const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(fullId)}&uid=${myUid}`);
+            const data = await res.json();
+
+            if (data.found) {
+                renderResult(fullId, data);
+            } else {
+                alert("ไม่พบข้อมูล หรือคุณไม่ใช่เจ้าของรายการนี้");
+            }
+        } catch (e) { alert("เชื่อมต่อผิดพลาด"); }
+        finally { document.getElementById('loader').style.display = 'none'; }
+    }
+
     async function loadDepts() {
         try {
             const res = await fetch(`${URL_GAS}?action=getPrefixes`);
             const prefixes = await res.json();
-            const select = document.getElementById('deptSelect');
+            const sel = document.getElementById('deptSelect');
+            sel.innerHTML = '<option value="">-- เลือกแผนก --</option>';
             prefixes.forEach(p => {
                 let opt = document.createElement('option');
                 opt.value = p; opt.innerText = p;
-                select.appendChild(opt);
+                sel.appendChild(opt);
             });
-        } catch (e) { console.error(e); }
+        } catch(e) { console.log(e); }
     }
 
-    async function searchTicket() {
-        const dept = document.getElementById('deptSelect').value;
-        const num = document.getElementById('numInput').value.trim();
-        if (!dept || !num) return alert("กรุณาเลือกแผนกและระบุหมายเลขงาน");
+    function renderResult(tid, data) {
+        document.getElementById('dispId').innerText = tid;
+        document.getElementById('dispRoom').innerText = data.room;
+        document.getElementById('dispIssue').innerText = data.issue;
+        document.getElementById('dispPrio').innerText = data.priority;
+        document.getElementById('dispAdmin').innerText = data.admin;
+        document.getElementById('dispTime').innerText = data.time;
 
-        document.getElementById('btnArea').innerHTML = "";
-        document.getElementById('result').style.display = 'none';
-        document.getElementById('loader').style.display = 'block';
+        const badge = document.getElementById('dispBadge');
+        badge.innerText = data.status;
+        badge.className = 'badge ' + (
+            data.status === "รอดำเนินการ" ? "st-1" :
+            data.status === "กำลังดำเนินการ" ? "st-2" :
+            data.status === "จัดจ้างร้านภายนอก" ? "st-3" : "st-4"
+        );
 
-        const fullTicketId = `${dept}#${num.padStart(3, '0')}`;
-
-        try {
-            const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(fullTicketId)}&uid=${myUid}`);
-            const data = await res.json();
-
-            if (data.found) {
-                document.getElementById('dispId').innerText = fullTicketId;
-                document.getElementById('dispRoom').innerText = data.room;
-                document.getElementById('dispIssue').innerText = data.issue;
-                document.getElementById('dispAdmin').innerText = data.admin;
-                document.getElementById('dispTime').innerText = data.time;
-
-                const prioElem = document.getElementById('dispPrio');
-                prioElem.innerText = data.priority;
-                if (data.priority === "ด่วนที่สุด") prioElem.style.color = "#ff4d4d";
-                else if (data.priority === "ด่วน") prioElem.style.color = "#ffa500";
-                else prioElem.style.color = "#2ecc71";
-
-                const badge = document.getElementById('dispBadge');
-                badge.innerText = data.status;
-                badge.className = 'badge ' + getStatusClass(data.status);
-
-                if (data.status === "ดำเนินการเรียบร้อยแล้ว") {
-                    const btn = document.createElement('button');
-                    btn.className = "btn-review";
-                    btn.innerHTML = "🌟 ประเมินความพึงพอใจ";
-                    btn.onclick = () => {
-                        liff.openWindow({
-                            url: `https://liff.line.me/${LIFF_ID_REVIEW}?row=${data.row}`,
-                            external: false
-                        });
-                    };
-                    document.getElementById('btnArea').appendChild(btn);
-                }
-                document.getElementById('result').style.display = 'block';
-            } else {
-                alert(`ไม่พบรายการ ${fullTicketId} หรือคุณไม่ใช่เจ้าของรายการนี้`);
-            }
-        } catch (e) { alert("เกิดข้อผิดพลาดในการโหลดข้อมูล"); }
-        finally { document.getElementById('loader').style.display = 'none'; }
-    }
-
-    function getStatusClass(s) {
-        switch(s) {
-            case "รอดำเนินการ": return "st-1";
-            case "กำลังดำเนินการ": return "st-2";
-            case "จัดจ้างร้านภายนอก": return "st-3";
-            case "ดำเนินการเรียบร้อยแล้ว": return "st-4";
-            default: return "";
+        const btnArea = document.getElementById('btnArea');
+        btnArea.innerHTML = "";
+        if (data.status === "ดำเนินการเรียบร้อยแล้ว") {
+            const btn = document.createElement('button');
+            btn.className = "btn-review";
+            btn.innerText = "⭐ ให้คะแนนงานซ่อม";
+            btn.onclick = () => {
+                liff.openWindow({ url: `https://liff.line.me/${LIFF_ID_REVIEW}?row=${data.row}`, external: false });
+            };
+            btnArea.appendChild(btn);
         }
+        document.getElementById('result').style.display = 'block';
     }
 
     init();
