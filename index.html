@@ -146,36 +146,42 @@
         </form>
     </div>
 
-    <script>
+        <script>
         // ==========================================
-        // ส่วนตั้งค่า
+        // ส่วนตั้งค่า (ตรวจสอบ ID ให้ถูกต้องอีกครั้ง)
         // ==========================================
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz6Y7LEPjRj5f9ZTXdPirxBNsFvd4SmRdxawaAeamA45-oggxsqBjt7icGA17-azQH6/exec";
         const LIFF_ID_MAIN = "2008875334-eZXiyz43";
-        const LIFF_ID_REVIEW = "2008875334-d6l72Uox";
         const LIFF_ID_TRACK = "2008875334-wOYUvNha";
         // ==========================================
-
+    
         const form = document.getElementById('repairForm');
         const btn = document.getElementById('submitBtn');
         const loading = document.getElementById('loading');
-        let profile = null;
-
+        let userProfile = null; // เปลี่ยนชื่อตัวแปรเพื่อกันการชนกัน
+    
         async function main() {
             try {
                 await liff.init({ liffId: LIFF_ID_MAIN });
                 if (liff.isLoggedIn()) {
-                    profile = await liff.getProfile();
-                    document.getElementById('userImg').src = profile.pictureUrl;
-                    document.getElementById('userName').innerText = profile.displayName;
+                    userProfile = await liff.getProfile();
+                    document.getElementById('userImg').src = userProfile.pictureUrl;
+                    document.getElementById('userName').innerText = userProfile.displayName;
+                    console.log("LIFF Loaded:", userProfile.displayName);
                 } else {
                     liff.login();
                 }
             } catch (err) {
-                console.error("LIFF Init failed", err);
+                console.error("LIFF Error:", err);
+                document.getElementById('userName').innerText = "เกิดข้อผิดพลาดในการโหลดโปรไฟล์";
+                alert("LIFF Init Failed: " + err.message);
             }
         }
-
+    
+        // เรียกใช้งาน main
+        main();
+    
+        // ส่วนของ Preview รูปภาพ
         document.getElementById('image').onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -187,13 +193,20 @@
                 reader.readAsDataURL(file);
             }
         };
-
+    
         form.onsubmit = async (e) => {
             e.preventDefault();
+            
+            // ตรวจสอบว่าโปรไฟล์โหลดเสร็จหรือยังก่อนส่ง
+            if (!userProfile) {
+                alert("กรุณารอโหลดข้อมูลโปรไฟล์สักครู่ หรือลองปิดแล้วเปิดใหม่");
+                return;
+            }
+    
             btn.disabled = true;
             loading.style.display = 'block';
-
-            // ดึงรูปภาพ
+    
+            // จัดการรูปภาพ
             const fileInput = document.getElementById('image');
             let base64 = "";
             if (fileInput.files.length > 0) {
@@ -204,10 +217,10 @@
                     reader.readAsDataURL(file);
                 });
             }
-
+    
             const payload = {
-                uid: profile ? profile.userId : "U_Unknown", // กัน error กรณี profile ไม่มา
-                displayName: profile ? profile.displayName : "Guest",
+                uid: userProfile.userId,
+                displayName: userProfile.displayName,
                 room: document.getElementById('room').value,
                 phone: document.getElementById('phone').value,
                 category: document.getElementById('category').value,
@@ -215,100 +228,76 @@
                 priority: document.getElementById('priority').value,
                 imageBase64: base64
             };
-
+    
             try {
                 const response = await fetch(GAS_URL, {
                     method: "POST",
                     body: JSON.stringify(payload)
                 });
                 const res = await response.json();
-
+    
                 if (res.result === "ok") {
-                // 1. กรองข้อมูลให้เหลือแต่ตัวอักษรไทย/อังกฤษ/ตัวเลข เท่านั้น (กันเหนียว 100%)
-                var fRoom = (document.getElementById('room').value || "-").replace(/[^a-zA-Z0-9ก-๙\s]/g, "");
-                var fIssue = (document.getElementById('issue').value || "-").replace(/[^a-zA-Z0-9ก-๙\s]/g, "");
-                var fTicket = String(res.ticketId || "T-000");
-                
-                // 2. ลองใช้ URL แบบสั้นและสะอาดที่สุดก่อน (ถ้าผ่านค่อยเติมพารามิเตอร์)
-                var trackUrl = "https://liff.line.me/" + (typeof LIFF_ID_TRACK !== 'undefined' ? LIFF_ID_TRACK : "123-abc");
-            
-                if (liff.isInClient()) {
-                    const flexPayload = {
-                        "type": "bubble",
-                        "header": {
-                            "type": "box", "layout": "horizontal", "backgroundColor": "#000080",
-                            "contents": [
-                                { "type": "text", "text": "แจ้งซ่อมสำเร็จ", "color": "#FFFFFF", "weight": "bold", "size": "sm" },
-                                { "type": "text", "text": fTicket, "color": "#FFFFFF", "align": "end", "size": "sm" }
-                            ]
-                        },
-                        "body": {
-                            "type": "box", "layout": "vertical", "spacing": "md",
-                            "contents": [
-                                {
-                                    "type": "box", "layout": "vertical", "backgroundColor": "#FBCEB1", "paddingAll": "md", "cornerRadius": "md",
+                    // กรองข้อมูลกัน JSON พัง
+                    var fRoom = (document.getElementById('room').value || "-").replace(/[^a-zA-Z0-9ก-๙\s]/g, "");
+                    var fIssue = (document.getElementById('issue').value || "-").replace(/[^a-zA-Z0-9ก-๙\s]/g, "");
+                    var fTicket = String(res.ticketId || "T-000");
+                    var trackUrl = "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket;
+    
+                    if (liff.isInClient()) {
+                        // ใช้โครงสร้าง Flex ที่เบาที่สุด (Text Action) เพื่อกัน Error 400
+                        const flexMessage = {
+                            "type": "flex",
+                            "altText": "แจ้งซ่อม " + fTicket,
+                            "contents": {
+                                "type": "bubble",
+                                "header": {
+                                    "type": "box", "layout": "horizontal", "backgroundColor": "#000080",
                                     "contents": [
-                                        { "type": "text", "text": "บันทึกข้อมูลเรียบร้อย", "color": "#000080", "weight": "bold", "size": "sm" }
+                                        { "type": "text", "text": "แจ้งซ่อมสำเร็จ", "color": "#FFFFFF", "weight": "bold", "size": "sm" },
+                                        { "type": "text", "text": fTicket, "color": "#FFFFFF", "align": "end", "size": "sm" }
                                     ]
                                 },
-                                { "type": "text", "text": "สถานที่: " + fRoom, "size": "xs", "wrap": true },
-                                { "type": "text", "text": "ปัญหา: " + fIssue, "size": "xs", "wrap": true },
-                                { "type": "separator" },
-                                {
-                                    "type": "box", "layout": "horizontal", "spacing": "xs",
-                                    "contents": [1, 2, 3, 4, 5].map(function(i) {
-                                        return {
-                                            "type": "text",
-                                            "text": "⭐" + i,
-                                            "align": "center",
-                                            "size": "sm",
-                                            "action": {
-                                                "type": "postback",
-                                                "label": String(i),
-                                                "data": "v=" + i + "&t=" + fTicket
-                                            }
-                                        };
-                                    })
+                                "body": {
+                                    "type": "box", "layout": "vertical", "spacing": "md",
+                                    "contents": [
+                                        { "type": "text", "text": "บันทึกเรียบร้อย", "weight": "bold", "size": "md", "color": "#000080" },
+                                        { "type": "text", "text": "สถานที่: " + fRoom, "size": "xs", "wrap": true },
+                                        { "type": "text", "text": "ปัญหา: " + fIssue, "size": "xs", "wrap": true },
+                                        { "type": "separator" },
+                                        { "type": "text", "text": "คลิกเลือกดาวเพื่อประเมิน", "size": "xxs", "color": "#aaaaaa", "align": "center" },
+                                        {
+                                            "type": "box", "layout": "horizontal", "margin": "md",
+                                            "contents": [1, 2, 3, 4, 5].map(i => ({
+                                                "type": "text", "text": "⭐" + i, "align": "center", "size": "sm", "weight": "bold", "color": "#000080",
+                                                "action": { "type": "postback", "label": String(i), "data": "v=" + i + "&t=" + fTicket }
+                                            }))
+                                        }
+                                    ]
+                                },
+                                "footer": {
+                                    "type": "box", "layout": "vertical",
+                                    "contents": [{
+                                        "type": "button", "style": "primary", "color": "#000080", "height": "sm",
+                                        "action": { "type": "uri", "label": "ติดตามสถานะ", "uri": trackUrl }
+                                    }]
                                 }
-                            ]
-                        },
-                        "footer": {
-                            "type": "box", "layout": "vertical",
-                            "contents": [
-                                { "type": "button", "style": "primary", "color": "#000080", "height": "sm", "action": { "type": "uri", "label": "ตกลง", "uri": trackUrl } }
-                            ]
-                        }
-                    };
-            
-                    liff.sendMessages([{
-                        "type": "flex",
-                        "altText": "แจ้งซ่อม " + fTicket,
-                        "contents": flexPayload
-                    }])
-                    .then(function() {
+                            }
+                        };
+    
+                        await liff.sendMessages([flexMessage]);
                         liff.closeWindow();
-                    })
-                    .catch(function(err) {
-                        // จุดสำคัญ: ถ้า Error 400 ให้ Alert ดู JSON ที่ส่งไปเลย
-                        alert("Payload: " + JSON.stringify(flexPayload));
-                        alert("Error: " + err.message);
-                    });
-            
-                } else {
-                    alert("สำเร็จ! Ticket: " + fTicket);
-                    location.reload();
+                    } else {
+                        alert("บันทึกสำเร็จ! Ticket: " + fTicket);
+                        window.location.reload();
+                    }
                 }
-            }
-            }
             } catch (err) {
-                alert("เกิดข้อผิดพลาด: " + err.message);
+                alert("Error: " + err.message);
             } finally {
                 btn.disabled = false;
                 loading.style.display = 'none';
             }
         };
-
-        main();
     </script>
 </body>
 </html>
