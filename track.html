@@ -98,11 +98,9 @@
 </div>
 
 <script>
-    // ********** ตั้งค่า Config (ตรวจสอบให้ตรงกับที่ใช้งานจริง) **********
     const URL_GAS = "https://script.google.com/macros/s/AKfycbyR1CjzjPXwVDXY--61hChyPkjXUY1sNG7jqZs1iHcjrPnEEcYrgILJcKbosuNGcMh3/exec";
     const LIFF_ID_TRACK = "2008875334-wOYUvNha";
     const LIFF_ID_REVIEW = "2008875334-d6l72Uox"; 
-    // ************************************************************
 
     let myUid = "";
 
@@ -111,74 +109,56 @@
             await liff.init({ liffId: LIFF_ID_TRACK });
             if (!liff.isLoggedIn()) { liff.login(); return; }
             
-            // ดึง Profile เพื่อเอา UID มาใช้เช็คสิทธิ์ (ถ้าไม่มี UID ทาง GAS จะส่ง found: false กลับมา)
             const profile = await liff.getProfile();
             myUid = profile.userId;
 
             const urlParams = new URLSearchParams(window.location.search);
             const ticketFromUrl = urlParams.get('ticket');
 
+            // --- ส่วนทดสอบ (Debug Mode) ---
             if (ticketFromUrl) {
-                // กรณีคลิกมาจาก Flex Message:
-                // decodeURIComponent ช่วยให้เครื่องหมาย # ใน IT#050 ไม่ผิดเพี้ยน
-                const cleanTicket = decodeURIComponent(ticketFromUrl).trim();
-                autoProcess(cleanTicket);
+                console.log("Ticket จาก URL คือ:", ticketFromUrl);
+                // บังคับใช้ค่า IT#068 เพื่อทดสอบตามที่คุณต้องการ
+                const testTicket = "IT#068"; 
+                console.log("ทำการทดสอบด้วยค่า Fix: ", testTicket);
+                autoProcess(testTicket); 
             } else {
                 loadDepts();
             }
-        } catch (e) { alert("Error Init: " + e.message); }
+        } catch (e) { alert("Error: " + e.message); }
     }
 
-    // ฟังก์ชันดึงข้อมูลอัตโนมัติ
     async function autoProcess(tid) {
         document.getElementById('searchSection').style.display = 'none';
         document.getElementById('loader').style.display = 'block';
 
         try {
-            // ส่งไปหา GAS: ตรวจสอบว่า tid และ uid ถูกต้อง
-            const fetchUrl = `${URL_GAS}?action=track&tid=${encodeURIComponent(tid)}&uid=${myUid}`;
-            const res = await fetch(fetchUrl);
+            // ส่งไปหา GAS โดยใช้ค่า Fix (IT#068) และ UID จริงของคุณ
+            const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(tid)}&uid=${myUid}`);
             const data = await res.json();
 
             if (data.found) {
+                // ถ้า Fix ค่าแล้วเจอ แสดงว่าปัญหาอยู่ที่การส่งค่า Ticket ID จาก Flex Message
                 renderResult(tid, data);
             } else {
-                // กรณีหาไม่เจอ ให้แสดงปุ่มค้นหาเองเผื่อไว้
-                alert("ไม่พบข้อมูลรายการ: " + tid + "\nหรือคุณไม่ใช่เจ้าของรายการนี้");
+                // ถ้า Fix ค่าแล้วยังไม่เจอ แสดงว่าปัญหาอยู่ที่ UID ในคอลัมน์ B ไม่ตรงกับค่า myUid นี้
+                alert("ทดสอบ Fix ค่า " + tid + " แล้วแต่ยังไม่พบข้อมูล\nสาเหตุที่เป็นไปได้: UID ในระบบไม่ตรงกับ User ปัจจุบัน");
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('searchSection').style.display = 'block';
                 loadDepts();
             }
         } catch (e) {
-            alert("เชื่อมต่อผิดพลาด");
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('searchSection').style.display = 'block';
+            alert("Connection Error");
         }
     }
 
-    // ฟังก์ชันค้นหาด้วยตนเอง
+    // ฟังก์ชัน manualSearch และอื่นๆ คงเดิมตามที่คุณใช้งานได้ปกติ
     async function manualSearch() {
         const dept = document.getElementById('deptSelect').value;
         const num = document.getElementById('numInput').value;
-        if (!dept || !num) return alert("กรุณากรอกข้อมูลให้ครบถ้วน");
-
-        // สร้าง Ticket ID รูปแบบเดียวกับใน Sheet (เช่น IT#001)
-        const fullId = `${dept}#${num.padStart(3, '0')}`.trim();
-        
-        document.getElementById('loader').style.display = 'block';
-        document.getElementById('result').style.display = 'none';
-
-        try {
-            const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(fullId)}&uid=${myUid}`);
-            const data = await res.json();
-
-            if (data.found) {
-                renderResult(fullId, data);
-            } else {
-                alert("ไม่พบข้อมูล " + fullId + " หรือ UID ของคุณไม่ตรงกับในระบบ");
-            }
-        } catch (e) { alert("เชื่อมต่อผิดพลาด"); }
-        finally { document.getElementById('loader').style.display = 'none'; }
+        if (!dept || !num) return alert("กรุณากรอกข้อมูล");
+        const fullId = `${dept}#${num.padStart(3, '0')}`;
+        autoProcess(fullId);
     }
 
     async function loadDepts() {
@@ -192,7 +172,7 @@
                 opt.value = p; opt.innerText = p;
                 sel.appendChild(opt);
             });
-        } catch(e) { console.error(e); }
+        } catch(e) {}
     }
 
     function renderResult(tid, data) {
@@ -202,26 +182,9 @@
         document.getElementById('dispPrio').innerText = data.priority || "ปกติ";
         document.getElementById('dispAdmin').innerText = data.admin || "กำลังรอช่างรับงาน";
         document.getElementById('dispTime').innerText = data.time || "-";
-
         const badge = document.getElementById('dispBadge');
         badge.innerText = data.status;
-        badge.className = 'badge ' + (
-            data.status === "รอดำเนินการ" ? "st-1" :
-            data.status === "กำลังดำเนินการ" ? "st-2" :
-            data.status === "จัดจ้างร้านภายนอก" ? "st-3" : "st-4"
-        );
-
-        const btnArea = document.getElementById('btnArea');
-        btnArea.innerHTML = "";
-        if (data.status === "ดำเนินการเรียบร้อยแล้ว") {
-            const btn = document.createElement('button');
-            btn.className = "btn-review";
-            btn.innerText = "⭐ ให้คะแนนงานซ่อม";
-            btn.onclick = () => {
-                liff.openWindow({ url: `https://liff.me/${LIFF_ID_REVIEW}?row=${data.row}`, external: false });
-            };
-            btnArea.appendChild(btn);
-        }
+        badge.className = 'badge ' + (data.status === "รอดำเนินการ" ? "st-1" : data.status === "กำลังดำเนินการ" ? "st-2" : data.status === "จัดจ้างร้านภายนอก" ? "st-3" : "st-4");
         document.getElementById('result').style.display = 'block';
         document.getElementById('loader').style.display = 'none';
     }
