@@ -134,19 +134,80 @@
 <script>
     const URL_GAS = "https://script.google.com/macros/s/AKfycbxuPWwXJCrdFV_-I1tXq1oEBBnD-CBOGb4Y0MeuPUzdeGuRz4RkbJjqENAGmuhr0Rsz/exec";
     const LIFF_ID_TRACK = "2008875334-wOYUvNha";
-    const LIFF_ID_REVIEW = "2008875334-d6l72Uox"; // สำหรับส่งไปหน้าประเมิน
+    const LIFF_ID_REVIEW = "2008875334-d6l72Uox"; 
     let myUid = "";
 
     async function init() {
         try {
             await liff.init({ liffId: LIFF_ID_TRACK });
-            if (!liff.isLoggedIn()) liff.login();
+            if (!liff.isLoggedIn()) {
+                liff.login();
+                return;
+            }
             const profile = await liff.getProfile();
             myUid = profile.userId;
+            
             await loadDepts();
+
+            // --- ส่วนที่เพิ่มใหม่: ตรวจสอบพารามิเตอร์จาก URL ---
+            const urlParams = new URLSearchParams(window.location.search);
+            const ticketFromUrl = urlParams.get('ticket'); // รับค่าจาก ?ticket=แผนก#001
+
+            if (ticketFromUrl) {
+                // เข้าสู่โหมด Auto: ค้นหาและส่ง Flex ทันที
+                autoSearchAndSendFlex(ticketFromUrl);
+            }
         } catch (e) { console.error(e); }
     }
 
+    // ฟังก์ชันใหม่สำหรับจัดการส่ง Flex อัตโนมัติ
+    async function autoSearchAndSendFlex(fullTicketId) {
+        document.getElementById('loader').style.display = 'block';
+        try {
+            const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(fullTicketId)}&uid=${myUid}`);
+            const data = await res.json();
+
+            if (data.found) {
+                // ส่ง Flex Message กลับเข้าไปในแชท
+                await liff.sendMessages([{
+                    "type": "flex",
+                    "altText": "อัปเดตสถานะ " + fullTicketId,
+                    "contents": {
+                        "type": "bubble",
+                        "header": {
+                            "type": "box", "layout": "vertical", "backgroundColor": "#000080",
+                            "contents": [{ "type": "text", "text": "อัปเดตสถานะล่าสุด", "color": "#FFFFFF", "weight": "bold", "size": "sm" }]
+                        },
+                        "body": {
+                            "type": "box", "layout": "vertical", "spacing": "md",
+                            "contents": [
+                                { "type": "text", "text": "หมายเลข: " + fullTicketId, "weight": "bold", "size": "md" },
+                                { 
+                                    "type": "box", "layout": "vertical", "backgroundColor": (data.status === "ดำเนินการเรียบร้อยแล้ว" ? "#d1e7dd" : "#eee"), 
+                                    "paddingAll": "md", "cornerRadius": "md",
+                                    "contents": [{ "type": "text", "text": "สถานะ: " + data.status, "weight": "bold", "align": "center", "color": (data.status === "ดำเนินการเรียบร้อยแล้ว" ? "#0f5132" : "#000080") }]
+                                },
+                                { "type": "text", "text": "📍 สถานที่: " + data.room, "size": "xs" },
+                                { "type": "text", "text": "🔧 ปัญหา: " + data.issue, "size": "xs", "wrap": true },
+                                { "type": "text", "text": "👤 ช่างดูแล: " + data.admin, "size": "xs", "color": "#0000ff", "weight": "bold" },
+                                { "type": "separator" },
+                                { "type": "text", "text": "อัปเดตเมื่อ: " + data.time, "size": "xxs", "color": "#aaaaaa", "align": "end" }
+                            ]
+                        }
+                    }
+                }]);
+                liff.closeWindow(); // ส่งเสร็จแล้วปิดหน้าต่างทันที
+            } else {
+                alert("ไม่พบข้อมูลหมายเลข " + fullTicketId);
+                document.getElementById('loader').style.display = 'none';
+            }
+        } catch (e) {
+            console.error(e);
+            document.getElementById('loader').style.display = 'none';
+        }
+    }
+
+    // --- ฟังก์ชันเดิมทั้งหมด (ห้ามลบ) ---
     async function loadDepts() {
         try {
             const res = await fetch(`${URL_GAS}?action=getPrefixes`);
@@ -166,7 +227,6 @@
 
         if (!dept || !num) return alert("กรุณาเลือกแผนกและระบุหมายเลขงาน");
 
-        // ล้างปุ่มและผลการค้นหาเดิมออกก่อน
         document.getElementById('btnArea').innerHTML = "";
         document.getElementById('result').style.display = 'none';
         document.getElementById('loader').style.display = 'block';
@@ -184,24 +244,17 @@
                 document.getElementById('dispAdmin').innerText = data.admin;
                 document.getElementById('dispTime').innerText = data.time;
 
-                // --- ส่วนที่เพิ่มใหม่สำหรับความเร่งด่วน ---
                 const prioElem = document.getElementById('dispPrio');
                 prioElem.innerText = data.priority;
                 
-                // ปรับสีตัวอักษรตามระดับความเร่งด่วน (ตัวเลือกเสริม)
-                if (data.priority === "ด่วนที่สุด") {
-                    prioElem.style.color = "#ff4d4d"; // สีแดง
-                } else if (data.priority === "ด่วน") {
-                    prioElem.style.color = "#ffa500"; // สีส้ม
-                } else {
-                    prioElem.style.color = "#2ecc71"; // สีเขียว
-                }
+                if (data.priority === "ด่วนที่สุด") { prioElem.style.color = "#ff4d4d"; } 
+                else if (data.priority === "ด่วน") { prioElem.style.color = "#ffa500"; } 
+                else { prioElem.style.color = "#2ecc71"; }
 
                 const badge = document.getElementById('dispBadge');
                 badge.innerText = data.status;
                 badge.className = 'badge ' + getStatusClass(data.status);
 
-                // แสดงปุ่มประเมินหากสถานะคือ "ดำเนินการเรียบร้อยแล้ว"
                 if (data.status === "ดำเนินการเรียบร้อยแล้ว") {
                     const btn = document.createElement('button');
                     btn.className = "btn-review";
@@ -214,7 +267,6 @@
                     };
                     document.getElementById('btnArea').appendChild(btn);
                 }
-
                 document.getElementById('result').style.display = 'block';
             } else {
                 alert(`ไม่พบรายการ ${fullTicketId} หรือคุณไม่ใช่เจ้าของรายการนี้`);
