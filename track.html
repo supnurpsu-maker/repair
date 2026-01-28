@@ -19,8 +19,9 @@
         .badge { display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 14px; color: white; margin-bottom: 10px; }
         .st-1 { background: #6c757d; } .st-2 { background: #007bff; } .st-3 { background: #fd7e14; } .st-4 { background: #28a745; }
         .info-row { display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        .info-label { color: #666; font-size: 14px; flex: 2; }
-        .info-value { font-weight: 600; color: #333; text-align: right; flex: 5; word-break: break-all; }
+        .info-label { color: #666; font-size: 14px; }
+        .info-value { font-weight: 600; color: #333; text-align: right; }
+        .btn-review { width: 100%; padding: 12px; background: #ffc107; color: #000; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; margin-top: 15px; cursor: pointer; }
         #loader { display: none; text-align: center; margin: 20px 0; color: var(--primary); font-weight: bold; }
     </style>
 </head>
@@ -36,7 +37,7 @@
         <label>เลือกแผนก</label>
         <select id="deptSelect"><option value="">-- กำลังโหลด --</option></select>
         <label>หมายเลขงาน</label>
-        <input type="number" id="numInput" placeholder="เช่น: 68">
+        <input type="number" id="numInput" placeholder="เช่น: 1">
         <button class="btn-search" onclick="manualSearch()">🔍 ค้นหาสถานะ</button>
     </div>
 
@@ -50,14 +51,16 @@
         <div class="info-row"><span class="info-label">สถานที่:</span><span id="dispRoom" class="info-value"></span></div>
         <div class="info-row"><span class="info-label">รายละเอียด:</span><span id="dispIssue" class="info-value"></span></div>
         <div class="info-row"><span class="info-label">ช่างรับผิดชอบ:</span><span id="dispAdmin" class="info-value"></span></div>
-        <div class="info-row"><span class="info-label">อัปเดตเมื่อ:</span><span id="dispTime" class="info-value"></span></div>
+        <div class="info-row"><span class="info-label">อัปเดตเมื่อ:</span><span id="dispTime" class="info-value" style="font-size:12px"></span></div>
+        <div id="btnArea"></div>
     </div>
 </div>
 
 <script>
-    // --- ตั้งค่าพื้นฐาน ---
+    // --- Config (ตรวจสอบให้ตรงกับระบบของคุณ) ---
     const URL_GAS = "https://script.google.com/macros/s/AKfycbyR1CjzjPXwVDXY--61hChyPkjXUY1sNG7jqZs1iHcjrPnEEcYrgILJcKbosuNGcMh3/exec";
     const LIFF_ID_TRACK = "2008875334-wOYUvNha";
+    const LIFF_ID_REVIEW = "2008875334-d6l72Uox"; 
 
     let myUid = "";
 
@@ -69,11 +72,17 @@
             const profile = await liff.getProfile();
             myUid = profile.userId;
 
-            // --- ส่วนทดสอบ: Fix Ticket ID เป็น IT#068 เสมอ ---
-            console.log("Debug Mode: Fixing Ticket ID to IT#068");
-            autoProcess("IT#068"); 
-            
-        } catch (e) { alert("Error: " + e.message); }
+            const urlParams = new URLSearchParams(window.location.search);
+            const ticketFromUrl = urlParams.get('ticket');
+
+            if (ticketFromUrl) {
+                // แก้ปัญหาเรื่องเครื่องหมาย # ที่ส่งมาจาก URL
+                const cleanTicket = decodeURIComponent(ticketFromUrl);
+                autoProcess(cleanTicket);
+            } else {
+                loadDepts();
+            }
+        } catch (e) { alert("Error Init: " + e.message); }
     }
 
     async function autoProcess(tid) {
@@ -81,84 +90,96 @@
         document.getElementById('loader').style.display = 'block';
 
         try {
-            // ส่งไปหา GAS พร้อม UID เพื่อเช็คสิทธิ์
             const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(tid)}&uid=${myUid}`);
             const data = await res.json();
 
             if (data.found) {
-                renderResult(tid, data); // แสดงผลบนหน้าเว็บ
+                renderResult(tid, data);
                 
+                // ส่ง Flex Message กลับเข้าแชท
                 if (liff.isInClient()) {
-                    await sendCleanFlex(tid, data); // ส่ง Flex รุ่นคลีนที่สุด
+                    await liff.sendMessages([{
+                        "type": "flex",
+                        "altText": "อัปเดตสถานะงาน " + tid,
+                        "contents": {
+                            "type": "bubble",
+                            "header": { "type": "box", "layout": "vertical", "backgroundColor": "#000080", "contents": [{ "type": "text", "text": "อัปเดตสถานะล่าสุด", "color": "#ffffff", "weight": "bold" }] },
+                            "body": {
+                                "type": "box", "layout": "vertical", "spacing": "sm",
+                                "contents": [
+                                    { "type": "text", "text": tid, "weight": "bold", "size": "xl", "color": "#000080" },
+                                    { "type": "text", "text": "สถานะ: " + data.status, "weight": "bold", "color": "#ff0000" },
+                                    { "type": "separator", "margin": "md" },
+                                    { "type": "text", "text": "📍 " + data.room, "size": "sm", "color": "#666666" },
+                                    { "type": "text", "text": "👤 ช่าง: " + data.admin, "size": "sm", "color": "#666666" }
+                                ]
+                            }
+                        }
+                    }]);
+                    // รอ 1.5 วินาทีให้ยูสเซอร์เห็นหน้าจอ แล้วปิดหน้า LIFF อัตโนมัติ
+                    setTimeout(() => { liff.closeWindow(); }, 1500);
                 }
             } else {
-                // ถ้าขึ้น Alert นี้ แสดงว่า UID ไม่ตรงกับใน Sheet (คอลัมน์ B)
-                alert("ไม่พบข้อมูล หรือคุณไม่มีสิทธิ์เข้าถึงเลขที่: " + tid);
+                alert("ไม่พบรายการ หรือคุณไม่ใช่เจ้าของรายการนี้");
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('searchSection').style.display = 'block';
+                loadDepts();
             }
         } catch (e) {
             alert("Connection Error");
         }
     }
 
-    async function sendCleanFlex(tid, data) {
-        // เตรียมข้อมูลให้เป็น String ทั้งหมดป้องกัน JSON พัง
-        const sTid = String(tid);
-        const sStatus = String(data.status || "-");
-        const sRoom = String(data.room || "-");
-        const sIssue = String(data.issue || "-");
-        const sAdmin = (data.admin && data.admin !== "" && data.admin !== "กำลังรอช่างรับงาน") 
-                       ? String(data.admin) : "รอเจ้าหน้าที่ดำเนินการ";
+    async function manualSearch() {
+        const dept = document.getElementById('deptSelect').value;
+        const num = document.getElementById('numInput').value;
+        if (!dept || !num) return alert("กรุณาระบุข้อมูลให้ครบ");
+        const fullId = `${dept}#${num.padStart(3, '0')}`;
+        autoProcess(fullId);
+    }
 
-        // โครงสร้าง Flex ที่คลีนที่สุด (ลดการซ้อน Box เพื่อความชัวร์)
-        const flexPayload = {
-            "type": "bubble",
-            "size": "md",
-            "header": {
-                "type": "box", "layout": "vertical", "backgroundColor": "#000080",
-                "contents": [{ "type": "text", "text": "อัปเดตสถานะงานซ่อม", "weight": "bold", "color": "#ffffff", "size": "sm" }]
-            },
-            "body": {
-                "type": "box", "layout": "vertical", "spacing": "md",
-                "contents": [
-                    { "type": "text", "text": sTid, "weight": "bold", "size": "xl", "color": "#000080" },
-                    { "type": "box", "layout": "vertical", "spacing": "sm", "contents": [
-                        { "type": "text", "text": "สถานะ: " + sStatus, "color": "#ff0000", "weight": "bold", "size": "sm" },
-                        { "type": "text", "text": "สถานที่: " + sRoom, "color": "#666666", "size": "sm", "wrap": true },
-                        { "type": "text", "text": "อาการ: " + sIssue, "color": "#666666", "size": "sm", "wrap": true },
-                        { "type": "text", "text": "ผู้ดูแล: " + sAdmin, "color": "#000080", "weight": "bold", "size": "sm" }
-                    ]}
-                ]
-            },
-            "footer": {
-                "type": "box", "layout": "vertical", "contents": [
-                    {
-                        "type": "button", "style": "secondary", "color": "#FBCEB1", "height": "sm",
-                        "action": { 
-                            "type": "uri", 
-                            "label": "ดูรายละเอียดเพิ่มเติม", 
-                            "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(sTid) 
-                        }
-                    }
-                ]
-            }
-        };
-
+    async function loadDepts() {
         try {
-            await liff.sendMessages([{
-                "type": "flex",
-                "altText": "สถานะงาน " + sTid,
-                "contents": flexPayload
-            }]);
-            liff.closeWindow();
-        } catch (err) {
-            console.error(err);
-            // ถ้า Error จะไม่ปิดหน้าต่างเพื่อให้เห็น Log หรือ Alert
+            const res = await fetch(`${URL_GAS}?action=getPrefixes`);
+            const prefixes = await res.json();
+            const sel = document.getElementById('deptSelect');
+            sel.innerHTML = '<option value="">-- เลือกแผนก --</option>';
+            prefixes.forEach(p => {
+                let opt = document.createElement('option');
+                opt.value = p; opt.innerText = p;
+                sel.appendChild(opt);
+            });
+        } catch(e) {}
+    }
+
+    function renderResult(tid, data) {
+        document.getElementById('dispId').innerText = tid;
+        document.getElementById('dispRoom').innerText = data.room || "-";
+        document.getElementById('dispIssue').innerText = data.issue || "-";
+        document.getElementById('dispAdmin').innerText = data.admin || "กำลังรอช่าง...";
+        document.getElementById('dispTime').innerText = data.time || "-";
+
+        const badge = document.getElementById('dispBadge');
+        badge.innerText = data.status;
+        badge.className = 'badge ' + (data.status === "รอดำเนินการ" ? "st-1" : data.status === "กำลังดำเนินการ" ? "st-2" : data.status === "จัดจ้างร้านภายนอก" ? "st-3" : "st-4");
+
+        const btnArea = document.getElementById('btnArea');
+        btnArea.innerHTML = "";
+        if (data.status === "ดำเนินการเรียบร้อยแล้ว") {
+            const btn = document.createElement('button');
+            btn.className = "btn-review";
+            btn.innerText = "⭐ ประเมินความพึงพอใจ";
+            btn.onclick = () => {
+                liff.openWindow({ url: `https://liff.line.me/${LIFF_ID_REVIEW}?row=${data.row}`, external: false });
+            };
+            btnArea.appendChild(btn);
         }
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('loader').style.display = 'none';
     }
 
     init();
 </script>
+
 </body>
 </html>
