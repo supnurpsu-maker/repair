@@ -90,25 +90,17 @@
         document.getElementById('loader').style.display = 'block';
 
         try {
-            // เรียกข้อมูลจาก GAS
+            // เรียกข้อมูลจาก GAS (ดึงมาเพื่อใช้ทำ renderResult บนหน้าเว็บ)
             const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(tid)}&uid=${myUid}`);
             const data = await res.json();
 
             if (data.found) {
-                // 1. แสดงผลในหน้าเว็บให้เรียบร้อยก่อน
+                // 1. แสดงผลบนหน้าเว็บตามปกติ
                 renderResult(tid, data);
                 
                 if (liff.isInClient()) {
-                    // ตรวจสอบค่าว่างเพื่อป้องกัน Invalid Message
-                    const room = data.room || "-";
-                    const issue = data.issue || "-";
-                    const status = data.status || "กำลังตรวจสอบ";
-                    const adminName = (data.admin && data.admin !== "" && data.admin !== "กำลังรอช่างรับงาน") 
-                                      ? data.admin 
-                                      : "รอเจ้าหน้าที่ดำเนินการ";
-
-                    // ใช้โครงสร้างเดียวกับ index.html เป๊ะๆ
-                    const flexPayload = {
+                    // 2. ส่ง Flex แบบ Fix ข้อความ (เพื่อทดสอบโครงสร้างว่า Invalid หรือไม่)
+                    const testPayload = {
                         "type": "bubble",
                         "size": "md",
                         "header": {
@@ -134,28 +126,28 @@
                                             "type": "box", "layout": "baseline", "spacing": "sm",
                                             "contents": [
                                                 { "type": "text", "text": "สถานะ", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                                                { "type": "text", "text": status, "wrap": true, "color": "#ff0000", "size": "sm", "flex": 5, "weight": "bold" }
+                                                { "type": "text", "text": "กำลังทดสอบระบบ", "wrap": true, "color": "#ff0000", "size": "sm", "flex": 5, "weight": "bold" }
                                             ]
                                         },
                                         {
                                             "type": "box", "layout": "baseline", "spacing": "sm",
                                             "contents": [
                                                 { "type": "text", "text": "สถานที่", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                                                { "type": "text", "text": room, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
+                                                { "type": "text", "text": "ห้องทดสอบ", "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
                                             ]
                                         },
                                         {
                                             "type": "box", "layout": "baseline", "spacing": "sm",
                                             "contents": [
                                                 { "type": "text", "text": "อาการ", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                                                { "type": "text", "text": issue, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
+                                                { "type": "text", "text": "ทดสอบการส่ง Flex", "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
                                             ]
                                         },
                                         {
                                             "type": "box", "layout": "baseline", "spacing": "sm",
                                             "contents": [
                                                 { "type": "text", "text": "ผู้ดูแล", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                                                { "type": "text", "text": adminName, "wrap": true, "color": "#000080", "size": "sm", "flex": 5, "weight": "bold" }
+                                                { "type": "text", "text": "เจ้าหน้าที่ทดสอบ", "wrap": true, "color": "#000080", "size": "sm", "flex": 5, "weight": "bold" }
                                             ]
                                         }
                                     ]
@@ -165,7 +157,6 @@
                         "footer": {
                             "type": "box",
                             "layout": "vertical",
-                            "spacing": "sm",
                             "contents": [
                                 {
                                     "type": "button",
@@ -174,35 +165,29 @@
                                     "height": "sm",
                                     "action": {
                                         "type": "uri",
-                                        "label": "ดูรายละเอียดเพิ่มเติม",
-                                        "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(tid)
+                                        "label": "ติดตามสถานะ",
+                                        "uri": "https://liff.line.me/" + LIFF_ID_TRACK
                                     }
                                 }
                             ]
                         }
                     };
 
-                    // ส่ง Flex Message
                     await liff.sendMessages([{
                         "type": "flex",
-                        "altText": "อัปเดตสถานะ " + tid,
-                        "contents": flexPayload
+                        "altText": "ทดสอบระบบ " + tid,
+                        "contents": testPayload
                     }]);
                     
-                    // ปิดหน้าต่างทันที
                     liff.closeWindow();
                 }
             } else {
-                alert("ไม่พบข้อมูล " + tid + " หรือคุณไม่ใช่เจ้าของรายการนี้");
+                alert("ไม่พบข้อมูล");
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('searchSection').style.display = 'block';
-                loadDepts();
             }
         } catch (e) {
-            console.error(e);
             alert("Error: " + e.message);
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('searchSection').style.display = 'block';
         }
     }
     function renderResult(tid, data) {
