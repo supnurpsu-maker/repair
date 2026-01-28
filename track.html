@@ -85,7 +85,7 @@
         } catch (e) { alert("Error Init: " + e.message); }
     }
 
-    async function autoProcess(tid) {
+    async function autoProcess(tid, isManual = false) {
         document.getElementById('searchSection').style.display = 'none';
         document.getElementById('loader').style.display = 'block';
 
