@@ -168,7 +168,13 @@
                         "contents": flexPayload
                     }]);
                     
-                    setTimeout(() => { liff.closeWindow(); }, 1500);
+                    if (!isManual) {
+                        // ถ้าไม่ได้กรอกเอง (เช่น กดมาจากปุ่มติดตามงาน) ให้ปิดอัตโนมัติ
+                        setTimeout(() => { liff.closeWindow(); }, 1500);
+                    } else {
+                        // ถ้ากรอกเลขเอง ให้ซ่อน Loader เฉยๆ เพื่อให้คนดูข้อมูลได้
+                        document.getElementById('loader').style.display = 'none';
+                    }
                 }
             } else {
                 alert("ไม่พบข้อมูล หรือคุณไม่มีสิทธิ์เข้าถึงเลขที่งานนี้");
