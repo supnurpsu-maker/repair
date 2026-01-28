@@ -96,62 +96,92 @@
             if (data.found) {
                 renderResult(tid, data);
                 
-                // ส่ง Flex Message กลับเข้าแชท
                 if (liff.isInClient()) {
+                    // ตรวจสอบชื่อช่าง ถ้าไม่มีให้ขึ้นว่า "รอเจ้าหน้าที่ดำเนินการ"
+                    const adminName = (data.admin && data.admin !== "" && data.admin !== "กำลังรอช่างรับงาน") 
+                                      ? data.admin 
+                                      : "รอเจ้าหน้าที่ดำเนินการ";
+
                     await liff.sendMessages([{
                         "type": "flex",
                         "altText": "อัปเดตสถานะงาน " + tid,
                         "contents": {
                             "type": "bubble",
-                            "header": { "type": "box", "layout": "vertical", "backgroundColor": "#000080", "contents": [{ "type": "text", "text": "อัปเดตสถานะล่าสุด", "color": "#ffffff", "weight": "bold" }] },
+                            "size": "md",
+                            "header": {
+                                "type": "box",
+                                "layout": "vertical",
+                                "contents": [
+                                    { "type": "text", "text": "อัปเดตสถานะงานซ่อม", "weight": "bold", "color": "#ffffff", "size": "sm" }
+                                ],
+                                "backgroundColor": "#000080"
+                            },
                             "body": {
-                                "type": "box", "layout": "vertical", "spacing": "sm",
+                                "type": "box",
+                                "layout": "vertical",
                                 "contents": [
                                     { "type": "text", "text": tid, "weight": "bold", "size": "xl", "color": "#000080" },
-                                    { "type": "text", "text": "สถานะ: " + data.status, "weight": "bold", "color": "#ff0000" },
-                                    { "type": "separator", "margin": "md" },
-                                    { "type": "text", "text": "📍 " + data.room, "size": "sm", "color": "#666666" },
-                                    { "type": "text", "text": "👤 ช่าง: " + data.admin, "size": "sm", "color": "#666666" }
+                                    {
+                                        "type": "box", "layout": "vertical", "margin": "lg", "spacing": "sm",
+                                        "contents": [
+                                            {
+                                                "type": "box", "layout": "baseline", "spacing": "sm",
+                                                "contents": [
+                                                    { "type": "text", "text": "สถานะ", "color": "#aaaaaa", "size": "sm", "flex": 2 },
+                                                    { "type": "text", "text": data.status, "wrap": true, "color": "#ff0000", "size": "sm", "flex": 5, "weight": "bold" }
+                                                ]
+                                            },
+                                            {
+                                                "type": "box", "layout": "baseline", "spacing": "sm",
+                                                "contents": [
+                                                    { "type": "text", "text": "สถานที่", "color": "#aaaaaa", "size": "sm", "flex": 2 },
+                                                    { "type": "text", "text": data.room, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
+                                                ]
+                                            },
+                                            {
+                                                "type": "box", "layout": "baseline", "spacing": "sm",
+                                                "contents": [
+                                                    { "type": "text", "text": "อาการ", "color": "#aaaaaa", "size": "sm", "flex": 2 },
+                                                    { "type": "text", "text": data.issue, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
+                                                ]
+                                            },
+                                            {
+                                                "type": "box", "layout": "baseline", "spacing": "sm",
+                                                "contents": [
+                                                    { "type": "text", "text": "ผู้ดูแล", "color": "#aaaaaa", "size": "sm", "flex": 2 },
+                                                    { "type": "text", "text": adminName, "wrap": true, "color": "#000080", "size": "sm", "flex": 5, "weight": "bold" }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            "footer": {
+                                "type": "box",
+                                "layout": "vertical",
+                                "contents": [
+                                    {
+                                        "type": "button",
+                                        "action": { "type": "uri", "label": "ดูรายละเอียดเพิ่มเติม", "uri": window.location.href },
+                                        "style": "secondary", "color": "#FBCEB1", "height": "sm"
+                                    }
                                 ]
                             }
                         }
                     }]);
-                    // รอ 1.5 วินาทีให้ยูสเซอร์เห็นหน้าจอ แล้วปิดหน้า LIFF อัตโนมัติ
-                    setTimeout(() => { liff.closeWindow(); }, 1500);
+                    
+                    // ปิดหน้าต่างเพื่อให้ยูสเซอร์กลับไปดู Flex ในแชท
+                    setTimeout(() => { liff.closeWindow(); }, 1200);
                 }
             } else {
                 alert("ไม่พบรายการ หรือคุณไม่ใช่เจ้าของรายการนี้");
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('searchSection').style.display = 'block';
-                loadDepts();
             }
         } catch (e) {
-            alert("Connection Error");
+            alert("Error: " + e.message);
         }
     }
-
-    async function manualSearch() {
-        const dept = document.getElementById('deptSelect').value;
-        const num = document.getElementById('numInput').value;
-        if (!dept || !num) return alert("กรุณาระบุข้อมูลให้ครบ");
-        const fullId = `${dept}#${num.padStart(3, '0')}`;
-        autoProcess(fullId);
-    }
-
-    async function loadDepts() {
-        try {
-            const res = await fetch(`${URL_GAS}?action=getPrefixes`);
-            const prefixes = await res.json();
-            const sel = document.getElementById('deptSelect');
-            sel.innerHTML = '<option value="">-- เลือกแผนก --</option>';
-            prefixes.forEach(p => {
-                let opt = document.createElement('option');
-                opt.value = p; opt.innerText = p;
-                sel.appendChild(opt);
-            });
-        } catch(e) {}
-    }
-
     function renderResult(tid, data) {
         document.getElementById('dispId').innerText = tid;
         document.getElementById('dispRoom').innerText = data.room || "-";
