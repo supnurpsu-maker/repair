@@ -186,7 +186,7 @@
         const num = document.getElementById('numInput').value;
         if (!dept || !num) return alert("กรุณาระบุข้อมูลให้ครบ");
         const fullId = `${dept}#${num.padStart(3, '0')}`;
-        autoProcess(fullId);
+        autoProcess(fullId, true);
     }
 
     async function loadDepts() {
