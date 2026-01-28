@@ -90,41 +90,39 @@
         document.getElementById('loader').style.display = 'block';
 
         try {
-            // ดึงข้อมูลจริงจาก GAS
             const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(tid)}&uid=${myUid}`);
             const data = await res.json();
 
             if (data.found) {
-                // 1. แสดงผลบนหน้าจอเว็บ (สำหรับคนที่เปิดค้างไว้)
                 renderResult(tid, data);
                 
                 if (liff.isInClient()) {
-                    // 2. เตรียมข้อมูล (ป้องกันค่าว่างเพื่อไม่ให้ Invalid)
-                    const room = data.room || "-";
-                    const issue = data.issue || "-";
-                    const status = data.status || "กำลังตรวจสอบ";
-                    // เช็คชื่อเจ้าหน้าที่ ถ้าไม่มีให้ขึ้น "รอเจ้าหน้าที่ดำเนินการ"
+                    // --- ป้องกันค่า Null/Undefined (จุดที่ทำให้เกิด Invalid Message) ---
+                    const cleanTid = String(tid || "N/A");
+                    const status = String(data.status || "กำลังตรวจสอบ");
+                    const room = String(data.room || "-");
+                    const issue = String(data.issue || "-");
                     const adminName = (data.admin && data.admin !== "" && data.admin !== "กำลังรอช่างรับงาน") 
-                                      ? data.admin 
+                                      ? String(data.admin) 
                                       : "รอเจ้าหน้าที่ดำเนินการ";
 
-                    // 3. โครงสร้าง Flex แบบเต็ม (ดีไซน์เดียวกับ index.html)
-                    const fullFlex = {
+                    // สร้าง Payload โดยเช็ค Comma และวงเล็บให้แม่นยำ
+                    const flexPayload = {
                         "type": "bubble",
                         "size": "md",
                         "header": {
                             "type": "box",
                             "layout": "vertical",
+                            "backgroundColor": "#000080",
                             "contents": [
                                 { "type": "text", "text": "อัปเดตสถานะงานซ่อม", "weight": "bold", "color": "#ffffff", "size": "sm" }
-                            ],
-                            "backgroundColor": "#000080"
+                            ]
                         },
                         "body": {
                             "type": "box",
                             "layout": "vertical",
                             "contents": [
-                                { "type": "text", "text": tid, "weight": "bold", "size": "xl", "color": "#000080" },
+                                { "type": "text", "text": cleanTid, "weight": "bold", "size": "xl", "color": "#000080" },
                                 {
                                     "type": "box",
                                     "layout": "vertical",
@@ -154,7 +152,6 @@
                         "footer": {
                             "type": "box",
                             "layout": "vertical",
-                            "spacing": "sm",
                             "contents": [
                                 {
                                     "type": "button",
@@ -163,22 +160,20 @@
                                     "height": "sm",
                                     "action": {
                                         "type": "uri",
-                                        "label": "ติดตามสถานะอีกครั้ง",
-                                        "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(tid)
+                                        "label": "ดูรายละเอียด",
+                                        "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(cleanTid)
                                     }
                                 }
                             ]
                         }
                     };
 
-                    // 4. ส่งข้อความ
                     await liff.sendMessages([{
                         "type": "flex",
-                        "altText": "อัปเดตสถานะ " + tid,
-                        "contents": fullFlex
+                        "altText": "อัปเดตงาน " + cleanTid,
+                        "contents": flexPayload
                     }]);
                     
-                    // ปิดหน้า LIFF ทันที
                     liff.closeWindow();
                 }
             } else {
@@ -187,10 +182,8 @@
                 document.getElementById('searchSection').style.display = 'block';
             }
         } catch (e) {
-            console.error(e);
-            alert("เกิดข้อผิดพลาด: " + e.message);
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('searchSection').style.display = 'block';
+            console.error("Flex Error:", e);
+            alert("Error: " + e.message);
         }
     }
     function renderResult(tid, data) {
