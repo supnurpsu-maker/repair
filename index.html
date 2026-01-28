@@ -115,26 +115,26 @@
         </div>
 
         <form id="repairForm">
-            <label for="room">สถานที่ / เบอร์โต๊ะ</label>
-            <input type="text" id="room" required placeholder="ระบุตึก/ชั้น/ห้อง">
+            <label for="room">สถานที่ / เลขห้อง</label>
+            <input type="text" id="room" required placeholder="ห้องประชุมดวงวดี สังโขบล / 2228">
             
-            <label for="phone">เบอร์โทรศัพท์ติดต่อ</label>
-            <input type="tel" id="phone" required placeholder="0XX-XXXXXXX">
+            <label for="phone">เบอร์ภายใน / เบอร์โทรศัพท์ติดต่อ</label>
+            <input type="tel" id="phone" required placeholder="XXXX / 0XX-XXXXXXX">
             
-            <label for="category">หมวดหมู่ปัญหา</label>
+            <label for="category">ประเภท</label>
             <select id="category" required>
                 <option value="">-- เลือก --</option>
                 <option value="Computer AIO">Computer AIO</option>
-                <option value="Laptop">Laptop</option>
-                <option value="Network">Network</option>
-                <option value="PSU Passport">PSU Passport</option>
+                <option value="Laptop/Mobile">Laptop/Mobile</option>
+                <option value="Network">Network (LAN/Wi-Fi)</option>
+                <option value="PSU Passport">PSU Passport(Microsoft Authen, PDF Foxit</option>
                 <option value="ZOOM/UC-Phone">ZOOM/UC-Phone</option>
                 <option value="CCTV/FingerPrint Scan">CCTV/FingerPrint Scan</option>
                 <option value="Others">Others</option>
             </select>
             
-            <label for="issue">ปัญหาที่พบ / อาการ</label>
-            <textarea id="issue" rows="3" required placeholder="อธิบายอาการเสียเบื้องต้น"></textarea>
+            <label for="issue">ปัญหาที่พบ / อาการ / ความต้องการใช้บริการ</label>
+            <textarea id="issue" rows="3" required placeholder="อธิบายความต้องการใช้บริการหรือปัญหาเบื้องต้น"></textarea>
             
             <label for="priority">ความเร่งด่วน</label>
             <select id="priority">
@@ -143,7 +143,7 @@
                 <option value="ด่วนที่สุด">ด่วนที่สุด</option>
             </select>
             
-            <label for="image">แนบรูปภาพ (ถ้ามี)</label>
+            <label for="image">แนบรูปภาพ 1 รูป(ถ้ามี)</label>
             <input type="file" id="image" accept="image/*">
             <img id="preview" class="img-preview">
             
