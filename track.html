@@ -90,43 +90,94 @@
         document.getElementById('loader').style.display = 'block';
 
         try {
+            // ส่งค่าไปตรวจสอบพร้อม UID ตามที่คุณต้องการ
             const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(tid)}&uid=${myUid}`);
             const data = await res.json();
 
             if (data.found) {
                 renderResult(tid, data);
                 
-                // ส่ง Flex Message กลับเข้าแชท
                 if (liff.isInClient()) {
+                    // --- ส่วนสร้าง Flex Message ตามแบบ index.html ---
+                    
+                    // เตรียมข้อมูลและทำความสะอาด String
+                    const cleanTid = String(tid).replace(/["\\]/g, "");
+                    const cleanStatus = String(data.status || "กำลังตรวจสอบ").replace(/["\\]/g, "");
+                    const cleanRoom = String(data.room || "-").replace(/["\\]/g, "");
+                    const cleanIssue = String(data.issue || "-").replace(/["\\]/g, "");
+                    // เช็คชื่อช่าง
+                    const adminDisp = (data.admin && data.admin !== "" && data.admin !== "กำลังรอช่างรับงาน") 
+                                      ? String(data.admin).replace(/["\\]/g, "") 
+                                      : "รอเจ้าหน้าที่ดำเนินการ";
+
+                    const flexPayload = {
+                        "type": "bubble",
+                        "header": {
+                            "type": "box", "layout": "horizontal", "backgroundColor": "#000080",
+                            "contents": [
+                                { "type": "text", "text": "อัปเดตสถานะงาน", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
+                                { "type": "text", "text": cleanTid, "align": "end", "weight": "bold", "color": "#FFFFFF", "size": "sm" }
+                            ]
+                        },
+                        "body": {
+                            "type": "box", "layout": "vertical", "spacing": "md",
+                            "contents": [
+                                {
+                                    "type": "box", "layout": "vertical", "backgroundColor": "#FBCEB1", "cornerRadius": "md", "paddingAll": "md",
+                                    "contents": [
+                                        { "type": "text", "text": "สถานะ: " + cleanStatus, "weight": "bold", "color": "#000080", "size": "sm" }
+                                    ]
+                                },
+                                {
+                                    "type": "box", "layout": "vertical", "spacing": "sm",
+                                    "contents": [
+                                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
+                                            { "type": "text", "text": "สถานที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
+                                            { "type": "text", "text": cleanRoom, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
+                                        ]},
+                                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
+                                            { "type": "text", "text": "ปัญหา:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
+                                            { "type": "text", "text": cleanIssue, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
+                                        ]},
+                                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
+                                            { "type": "text", "text": "ผู้ดูแล:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
+                                            { "type": "text", "text": adminDisp, "wrap": true, "color": "#000080", "size": "xs", "flex": 5, "weight": "bold" }
+                                        ]}
+                                    ]
+                                }
+                            ]
+                        },
+                        "footer": {
+                            "type": "box", "layout": "vertical",
+                            "contents": [
+                                {
+                                    "type": "button", "style": "primary", "color": "#000080", "height": "sm",
+                                    "action": {
+                                        "type": "uri",
+                                        "label": "เปิดหน้าติดตามสถานะ",
+                                        "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(cleanTid)
+                                    }
+                                }
+                            ]
+                        }
+                    };
+
                     await liff.sendMessages([{
                         "type": "flex",
-                        "altText": "อัปเดตสถานะงาน " + tid,
-                        "contents": {
-                            "type": "bubble",
-                            "header": { "type": "box", "layout": "vertical", "backgroundColor": "#000080", "contents": [{ "type": "text", "text": "อัปเดตสถานะล่าสุด", "color": "#ffffff", "weight": "bold" }] },
-                            "body": {
-                                "type": "box", "layout": "vertical", "spacing": "sm",
-                                "contents": [
-                                    { "type": "text", "text": tid, "weight": "bold", "size": "xl", "color": "#000080" },
-                                    { "type": "text", "text": "สถานะ: " + data.status, "weight": "bold", "color": "#ff0000" },
-                                    { "type": "separator", "margin": "md" },
-                                    { "type": "text", "text": "📍 " + data.room, "size": "sm", "color": "#666666" },
-                                    { "type": "text", "text": "👤 ช่าง: " + data.admin, "size": "sm", "color": "#666666" }
-                                ]
-                            }
-                        }
+                        "altText": "อัปเดตสถานะงาน " + cleanTid,
+                        "contents": flexPayload
                     }]);
-                    // รอ 1.5 วินาทีให้ยูสเซอร์เห็นหน้าจอ แล้วปิดหน้า LIFF อัตโนมัติ
+                    
                     setTimeout(() => { liff.closeWindow(); }, 1500);
                 }
             } else {
-                alert("ไม่พบรายการ หรือคุณไม่ใช่เจ้าของรายการนี้");
+                alert("ไม่พบข้อมูล หรือคุณไม่มีสิทธิ์เข้าถึงเลขที่งานนี้");
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('searchSection').style.display = 'block';
-                loadDepts();
             }
         } catch (e) {
-            alert("Connection Error");
+            console.error(e);
+            alert("Error: " + e.message);
         }
     }
 
