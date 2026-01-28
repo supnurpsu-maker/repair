@@ -90,99 +90,39 @@
         document.getElementById('loader').style.display = 'block';
 
         try {
-            // เรียกข้อมูลจาก GAS (ดึงมาเพื่อใช้ทำ renderResult บนหน้าเว็บ)
             const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(tid)}&uid=${myUid}`);
             const data = await res.json();
 
             if (data.found) {
-                // 1. แสดงผลบนหน้าเว็บตามปกติ
                 renderResult(tid, data);
                 
                 if (liff.isInClient()) {
-                    // 2. ส่ง Flex แบบ Fix ข้อความ (เพื่อทดสอบโครงสร้างว่า Invalid หรือไม่)
-                    const testPayload = {
+                    // โครงสร้างที่เรียบง่ายที่สุดที่เป็นไปได้
+                    const minimalFlex = {
                         "type": "bubble",
-                        "size": "md",
-                        "header": {
-                            "type": "box",
-                            "layout": "vertical",
-                            "contents": [
-                                { "type": "text", "text": "อัปเดตสถานะงานซ่อม", "weight": "bold", "color": "#ffffff", "size": "sm" }
-                            ],
-                            "backgroundColor": "#000080"
-                        },
                         "body": {
                             "type": "box",
                             "layout": "vertical",
                             "contents": [
-                                { "type": "text", "text": tid, "weight": "bold", "size": "xl", "color": "#000080" },
-                                {
-                                    "type": "box",
-                                    "layout": "vertical",
-                                    "margin": "lg",
-                                    "spacing": "sm",
-                                    "contents": [
-                                        {
-                                            "type": "box", "layout": "baseline", "spacing": "sm",
-                                            "contents": [
-                                                { "type": "text", "text": "สถานะ", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                                                { "type": "text", "text": "กำลังทดสอบระบบ", "wrap": true, "color": "#ff0000", "size": "sm", "flex": 5, "weight": "bold" }
-                                            ]
-                                        },
-                                        {
-                                            "type": "box", "layout": "baseline", "spacing": "sm",
-                                            "contents": [
-                                                { "type": "text", "text": "สถานที่", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                                                { "type": "text", "text": "ห้องทดสอบ", "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
-                                            ]
-                                        },
-                                        {
-                                            "type": "box", "layout": "baseline", "spacing": "sm",
-                                            "contents": [
-                                                { "type": "text", "text": "อาการ", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                                                { "type": "text", "text": "ทดสอบการส่ง Flex", "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
-                                            ]
-                                        },
-                                        {
-                                            "type": "box", "layout": "baseline", "spacing": "sm",
-                                            "contents": [
-                                                { "type": "text", "text": "ผู้ดูแล", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                                                { "type": "text", "text": "เจ้าหน้าที่ทดสอบ", "wrap": true, "color": "#000080", "size": "sm", "flex": 5, "weight": "bold" }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            ]
-                        },
-                        "footer": {
-                            "type": "box",
-                            "layout": "vertical",
-                            "contents": [
-                                {
-                                    "type": "button",
-                                    "style": "secondary",
-                                    "color": "#FBCEB1",
-                                    "height": "sm",
-                                    "action": {
-                                        "type": "uri",
-                                        "label": "ติดตามสถานะ",
-                                        "uri": "https://liff.line.me/" + LIFF_ID_TRACK
-                                    }
-                                }
+                                { "type": "text", "text": "อัปเดตสถานะงาน", "weight": "bold", "color": "#000080" },
+                                { "type": "text", "text": "เลขที่: " + tid, "size": "sm" },
+                                { "type": "separator", "margin": "md" },
+                                { "type": "text", "text": "สถานะ: " + (data.status || "-"), "color": "#ff0000", "weight": "bold" },
+                                { "type": "text", "text": "ผู้ดูแล: " + (data.admin || "รอเจ้าหน้าที่"), "size": "sm" }
                             ]
                         }
                     };
 
                     await liff.sendMessages([{
                         "type": "flex",
-                        "altText": "ทดสอบระบบ " + tid,
-                        "contents": testPayload
+                        "altText": "Status " + tid,
+                        "contents": minimalFlex
                     }]);
                     
                     liff.closeWindow();
                 }
             } else {
-                alert("ไม่พบข้อมูล");
+                alert("ไม่พบข้อมูล " + tid);
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('searchSection').style.display = 'block';
             }
