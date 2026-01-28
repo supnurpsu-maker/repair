@@ -151,7 +151,15 @@
     }
 
     async function sendStatusFlex(tid, data) {
-        const adminName = (data.admin && data.admin !== "กำลังรอช่างรับงาน") ? data.admin : "รอเจ้าหน้าที่ดำเนินการ";
+        // 1. ตรวจสอบว่าเปิดในแอป LINE หรือไม่ (ถ้าเปิดในเบราว์เซอร์ปกติจะส่งไม่ได้)
+        if (!liff.isInClient()) {
+            console.log("Not in LINE Client - Flex cannot be sent");
+            return; 
+        }
+
+        const adminName = (data.admin && data.admin !== "" && data.admin !== "กำลังรอช่างรับงาน") 
+                          ? data.admin 
+                          : "รอเจ้าหน้าที่ดำเนินการ";
         
         const flexPayload = {
             "type": "bubble",
@@ -210,14 +218,19 @@
         };
 
         try {
+            // ส่งข้อความ
             await liff.sendMessages([{
                 "type": "flex",
                 "altText": "อัปเดตสถานะงาน " + tid,
                 "contents": flexPayload
             }]);
-            setTimeout(() => { liff.closeWindow(); }, 1000);
+            
+            // ถ้าส่งสำเร็จ ให้ปิดหน้าจอทันที
+            liff.closeWindow(); 
         } catch (err) {
-            console.error("Send Flex Error", err);
+            console.error("Flex Send Failed:", err);
+            // ถ้าส่งไม่สำเร็จ (อาจเพราะไม่มีสิทธิ์) อย่างน้อยก็สั่งให้ปิดหน้าจอหลังจาก 3 วินาที
+            setTimeout(() => { liff.closeWindow(); }, 3000);
         }
     }
 
