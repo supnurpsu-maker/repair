@@ -90,91 +90,113 @@
         document.getElementById('loader').style.display = 'block';
 
         try {
+            // เรียกข้อมูลจาก GAS
             const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(tid)}&uid=${myUid}`);
             const data = await res.json();
 
             if (data.found) {
-                // 1. แสดงผลในหน้าเว็บ (ที่บอกว่า สถานที่/รายละเอียด ขึ้นขีด - จะถูกแทนที่ด้วยข้อมูลจริง)
+                // 1. แสดงผลในหน้าเว็บให้เรียบร้อยก่อน
                 renderResult(tid, data);
                 
-                // 2. ส่ง Flex Message
                 if (liff.isInClient()) {
-                    // ตรวจสอบชื่อช่าง
+                    // ตรวจสอบค่าว่างเพื่อป้องกัน Invalid Message
+                    const room = data.room || "-";
+                    const issue = data.issue || "-";
+                    const status = data.status || "กำลังตรวจสอบ";
                     const adminName = (data.admin && data.admin !== "" && data.admin !== "กำลังรอช่างรับงาน") 
                                       ? data.admin 
                                       : "รอเจ้าหน้าที่ดำเนินการ";
 
-                    // สร้าง Flex ที่ตัดความซับซ้อนออก เพื่อป้องกัน Invalid Message
-                    await liff.sendMessages([{
-                        "type": "flex",
-                        "altText": "ติดตามสถานะงาน " + tid,
-                        "contents": {
-                            "type": "bubble",
-                            "size": "md",
-                            "header": {
-                                "type": "box",
-                                "layout": "vertical",
-                                "contents": [
-                                    { "type": "text", "text": "อัปเดตสถานะงานซ่อม", "weight": "bold", "color": "#ffffff", "size": "sm" }
-                                ],
-                                "backgroundColor": "#000080"
-                            },
-                            "body": {
-                                "type": "box",
-                                "layout": "vertical",
-                                "spacing": "md",
-                                "contents": [
-                                    { "type": "text", "text": tid, "weight": "bold", "size": "xl", "color": "#000080" },
-                                    {
-                                        "type": "box", "layout": "vertical", "spacing": "sm",
-                                        "contents": [
-                                            { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
+                    // ใช้โครงสร้างเดียวกับ index.html เป๊ะๆ
+                    const flexPayload = {
+                        "type": "bubble",
+                        "size": "md",
+                        "header": {
+                            "type": "box",
+                            "layout": "vertical",
+                            "contents": [
+                                { "type": "text", "text": "อัปเดตสถานะงานซ่อม", "weight": "bold", "color": "#ffffff", "size": "sm" }
+                            ],
+                            "backgroundColor": "#000080"
+                        },
+                        "body": {
+                            "type": "box",
+                            "layout": "vertical",
+                            "contents": [
+                                { "type": "text", "text": tid, "weight": "bold", "size": "xl", "color": "#000080" },
+                                {
+                                    "type": "box",
+                                    "layout": "vertical",
+                                    "margin": "lg",
+                                    "spacing": "sm",
+                                    "contents": [
+                                        {
+                                            "type": "box", "layout": "baseline", "spacing": "sm",
+                                            "contents": [
                                                 { "type": "text", "text": "สถานะ", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                                                { "type": "text", "text": data.status, "wrap": true, "color": "#ff0000", "size": "sm", "flex": 5, "weight": "bold" }
-                                            ]},
-                                            { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
+                                                { "type": "text", "text": status, "wrap": true, "color": "#ff0000", "size": "sm", "flex": 5, "weight": "bold" }
+                                            ]
+                                        },
+                                        {
+                                            "type": "box", "layout": "baseline", "spacing": "sm",
+                                            "contents": [
                                                 { "type": "text", "text": "สถานที่", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                                                { "type": "text", "text": data.room, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
-                                            ]},
-                                            { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
+                                                { "type": "text", "text": room, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
+                                            ]
+                                        },
+                                        {
+                                            "type": "box", "layout": "baseline", "spacing": "sm",
+                                            "contents": [
                                                 { "type": "text", "text": "อาการ", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                                                { "type": "text", "text": data.issue, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
-                                            ]},
-                                            { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
+                                                { "type": "text", "text": issue, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
+                                            ]
+                                        },
+                                        {
+                                            "type": "box", "layout": "baseline", "spacing": "sm",
+                                            "contents": [
                                                 { "type": "text", "text": "ผู้ดูแล", "color": "#aaaaaa", "size": "sm", "flex": 2 },
                                                 { "type": "text", "text": adminName, "wrap": true, "color": "#000080", "size": "sm", "flex": 5, "weight": "bold" }
-                                            ]}
-                                        ]
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "footer": {
+                            "type": "box",
+                            "layout": "vertical",
+                            "spacing": "sm",
+                            "contents": [
+                                {
+                                    "type": "button",
+                                    "style": "secondary",
+                                    "color": "#FBCEB1",
+                                    "height": "sm",
+                                    "action": {
+                                        "type": "uri",
+                                        "label": "ดูรายละเอียดเพิ่มเติม",
+                                        "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(tid)
                                     }
-                                ]
-                            },
-                            "footer": {
-                                "type": "box",
-                                "layout": "vertical",
-                                "contents": [
-                                    {
-                                        "type": "button",
-                                        "action": {
-                                            "type": "uri",
-                                            "label": "ดูรายละเอียดเพิ่มเติม",
-                                            "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(tid)
-                                        },
-                                        "style": "secondary",
-                                        "color": "#FBCEB1",
-                                        "height": "sm"
-                                    }
-                                ]
-                            }
+                                }
+                            ]
                         }
+                    };
+
+                    // ส่ง Flex Message
+                    await liff.sendMessages([{
+                        "type": "flex",
+                        "altText": "อัปเดตสถานะ " + tid,
+                        "contents": flexPayload
                     }]);
                     
-                    // ปิดหน้าต่าง LIFF ทันทีหลังจากส่งสำเร็จ
+                    // ปิดหน้าต่างทันที
                     liff.closeWindow();
                 }
             } else {
-                alert("ไม่พบข้อมูลรายการนี้ หรือคุณไม่มีสิทธิ์เข้าถึง");
+                alert("ไม่พบข้อมูล " + tid + " หรือคุณไม่ใช่เจ้าของรายการนี้");
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('searchSection').style.display = 'block';
+                loadDepts();
             }
         } catch (e) {
             console.error(e);
