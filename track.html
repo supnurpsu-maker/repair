@@ -151,91 +151,76 @@
     }
 
     async function sendStatusFlex(tid, data) {
-    if (!liff.isInClient()) return;
+        if (!liff.isInClient()) return;
 
-    // 1. เตรียมข้อมูลและเช็คค่าว่าง (ป้องกัน JSON พัง)
-    const sTid = String(tid || "N/A");
-    const sStatus = String(data.status || "กำลังดำเนินการ");
-    const sRoom = String(data.room || "-");
-    const sIssue = String(data.issue || "-");
-    const sAdmin = (data.admin && data.admin !== "" && data.admin !== "กำลังรอช่างรับงาน") 
-                   ? String(data.admin) 
-                   : "รอเจ้าหน้าที่ดำเนินการ";
+        // เตรียมข้อมูล (Sanitize)
+        const sTid = String(tid || "N/A");
+        const sStatus = String(data.status || "-");
+        const sRoom = String(data.room || "-");
+        const sIssue = String(data.issue || "-");
+        const sAdmin = (data.admin && data.admin !== "" && data.admin !== "กำลังรอช่างรับงาน") 
+                       ? String(data.admin) 
+                       : "รอเจ้าหน้าที่ดำเนินการ";
 
-    // 2. โครงสร้าง Flex (ใช้ตาม index.html แต่ปรับโครงสร้างข้างในให้ปลอดภัย)
-    const flexContents = {
-        "type": "bubble",
-        "size": "md",
-        "header": {
-            "type": "box",
-            "layout": "vertical",
-            "backgroundColor": "#000080",
-            "contents": [
-                { "type": "text", "text": "อัปเดตสถานะงานซ่อม", "weight": "bold", "color": "#ffffff", "size": "sm" }
-            ]
-        },
-        "body": {
-            "type": "box",
-            "layout": "vertical",
-            "contents": [
-                { "type": "text", "text": sTid, "weight": "bold", "size": "xl", "color": "#000080" },
-                {
-                    "type": "box", "layout": "vertical", "margin": "lg", "spacing": "sm",
-                    "contents": [
-                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
-                            { "type": "text", "text": "สถานะ", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                            { "type": "text", "text": sStatus, "wrap": true, "color": "#ff0000", "size": "sm", "flex": 5, "weight": "bold" }
-                        ]},
-                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
-                            { "type": "text", "text": "สถานที่", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                            { "type": "text", "text": sRoom, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
-                        ]},
-                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
-                            { "type": "text", "text": "อาการ", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                            { "type": "text", "text": sIssue, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
-                        ]},
-                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
-                            { "type": "text", "text": "ผู้ดูแล", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                            { "type": "text", "text": sAdmin, "wrap": true, "color": "#000080", "size": "sm", "flex": 5, "weight": "bold" }
-                        ]}
-                    ]
-                }
-            ]
-        },
-        "footer": {
-            "type": "box",
-            "layout": "vertical",
-            "contents": [
-                {
-                    "type": "button",
-                    "style": "secondary",
-                    "color": "#FBCEB1",
-                    "height": "sm",
-                    "action": {
-                        "type": "uri",
-                        "label": "ติดตามสถานะ",
-                        "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(sTid)
+        // โครงสร้าง Flex แบบ Linear (เรียงลงมาตรงๆ ไม่ซ้อนเยอะ)
+        const flexMinimal = {
+            "type": "bubble",
+            "size": "md",
+            "header": {
+                "type": "box",
+                "layout": "vertical",
+                "backgroundColor": "#000080",
+                "contents": [
+                    { "type": "text", "text": "อัปเดตสถานะงานซ่อม", "weight": "bold", "color": "#ffffff" }
+                ]
+            },
+            "body": {
+                "type": "box",
+                "layout": "vertical",
+                "spacing": "md",
+                "contents": [
+                    { "type": "text", "text": sTid, "weight": "bold", "size": "xl", "color": "#000080" },
+                    { "type": "separator" },
+                    { "type": "text", "text": "🔴 สถานะ: " + sStatus, "weight": "bold", "color": "#ff0000", "size": "sm" },
+                    { "type": "text", "text": "📍 สถานที่: " + sRoom, "size": "sm", "color": "#666666", "wrap": true },
+                    { "type": "text", "text": "🔧 อาการ: " + sIssue, "size": "sm", "color": "#666666", "wrap": true },
+                    { "type": "text", "text": "👤 ผู้ดูแล: " + sAdmin, "size": "sm", "color": "#000080", "weight": "bold" }
+                ]
+            },
+            "footer": {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                    {
+                        "type": "button",
+                        "style": "secondary",
+                        "color": "#FBCEB1",
+                        "action": {
+                            "type": "uri",
+                            "label": "ดูรายละเอียด",
+                            "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(sTid)
+                        }
                     }
-                }
-            ]
-        }
-    };
+                ]
+            }
+        };
 
-    // 3. ส่งข้อความ
-    try {
-        await liff.sendMessages([{
-            "type": "flex",
-            "altText": "อัปเดตสถานะงาน " + sTid,
-            "contents": flexContents
-        }]);
-        console.log("Flex sent successfully");
-        liff.closeWindow();
-    } catch (err) {
-        console.error("Send Flex Error:", err);
-        // ถ้า Error ยังเกิดขึ้น ให้ลองปิดหน้าต่างเลยเพื่อไม่ให้ User ค้าง
-        liff.closeWindow();
+        try {
+            await liff.sendMessages([{
+                "type": "flex",
+                "altText": "อัปเดตงาน " + sTid,
+                "contents": flexMinimal
+            }]);
+            liff.closeWindow(); 
+        } catch (err) {
+            // หากยังส่งไม่ได้ ให้ลองส่งเป็น Text ธรรมดาเพื่อไม่ให้เสียเที่ยว
+            await liff.sendMessages([{
+                "type": "text",
+                "text": "อัปเดตสถานะ " + sTid + "\nสถานะ: " + sStatus + "\nผู้ดูแล: " + sAdmin
+            }]);
+            liff.closeWindow();
+        }
     }
-}
 
     init();
 </script>
