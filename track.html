@@ -95,11 +95,11 @@
             const data = await res.json();
 
             if (data.found) {
-                // 1. แสดงผลบนหน้าจอเว็บ
+                // 1. แสดงผลบนหน้าจอเว็บ (สำหรับคนที่เปิดค้างไว้)
                 renderResult(tid, data);
                 
                 if (liff.isInClient()) {
-                    // 2. เตรียมข้อมูลสำหรับ Flex (ป้องกันค่า Null/Undefined)
+                    // 2. เตรียมข้อมูล (ป้องกันค่าว่างเพื่อไม่ให้ Invalid)
                     const room = data.room || "-";
                     const issue = data.issue || "-";
                     const status = data.status || "กำลังตรวจสอบ";
@@ -108,8 +108,8 @@
                                       ? data.admin 
                                       : "รอเจ้าหน้าที่ดำเนินการ";
 
-                    // 3. สร้าง Flex Payload ตามโครงสร้าง index.html
-                    const flexPayload = {
+                    // 3. โครงสร้าง Flex แบบเต็ม (ดีไซน์เดียวกับ index.html)
+                    const fullFlex = {
                         "type": "bubble",
                         "size": "md",
                         "header": {
@@ -163,7 +163,7 @@
                                     "height": "sm",
                                     "action": {
                                         "type": "uri",
-                                        "label": "ติดตามสถานะ",
+                                        "label": "ติดตามสถานะอีกครั้ง",
                                         "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(tid)
                                     }
                                 }
@@ -171,23 +171,24 @@
                         }
                     };
 
-                    // 4. ส่ง Message
+                    // 4. ส่งข้อความ
                     await liff.sendMessages([{
                         "type": "flex",
                         "altText": "อัปเดตสถานะ " + tid,
-                        "contents": flexPayload
+                        "contents": fullFlex
                     }]);
                     
-                    // ปิดหน้า LIFF
+                    // ปิดหน้า LIFF ทันที
                     liff.closeWindow();
                 }
             } else {
-                alert("ไม่พบข้อมูล " + tid + " หรือคุณไม่ใช่เจ้าของรายการ");
+                alert("ไม่พบข้อมูล " + tid);
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('searchSection').style.display = 'block';
             }
         } catch (e) {
-            alert("Error: " + e.message);
+            console.error(e);
+            alert("เกิดข้อผิดพลาด: " + e.message);
             document.getElementById('loader').style.display = 'none';
             document.getElementById('searchSection').style.display = 'block';
         }
