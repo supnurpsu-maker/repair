@@ -259,7 +259,7 @@
                     var trackUrl = "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(fTicket);
                     if (liff.isInClient()) {
                     // ประกาศ fRow ไว้เผื่อ (กรณี GAS ยังไม่ส่งมา) เพื่อป้องกัน Error
-                    const fRow = (data && data.row) ? data.row : ""; 
+                    // const fRow = (data && data.row) ? data.row : ""; 
                 
                     const flexPayload = {
                         "type": "bubble",
