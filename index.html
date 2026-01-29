@@ -252,7 +252,7 @@
                     var fIssue = (document.getElementById('issue').value || "-").replace(/["\\]/g, "");
                     var fTicket = String(res.ticketId || "ID");
                     var fQueue = String(res.pendingCount || "0");
-                    
+                    var fRow = "";
                     // 2. สร้างลิงก์ติดตามสถานะ (เชื่อมกับ track.html)
                     // รูปแบบ: LIFF_ID_TRACK + ?ticket=TICKET_ID
                     // var trackUrl = "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket;
