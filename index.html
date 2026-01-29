@@ -307,42 +307,33 @@
                               "spacing": "xs",
                               "contents": [
                                 {
-                                  "type": "button",
-                                  "action": { "type": "uri", "label": "⭐ 1", "uri": "https://liff.line.me/2008875334-d6l72Uox?row=" + fRow + "&score=1" },
-                                  "style": "secondary", // ใช้ secondary เพื่อดึงพื้นหลังเทามาตรฐานของ LINE
-                                  "height": "sm",
-                                  "color": "#f0f0f0" // สีพื้นหลังปุ่ม
-                                },
-                                {
-                                  "type": "button",
-                                  "action": { "type": "uri", "label": "⭐ 2", "uri": "https://liff.line.me/2008875334-d6l72Uox?row=" + fRow + "&score=2" },
-                                  "style": "secondary",
-                                  "height": "sm",
-                                  "color": "#f0f0f0"
-                                },
-                                {
-                                  "type": "button",
-                                  "action": { "type": "uri", "label": "⭐ 3", "uri": "https://liff.line.me/2008875334-d6l72Uox?row=" + fRow + "&score=3" },
-                                  "style": "secondary",
-                                  "height": "sm",
-                                  "color": "#f0f0f0"
-                                },
-                                {
-                                  "type": "button",
-                                  "action": { "type": "uri", "label": "⭐ 4", "uri": "https://liff.line.me/2008875334-d6l72Uox?row=" + fRow + "&score=4" },
-                                  "style": "secondary",
-                                  "height": "sm",
-                                  "color": "#f0f0f0"
-                                },
-                                {
-                                  "type": "button",
-                                  "action": { "type": "uri", "label": "⭐ 5", "uri": "https://liff.line.me/2008875334-d6l72Uox?row=" + fRow + "&score=5" },
-                                  "style": "secondary",
-                                  "height": "sm",
-                                  "color": "#f0f0f0"
+                                  "type": "box",
+                                  "layout": "horizontal",
+                                  "margin": "md",
+                                  "spacing": "xs",
+                                  "contents": [1, 2, 3, 4, 5].map(score => ({
+                                    "type": "box",
+                                    "layout": "vertical",
+                                    "backgroundColor": "#eeeeee",
+                                    "cornerRadius": "sm",
+                                    "paddingAll": "8px",
+                                    "action": {
+                                      "type": "uri",
+                                      "label": "⭐ " + score,
+                                      "uri": "https://liff.line.me/2008875334-d6l72Uox?row=" + fRow + "&score=" + score
+                                    },
+                                    "contents": [
+                                      {
+                                        "type": "text",
+                                        "text": "⭐ " + score,
+                                        "size": "xs",
+                                        "align": "center",
+                                        "weight": "bold",
+                                        "color": "#333333"
+                                      }
+                                    ]
+                                  }))
                                 }
-                              ]
-                            }
                             ]
                           },
                           "footer": {
