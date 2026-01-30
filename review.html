@@ -105,66 +105,53 @@
         }
     }
 
-    async function sendReview(autoRow = null, autoScore = null) {
+    function sendReview(autoRow = null, autoScore = null) {
     const urlParams = new URLSearchParams(window.location.search);
     const row = autoRow || urlParams.get('row');
     const selectedStar = document.querySelector('input[name="stars"]:checked');
     const score = autoScore || (selectedStar ? selectedStar.value : null);
     
     if (!row || !score) {
-        alert("ข้อมูลไม่ครบถ้วน ไม่สามารถประเมินได้");
+        alert("ข้อมูลไม่ครบถ้วน");
         return;
     }
 
-    const submitBtn = document.getElementById('submitBtn');
-    const loader = document.getElementById('loader');
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('loader').style.display = 'block';
 
-    submitBtn.disabled = true;
-    loader.style.display = 'block';
-
-    try {
-        // ดึงชื่อโปรไฟล์
-        const profile = await liff.getProfile();
-        const displayName = encodeURIComponent(profile.displayName);
-
-        // สร้าง URL สำหรับส่งข้อมูล
-        const fetchUrl = `${URL_GAS}?action=submitReview&row=${row}&score=${score}&name=${displayName}`;
-
-        // แก้ไขจุดสำคัญ: ใช้ fetch แบบเรียบง่ายที่สุดสำหรับ GAS
-        //const response = await fetch(fetchUrl);
-        const response = await fetch(fetchUrl, {
-            method: 'GET',
-            mode: 'cors', // เพิ่มเพื่อขออนุญาตข้าม Domain
-            cache: 'no-cache'
-        });
+    // ดึงชื่อโปรไฟล์และส่งข้อมูลผ่าน JSONP (ไม้ตายข้าม CORS)
+    liff.getProfile().then(profile => {
+        const name = encodeURIComponent(profile.displayName);
+        const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
         
-        // ตรวจสอบว่าเชื่อมต่อได้ไหม
-        if (!response.ok) throw new Error('Network response was not ok');
+        // สร้างฟังก์ชันตอบกลับชั่วคราว
+        window[callbackName] = function(data) {
+            delete window[callbackName];
+            document.body.removeChild(script);
+            document.getElementById('loader').style.display = 'none';
 
-        const result = await response.text();
+            if (data === "OK") {
+                alert("🌟 ขอบคุณสำหรับคะแนน " + score + " ดาวครับ");
+                liff.closeWindow();
+            } else {
+                alert("แจ้งเตือนจากระบบ: " + data);
+                document.getElementById('submitBtn').disabled = false;
+            }
+        };
 
-        // ตรวจสอบคำตอบจาก GAS
-        if (result.trim() === "OK") {
-            alert("🌟 ขอบคุณสำหรับคะแนนประเมิน " + score + " ดาวครับ");
-            liff.closeWindow();
-        } else if (result.includes("ERROR_NOT_FINISHED")) {
-            alert("❌ งานยังไม่เสร็จสมบูรณ์: กรุณาประเมินเมื่อช่างปิดงานแล้วครับ");
-            liff.closeWindow();
-        } else if (result.includes("ERROR_ALREADY_RATED")) {
-            alert("⚠️ รายการนี้เคยมีการประเมินไปแล้วครับ");
-            liff.closeWindow();
-        } else {
-            alert("ผลการทำงานจากระบบ: " + result);
-            submitBtn.disabled = false;
-        }
-    } catch (e) {
-        console.error("Fetch Error:", e);
-        // แสดงรายละเอียด Error ให้ชัดเจนเพื่อการ Debug
-        alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้\nสาเหตุ: " + e.message + "\nกรุณาตรวจสอบการตั้งค่า Deploy ใน GAS (ต้องเป็น Anyone)");
-        submitBtn.disabled = false;
-    } finally {
-        loader.style.display = 'none';
-    }
+        // สร้าง Script Tag เพื่อส่งข้อมูลไปยัง GAS
+        const script = document.createElement('script');
+        script.src = `${URL_GAS}?action=submitReview&row=${row}&score=${score}&name=${name}&callback=${callbackName}`;
+        
+        // จัดการกรณี Error (เช่น URL ผิด หรือเซิร์ฟเวอร์ล่ม)
+        script.onerror = function() {
+            alert("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ (Network Error)");
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('submitBtn').disabled = false;
+        };
+
+        document.body.appendChild(script);
+    });
 }
 
     // เริ่มทำงานเมื่อโหลดหน้า
