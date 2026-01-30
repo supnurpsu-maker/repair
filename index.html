@@ -84,9 +84,9 @@
             transition: 0.3s;
         }
 
-        button:disabled {
-            background: #ccc;
-        }
+            button:disabled {
+                background: #ccc;
+            }
 
         #loading {
             display: none;
@@ -117,10 +117,10 @@
         <form id="repairForm">
             <label for="room">สถานที่ / เลขห้อง</label>
             <input type="text" id="room" required placeholder="ห้องประชุมดวงวดี สังโขบล / 2228">
-            
+
             <label for="phone">เบอร์ภายใน / เบอร์โทรศัพท์ติดต่อ</label>
             <input type="tel" id="phone" required placeholder="XXXX / 0XX-XXXXXXX">
-            
+
             <label for="category">ประเภท</label>
             <select id="category" required>
                 <option value="">-- เลือก --</option>
@@ -132,21 +132,21 @@
                 <option value="CCTV/FingerPrint Scan">ระบบกล้องวงจรปิด/เครื่องสแกนควบคุมเปิด-ปิดประตู</option>
                 <option value="Others">อื่นๆ</option>
             </select>
-            
+
             <label for="issue">ปัญหาที่พบ / อาการ / ความต้องการใช้บริการ</label>
             <textarea id="issue" rows="3" required placeholder="อธิบายความต้องการใช้บริการหรือปัญหาเบื้องต้น"></textarea>
-            
+
             <label for="priority">ความเร่งด่วน</label>
             <select id="priority">
                 <option value="ปกติ">ปกติ</option>
                 <option value="ด่วน">ด่วน</option>
                 <option value="ด่วนที่สุด">ด่วนที่สุด</option>
             </select>
-            
+
             <label for="image">แนบรูปภาพ 1 รูป(ถ้ามี)</label>
             <input type="file" id="image" accept="image/*">
             <img id="preview" class="img-preview">
-            
+
             <button type="submit" id="submitBtn">ส่งข้อมูลขอใช้บริการ</button>
             <div id="loading">🚀 กำลังบันทึกข้อมูล...</div>
         </form>
@@ -157,18 +157,18 @@
         // ส่วนตั้งค่า Configuration
         // ==========================================
         // URL ของ GAS (ใช้ตัวล่าสุดที่คุณแนบมาในไฟล์)
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbwSV9Ch5UInUkyTb7I9H0Ih_XlfSdbebFY2jW_1kz_XGl6cGf3d07_uz6m7E6ZN_qvT/exec"; 
-        
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwSV9Ch5UInUkyTb7I9H0Ih_XlfSdbebFY2jW_1kz_XGl6cGf3d07_uz6m7E6ZN_qvT/exec";
+
         // LIFF ID (ตรวจสอบให้แน่ใจว่าถูกต้อง)
         const LIFF_ID_MAIN = "2008875334-eZXiyz43"; // LIFF ID ของหน้าแจ้งซ่อมนี้
         const LIFF_ID_TRACK = "2008875334-wOYUvNha"; // LIFF ID ของหน้าติดตามสถานะ (track.html)
         // ==========================================
-    
+
         const form = document.getElementById('repairForm');
         const btn = document.getElementById('submitBtn');
         const loading = document.getElementById('loading');
         let userProfile = null;
-    
+
         async function main() {
             try {
                 await liff.init({ liffId: LIFF_ID_MAIN });
@@ -184,9 +184,9 @@
                 alert("LIFF Init Failed: " + err.message);
             }
         }
-    
+
         main();
-    
+
         // Preview รูปภาพ
         document.getElementById('image').onchange = (e) => {
             const file = e.target.files[0];
@@ -199,20 +199,20 @@
                 reader.readAsDataURL(file);
             }
         };
-    
+
         // จัดการเมื่อกดส่งฟอร์ม
         form.onsubmit = async (e) => {
             e.preventDefault();
-            
+
             if (!userProfile) {
                 alert("กรุณารอโหลดข้อมูลโปรไฟล์สักครู่");
                 return;
             }
-    
+
             btn.disabled = true;
             btn.innerText = "กำลังส่งข้อมูล...";
             loading.style.display = 'block';
-    
+
             // แปลงรูปภาพเป็น Base64
             const fileInput = document.getElementById('image');
             let base64 = "";
@@ -224,7 +224,7 @@
                     reader.readAsDataURL(file);
                 });
             }
-    
+
             const payload = {
                 uid: userProfile.userId,
                 displayName: userProfile.displayName,
@@ -235,7 +235,7 @@
                 priority: document.getElementById('priority').value,
                 imageBase64: base64
             };
-    
+
             try {
                 // ส่งข้อมูลไปยัง GAS
                 const response = await fetch(GAS_URL, {
@@ -243,143 +243,140 @@
                     body: JSON.stringify(payload)
                 });
                 const res = await response.json();
-    
+
                 if (res.result === "ok") {
                     // --- ส่วนจัดการหลังส่งสำเร็จ ---
-                    
+
                     // 1. เตรียมข้อมูลสำหรับ Flex Message
                     var fRoom = (document.getElementById('room').value || "-").replace(/["\\]/g, "");
                     var fIssue = (document.getElementById('issue').value || "-").replace(/["\\]/g, "");
                     var fTicket = String(res.ticketId || "ID");
                     var fQueue = String(res.pendingCount || "0");
-                    const fRow = data.row;
+                    const fRow = res.row;
                     // 2. สร้างลิงก์ติดตามสถานะ (เชื่อมกับ track.html)
                     // รูปแบบ: LIFF_ID_TRACK + ?ticket=TICKET_ID
                     // var trackUrl = "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket;
                     var trackUrl = "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(fTicket);
                     if (liff.isInClient()) {
-                    // ประกาศ fRow ไว้เผื่อ (กรณี GAS ยังไม่ส่งมา) เพื่อป้องกัน Error
-                    // const fRow = (data && data.row) ? data.row : ""; 
-                
-                    const flexPayload = {
-                        "type": "bubble",
-                        "size": "mega",
-                        "header": {
-                            "type": "box",
-                            "layout": "horizontal",
-                            "backgroundColor": "#000080",
-                            "contents": [
-                                { "type": "text", "text": "รายการแจ้งซ่อม", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
-                                { "type": "text", "text": fTicket, "align": "end", "weight": "bold", "color": "#FFFFFF", "size": "sm" }
-                            ]
-                        },
-                        "body": {
-                            "type": "box",
-                            "layout": "vertical",
-                            "spacing": "md",
-                            "contents": [
-                                {
-                                    "type": "box",
-                                    "layout": "vertical",
-                                    "backgroundColor": "#eef3ff",
-                                    "cornerRadius": "md",
-                                    "paddingAll": "md",
-                                    "contents": [
-                                        { "type": "text", "text": "สถานะ: รอดำเนินการ", "weight": "bold", "color": "#000080", "size": "sm" },
-                                        { "type": "text", "text": "คิวที่รอขณะนี้: " + fQueue + " คิว", "size": "xs", "color": "#666666", "margin": "xs" }
-                                    ]
-                                },
-                                {
-                                    "type": "box",
-                                    "layout": "vertical",
-                                    "spacing": "sm",
-                                    "contents": [
-                                        {
-                                            "type": "box",
-                                            "layout": "baseline",
-                                            "spacing": "sm",
-                                            "contents": [
-                                                { "type": "text", "text": "📍 สถานที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
-                                                { "type": "text", "text": fRoom, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
-                                            ]
-                                        },
-                                        {
-                                            "type": "box",
-                                            "layout": "baseline",
-                                            "spacing": "sm",
-                                            "contents": [
-                                                { "type": "text", "text": "🛠 ปัญหา:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
-                                                { "type": "text", "text": fIssue, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
-                                            ]
-                                        }
-                                    ]
-                                },
-                                { "type": "separator", "margin": "xl" },
-                                { "type": "text", "text": "รบกวนให้คะแนนเมื่อบริการเสร็จสิ้น", "align": "center", "size": "xxs", "color": "#aaaaaa", "margin": "md" },
-                                {
-                                    "type": "box",
-                                    "layout": "horizontal",
-                                    "margin": "md",
-                                    "spacing": "xs",
-                                    "contents": [1, 2, 3, 4, 5].map(function(score) {
-                                        return {
-                                            "type": "box",
-                                            "layout": "vertical",
-                                            "backgroundColor": "#eeeeee",
-                                            "cornerRadius": "sm",
-                                            "paddingAll": "8px",
-                                            "action": {
-                                                "type": "uri",
-                                                "label": "⭐ " + score,
-                                                "uri": "https://liff.line.me/2008875334-d6l72Uox?row=" + fRow + "&score=" + score
+                        const flexPayload = {
+                            "type": "bubble",
+                            "size": "mega",
+                            "header": {
+                                "type": "box",
+                                "layout": "horizontal",
+                                "backgroundColor": "#000080",
+                                "contents": [
+                                    { "type": "text", "text": "รายการแจ้งซ่อม", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
+                                    { "type": "text", "text": fTicket, "align": "end", "weight": "bold", "color": "#FFFFFF", "size": "sm" }
+                                ]
+                            },
+                            "body": {
+                                "type": "box",
+                                "layout": "vertical",
+                                "spacing": "md",
+                                "contents": [
+                                    {
+                                        "type": "box",
+                                        "layout": "vertical",
+                                        "backgroundColor": "#eef3ff",
+                                        "cornerRadius": "md",
+                                        "paddingAll": "md",
+                                        "contents": [
+                                            { "type": "text", "text": "สถานะ: รอดำเนินการ", "weight": "bold", "color": "#000080", "size": "sm" },
+                                            { "type": "text", "text": "คิวที่รอขณะนี้: " + fQueue + " คิว", "size": "xs", "color": "#666666", "margin": "xs" }
+                                        ]
+                                    },
+                                    {
+                                        "type": "box",
+                                        "layout": "vertical",
+                                        "spacing": "sm",
+                                        "contents": [
+                                            {
+                                                "type": "box",
+                                                "layout": "baseline",
+                                                "spacing": "sm",
+                                                "contents": [
+                                                    { "type": "text", "text": "📍 สถานที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
+                                                    { "type": "text", "text": fRoom, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
+                                                ]
                                             },
-                                            "contents": [
-                                                {
-                                                    "type": "text",
-                                                    "text": "⭐ " + score,
-                                                    "size": "xs",
-                                                    "align": "center",
-                                                    "weight": "bold",
-                                                    "color": "#333333"
-                                                }
-                                            ]
-                                        };
-                                    })
-                                }
-                            ]
-                        },
-                        "footer": {
-                            "type": "box",
-                            "layout": "vertical",
-                            "contents": [
-                                {
-                                    "type": "button",
-                                    "style": "primary",
-                                    "color": "#000080",
-                                    "height": "sm",
-                                    "action": {
-                                        "type": "uri",
-                                        "label": "ติดตามสถานะงาน",
-                                        "uri": trackUrl
+                                            {
+                                                "type": "box",
+                                                "layout": "baseline",
+                                                "spacing": "sm",
+                                                "contents": [
+                                                    { "type": "text", "text": "🛠 ปัญหา:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
+                                                    { "type": "text", "text": fIssue, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    { "type": "separator", "margin": "xl" },
+                                    { "type": "text", "text": "รบกวนให้คะแนนเมื่อบริการเสร็จสิ้น", "align": "center", "size": "xxs", "color": "#aaaaaa", "margin": "md" },
+                                    {
+                                        "type": "box",
+                                        "layout": "horizontal",
+                                        "margin": "md",
+                                        "spacing": "xs",
+                                        "contents": [1, 2, 3, 4, 5].map(function (score) {
+                                            return {
+                                                "type": "box",
+                                                "layout": "vertical",
+                                                "backgroundColor": "#eeeeee",
+                                                "cornerRadius": "sm",
+                                                "paddingAll": "8px",
+                                                "action": {
+                                                    "type": "uri",
+                                                    "label": "⭐ " + score,
+                                                    "uri": "https://liff.line.me/2008875334-d6l72Uox?row=" + fRow + "&score=" + score
+                                                },
+                                                "contents": [
+                                                    {
+                                                        "type": "text",
+                                                        "text": "⭐ " + score,
+                                                        "size": "xs",
+                                                        "align": "center",
+                                                        "weight": "bold",
+                                                        "color": "#333333"
+                                                    }
+                                                ]
+                                            };
+                                        })
                                     }
-                                }
-                            ]
-                        }
-                    };
-                
-                    liff.sendMessages([{
-                        "type": "flex",
-                        "altText": "แจ้งซ่อมสำเร็จ Ticket: " + fTicket,
-                        "contents": flexPayload
-                    }])
-                    .then(function() {
-                        liff.closeWindow();
-                    })
-                    .catch(function(err) {
-                        alert("ส่งข้อความไม่สำเร็จ: " + err.message);
-                        liff.closeWindow();
-                    });
-                } else {
+                                ]
+                            },
+                            "footer": {
+                                "type": "box",
+                                "layout": "vertical",
+                                "contents": [
+                                    {
+                                        "type": "button",
+                                        "style": "primary",
+                                        "color": "#000080",
+                                        "height": "sm",
+                                        "action": {
+                                            "type": "uri",
+                                            "label": "ติดตามสถานะงาน",
+                                            "uri": trackUrl
+                                        }
+                                    }
+                                ]
+                            }
+                        };
+
+                        liff.sendMessages([{
+                            "type": "flex",
+                            "altText": "แจ้งซ่อมสำเร็จ Ticket: " + fTicket,
+                            "contents": flexPayload
+                        }])
+                            .then(function () {
+                                liff.closeWindow();
+                            })
+                            .catch(function (err) {
+                                alert("ส่งข้อความไม่สำเร็จ: " + err.message);
+                                liff.closeWindow();
+                            });
+                    } else {
                         // กรณีเปิดผ่าน Browser ภายนอก
                         alert("บันทึกข้อมูลสำเร็จ! Ticket: " + fTicket + "\nกรุณาตรวจสอบสถานะผ่านเมนูใน LINE");
                         window.location.reload();
