@@ -122,6 +122,8 @@
         autoProcess(fullId, true);
     }
 
+    // ... (ส่วน CSS และ HTML เหมือนเดิม) ...
+
     async function autoProcess(tid, isManual = false) {
         document.getElementById('searchSection').style.display = 'none';
         document.getElementById('loader').style.display = 'block';
@@ -132,18 +134,27 @@
             const data = await res.json();
 
             if (data.found) {
+                // 1. แสดงผลบนหน้าจอเว็บเสมอ
                 renderUI(tid, data);
-                if (liff.isInClient()) {
-                    // ส่ง Flex Message และจัดการ Error ป้องกัน INVALID_MESSAGE
+
+                // 2. เงื่อนไขการส่ง Flex Message เข้าแชท
+                // ส่งเฉพาะเมื่อกดมาจากปุ่ม (มี ticket ใน URL) และไม่ใช่การค้นหาเองด้วยมือ (isManual === false)
+                if (liff.isInClient() && !isManual) {
                     try {
                         await sendFlexUpdate(tid, data);
-                        if (!isManual) { setTimeout(() => { liff.closeWindow(); }, 2500); }
+                        // เมื่อส่ง Flex เสร็จ ให้ปิดหน้าต่างอัตโนมัติ (ประสบการณ์ใช้งานจะดีมาก)
+                        setTimeout(() => { liff.closeWindow(); }, 2000);
                     } catch (err) {
                         console.error("Flex Error:", err);
-                        // ถ้า Flex พัง ให้ยังคงโชว์หน้าเว็บไว้ ไม่ต้องปิด
+                        // ถ้า Flex พัง ให้โชว์หน้าเว็บทิ้งไว้
                         document.getElementById('loader').style.display = 'none';
                         document.getElementById('result').style.display = 'block';
                     }
+                } else {
+                    // ถ้าเป็นการค้นหาด้วยมือ (Manual Search) หรือเปิดผ่าน Browser ทั่วไป
+                    // ให้หยุดอยู่ที่หน้าผลลัพธ์ ไม่ต้องปิดหน้าต่าง
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('result').style.display = 'block';
                 }
             } else {
                 alert("ไม่พบข้อมูล หรือคุณไม่มีสิทธิ์เข้าถึง");
@@ -152,6 +163,8 @@
             }
         } catch (e) { alert("Error: " + e.message); }
     }
+
+// ... (ฟังก์ชัน renderUI และ sendFlexUpdate คงไว้เหมือนเดิม) ...
 
     function renderUI(tid, data) {
         document.getElementById('dispId').innerText = tid;
