@@ -111,28 +111,43 @@
 
                     // กำหนดสีตามสถานะ
                     // --- ส่วนกำหนดสีตามสถานะ (Pastel Style) ---
-                    let statusBg = "#eef3ff";   // Default ฟ้าอ่อน (รอดำเนินการ)
-                    let statusColor = "#000080"; // Default Navy
-                    let headerColor = "#000080"; // Fix สี Navy ตามที่ต้องการ
+                    // 1. กำหนดสีตามสถานะ (Pastel Style)
+                    let statusBg = "#eef3ff";   
+                    let statusColor = "#000080"; 
                     
                     if (fStatus === "กำลังดำเนินการ") {
-                        statusBg = "#fff4e6";    // ส้มอ่อนบางๆ
-                        statusColor = "#d9480f"; // ส้มเข้ม
+                        statusBg = "#fff4e6";    
+                        statusColor = "#d9480f"; 
                     } else if (fStatus === "ดำเนินการเรียบร้อยแล้ว") {
-                        statusBg = "#ebfbee";    // เขียวอ่อนบางๆ (แบบที่คุณชอบ)
-                        statusColor = "#2b8a3e"; // เขียวเข้ม
-                    } else if (fStatus === "จัดจ้างร้านภายนอก") {
-                        statusBg = "#f1f3f5";    // เทาอ่อน
-                        statusColor = "#495057"; // เทาเข้ม
+                        statusBg = "#ebfbee";    
+                        statusColor = "#2b8a3e"; 
                     }
                     
+                    // 2. เตรียม Contents ภายในแถบสถานะ
+                    // เริ่มต้นด้วยการใส่ข้อความ "สถานะ" เสมอ
+                    let statusContents = [
+                        { "type": "text", "text": "สถานะ: " + fStatus, "weight": "bold", "color": statusColor, "size": "sm" }
+                    ];
+                    
+                    // --- หัวใจสำคัญ: ถ้าสถานะเป็น "รอดำเนินการ" เท่านั้น ถึงจะเพิ่มบรรทัดคิวลงไป ---
+                    if (fStatus === "รอดำเนินการ") {
+                        statusContents.push({ 
+                            "type": "text", 
+                            "text": "⏳ คิวที่รอขณะนี้: " + fQueue + " คิว", 
+                            "size": "xs", 
+                            "color": "#666666", 
+                            "margin": "xs" 
+                        });
+                    }
+                    
+                    // 3. นำ statusContents ไปใส่ใน flexPayload
                     const flexPayload = {
                         "type": "bubble",
                         "size": "mega",
                         "header": {
-                            "type": "box", "layout": "horizontal", "backgroundColor": headerColor,
+                            "type": "box", "layout": "horizontal", "backgroundColor": "#000080",
                             "contents": [
-                                { "type": "text", "text": "รายการแจ้งซ่อม", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
+                                { "type": "text", "text": "📋 รายการแจ้งซ่อม (อัปเดต)", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
                                 { "type": "text", "text": fTicket, "align": "end", "weight": "bold", "color": "#FFFFFF", "size": "sm" }
                             ]
                         },
@@ -141,12 +156,9 @@
                             "contents": [
                                 {
                                     "type": "box", "layout": "vertical", 
-                                    "backgroundColor": statusBg, // ใช้สีพื้นหลังที่เปลี่ยนตามสถานะ
+                                    "backgroundColor": statusBg, 
                                     "cornerRadius": "md", "paddingAll": "md",
-                                    "contents": [
-                                        { "type": "text", "text": "สถานะ: " + fStatus, "weight": "bold", "color": statusColor, "size": "sm" },
-                                        { "type": "text", "text": "⏳ คิวที่รอขณะนี้: " + fQueue + " คิว", "size": "xs", "color": "#666666", "margin": "xs" }
-                                    ]
+                                    "contents": statusContents // ใส่ชุดข้อความที่เราเตรียมไว้ (จะมีคิวหรือไม่มีคิวขึ้นอยู่กับ Logic ด้านบน)
                                 },
                                 {
                                     "type": "box", "layout": "vertical", "spacing": "sm",
@@ -192,7 +204,7 @@
                                     "type": "button", "style": "primary", "color": "#000080", "height": "sm",
                                     "action": {
                                         "type": "uri",
-                                        "label": "🔍 ตรวจสอบสถานะอีกครั้ง",
+                                        "label": "ติดตามสถานะงาน",
                                         "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(fTicket)
                                     }
                                 }
