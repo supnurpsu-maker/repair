@@ -131,7 +131,11 @@
         const fetchUrl = `${URL_GAS}?action=submitReview&row=${row}&score=${score}&name=${displayName}`;
 
         // แก้ไขจุดสำคัญ: ใช้ fetch แบบเรียบง่ายที่สุดสำหรับ GAS
-        const response = await fetch(fetchUrl);
+        //const response = await fetch(fetchUrl);
+        const response = await fetch(fetchUrl, {
+            method: 'GET',
+            redirect: 'follow' 
+        });
         
         // ตรวจสอบว่าเชื่อมต่อได้ไหม
         if (!response.ok) throw new Error('Network response was not ok');
