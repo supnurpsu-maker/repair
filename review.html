@@ -134,7 +134,8 @@
         //const response = await fetch(fetchUrl);
         const response = await fetch(fetchUrl, {
             method: 'GET',
-            redirect: 'follow' 
+            mode: 'cors', // เพิ่มเพื่อขออนุญาตข้าม Domain
+            cache: 'no-cache'
         });
         
         // ตรวจสอบว่าเชื่อมต่อได้ไหม
