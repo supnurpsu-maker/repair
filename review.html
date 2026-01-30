@@ -67,93 +67,100 @@
 </div>
 
 <script>
-    const URL_GAS = "https://script.google.com/macros/s/AKfycbwSV9Ch5UInUkyTb7I9H0Ih_XlfSdbebFY2jW_1kz_XGl6cGf3d07_uz6m7E6ZN_qvT/exec";
+    const URL_GAS = "https://script.google.com/macros/s/AKfycbwu7ggrxZlSUBTPpFL1qkzhHlsqDjRbUejIcsU_ZCY8fc6R-wGkfbO2AMjSyrTky7Iq/exec";
     const LIFF_ID = "2008875334-d6l72Uox";
 
     async function init() {
         try {
+            // 1. รอให้ LIFF Init จนเสร็จ
             await liff.init({ liffId: LIFF_ID });
+            
             if (!liff.isLoggedIn()) {
                 liff.login();
-            } else {
-                // เมื่อ Login แล้ว ให้ตรวจสอบ Parameter จาก URL
-                const urlParams = new URLSearchParams(window.location.search);
-                const row = urlParams.get('row');
-                const score = urlParams.get('score');
+                return; // หยุดรอให้ Login เสร็จก่อน
+            }
 
-                // 1. ถ้ามีคะแนนส่งมาจาก Flex ให้ทำการติ๊กดาวในหน้าเว็บให้เห็น
-                if (score) {
-                    const starRadio = document.getElementById('star' + score);
-                    if (starRadio) starRadio.checked = true;
-                }
+            // 2. ดึงค่าจาก URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const row = urlParams.get('row');
+            const score = urlParams.get('score');
 
-                // 2. ถ้ามีทั้ง row และ score ให้ส่งประเมินอัตโนมัติทันที
-                if (row && score) {
+            // 3. แสดงดาวที่เลือกบนหน้าเว็บ (เพื่อให้ User รู้ว่าเลือกเลขอะไรมา)
+            if (score) {
+                const starRadio = document.getElementById('star' + score);
+                if (starRadio) starRadio.checked = true;
+            }
+
+            // 4. ถ้ามีค่าครบ ให้เริ่มการส่งข้อมูลอัตโนมัติ
+            if (row && score) {
+                console.log("Auto-submitting review for row:", row, "score:", score);
+                // ใช้ setTimeout เล็กน้อยเพื่อให้หน้าเว็บ Render ดาวเสร็จก่อนส่ง
+                setTimeout(() => {
                     sendReview(row, score);
-                }
+                }, 500);
             }
         } catch (e) {
-            console.error(e);
+            console.error("LIFF Init Error:", e);
+            alert("เกิดข้อผิดพลาดในการโหลดระบบ: " + e.message);
         }
     }
 
     async function sendReview(autoRow = null, autoScore = null) {
-        // ดึงค่าจาก Parameter หรือจากที่ User ติ๊กเอง
         const urlParams = new URLSearchParams(window.location.search);
-        const row = autoRow || urlParams.get('row');
         
+        // รับค่าจาก parameter หรือจากหน้าเว็บ
+        const row = autoRow || urlParams.get('row');
         const selectedStar = document.querySelector('input[name="stars"]:checked');
         const score = autoScore || (selectedStar ? selectedStar.value : null);
         
-        if (!row) {
-            alert("ไม่พบหมายเลขอ้างอิงรายการซ่อม");
-            return;
-        }
-        if (!score) {
-            alert("กรุณาเลือกดาวเพื่อประเมินคะแนน");
+        if (!row || !score) {
+            alert("ข้อมูลไม่ครบถ้วน ไม่สามารถประเมินได้");
             return;
         }
 
         const submitBtn = document.getElementById('submitBtn');
         const loader = document.getElementById('loader');
 
+        // แสดงสถานะกำลังบันทึก
         submitBtn.disabled = true;
         loader.style.display = 'block';
 
         try {
-            // ดึง Profile เพื่อเอาชื่อไปอัปเดตใน Sheet user
+            // ดึงชื่อผู้ใช้ (ต้องดึงหลังจาก liff.init สำเร็จแล้วเท่านั้น)
             const profile = await liff.getProfile();
             const displayName = encodeURIComponent(profile.displayName);
 
-            // ส่ง Request ไปยัง GAS
-            const response = await fetch(`${URL_GAS}?action=submitReview&row=${row}&score=${score}&name=${displayName}`);
+            // ยิงข้อมูลไปที่ GAS
+            const fetchUrl = `${URL_GAS}?action=submitReview&row=${row}&score=${score}&name=${displayName}`;
+            const response = await fetch(fetchUrl);
             const result = await response.text();
 
+            console.log("GAS Result:", result);
+
             if (result === "OK") {
-                alert("🌟 ขอบคุณสำหรับคะแนนประเมิน " + score + " ดาวครับ");
+                alert("🌟 บันทึกคะแนน " + score + " ดาวเรียบร้อยแล้ว ขอบคุณครับ");
                 liff.closeWindow();
-            } 
-            else if (result === "ERROR_NOT_FINISHED") {
-                alert("❌ สถานะงานยังไม่เสร็จสมบูรณ์\nกรุณาประเมินเมื่อช่างปิดงานแล้วครับ");
+            } else if (result === "ERROR_NOT_FINISHED") {
+                alert("❌ สถานะงานยังไม่เสร็จสมบูรณ์ ประเมินไม่ได้ครับ");
                 liff.closeWindow();
-            } 
-            else if (result === "ERROR_ALREADY_RATED") {
-                alert("⚠️ รายการนี้เคยมีการประเมินไปแล้วครับ");
+            } else if (result === "ERROR_ALREADY_RATED") {
+                alert("⚠️ คุณเคยให้คะแนนรายการนี้ไปแล้วครับ");
                 liff.closeWindow();
-            } 
-            else {
-                alert("เกิดข้อผิดพลาด: " + result);
+            } else {
+                alert("ผลการทำงาน: " + result);
                 submitBtn.disabled = false;
             }
         } catch (e) {
-            alert("การเชื่อมต่อล้มเหลว กรุณาลองใหม่อีกครั้ง");
+            console.error("Fetch Error:", e);
+            alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่");
             submitBtn.disabled = false;
         } finally {
             loader.style.display = 'none';
         }
     }
 
-    init();
+    // เริ่มทำงานเมื่อโหลดหน้า
+    window.onload = init;
 </script>
 
 </body>
