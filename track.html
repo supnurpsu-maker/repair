@@ -120,7 +120,7 @@
                         "header": {
                             "type": "box", "layout": "horizontal", "backgroundColor": headerColor,
                             "contents": [
-                                { "type": "text", "text": "รายการแจ้งซ่อม (อัปเดต)", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
+                                { "type": "text", "text": "รายการแจ้งซ่อม", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
                                 { "type": "text", "text": fTicket, "align": "end", "weight": "bold", "color": "#FFFFFF", "size": "sm" }
                             ]
                         },
@@ -140,6 +140,10 @@
                                         { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
                                             { "type": "text", "text": "🏢 สถานที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
                                             { "type": "text", "text": fRoom, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
+                                        ]},
+                                         { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
+                                            { "type": "text", "text": "📁 ประเภท:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
+                                            { "type": "text", "text": fCategory, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
                                         ]},
                                         { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
                                             { "type": "text", "text": "⚙️ รายละเอียด:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
@@ -179,7 +183,7 @@
                                     "height": "sm",
                                     "action": {
                                         "type": "uri",
-                                        "label": "🔍 ตรวจสอบสถานะอีกครั้ง",
+                                        "label": "ติดตามสถานะงาน",
                                         "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(fTicket)
                                     }
                                 }
