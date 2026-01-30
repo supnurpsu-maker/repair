@@ -203,7 +203,7 @@
         } else {
             badgeBox.style.backgroundColor = "#eef3ff"; statusText.style.color = "#000080";
             queueText.style.display = "block";
-            queueText.innerText = "⏳ มีคิวก่อนหน้าคุณ: " + (data.pendingCount || "0") + " คิว";
+            queueText.innerText = "คิวที่รอก่อนหน้านี้: " + (data.pendingCount || "0") + " คิว";
         }
         document.getElementById('result').style.display = 'block';
     }
@@ -223,7 +223,7 @@
 
         let statusContents = [{ "type": "text", "text": "สถานะ: " + fStatus, "weight": "bold", "color": statusColor, "size": "sm" }];
         if (fStatus === "รอดำเนินการ") {
-            statusContents.push({ "type": "text", "text": "⏳ มีคิวก่อนหน้าคุณ: " + fQueue + " คิว", "size": "xs", "color": "#666666", "margin": "xs" });
+            statusContents.push({ "type": "text", "text": "คิวที่รอก่อนหน้านี้: " + fQueue + " คิว", "size": "xs", "color": "#666666", "margin": "xs" });
         }
 
         const flexPayload = {
