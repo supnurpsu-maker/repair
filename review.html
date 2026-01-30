@@ -106,50 +106,53 @@
     }
 
     function sendReview(autoRow = null, autoScore = null) {
+    // 1. ดึง URL Parameters ใหม่อีกครั้งเพื่อความชัวร์
     const urlParams = new URLSearchParams(window.location.search);
-    const row = autoRow || urlParams.get('row');
-    const selectedStar = document.querySelector('input[name="stars"]:checked');
-    const score = autoScore || (selectedStar ? selectedStar.value : null);
     
-    if (!row || !score) {
-        alert("ข้อมูลไม่ครบถ้วน");
+    // 2. ลำดับการเช็ค: ถ้ามี autoRow (จาก init) ให้ใช้ก่อน ถ้าไม่มีให้ดึงจาก URL (?row=...)
+    const row = autoRow || urlParams.get('row');
+    const score = autoScore || (document.querySelector('input[name="stars"]:checked') ? document.querySelector('input[name="stars"]:checked').value : null);
+    
+    // 3. ดัก Error ฝั่ง Client ก่อนส่งไปหา GAS
+    if (!row || row === "null" || isNaN(parseInt(row))) {
+        alert("❌ ไม่พบเลขแถว (Row ID) กรุณาลองเปิดลิงก์จากหน้าแชทอีกครั้ง");
+        console.error("Row is invalid:", row);
         return;
     }
 
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('loader').style.display = 'block';
 
-    // ดึงชื่อโปรไฟล์และส่งข้อมูลผ่าน JSONP (ไม้ตายข้าม CORS)
     liff.getProfile().then(profile => {
         const name = encodeURIComponent(profile.displayName);
         const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
         
-        // สร้างฟังก์ชันตอบกลับชั่วคราว
         window[callbackName] = function(data) {
             delete window[callbackName];
             document.body.removeChild(script);
             document.getElementById('loader').style.display = 'none';
-
+            
             if (data === "OK") {
                 alert("🌟 ขอบคุณสำหรับคะแนน " + score + " ดาวครับ");
                 liff.closeWindow();
+            } else if (data === "ERROR_NOT_FINISHED") {
+                alert("❌ งานนี้ยังไม่เสร็จสมบูรณ์ ไม่สามารถประเมินได้");
+                liff.closeWindow();
             } else {
-                alert("แจ้งเตือนจากระบบ: " + data);
+                alert("แจ้งเตือน: " + data);
                 document.getElementById('submitBtn').disabled = false;
             }
         };
 
-        // สร้าง Script Tag เพื่อส่งข้อมูลไปยัง GAS
         const script = document.createElement('script');
+        // --- จุดที่ส่งข้อมูล ---
         script.src = `${URL_GAS}?action=submitReview&row=${row}&score=${score}&name=${name}&callback=${callbackName}`;
         
-        // จัดการกรณี Error (เช่น URL ผิด หรือเซิร์ฟเวอร์ล่ม)
         script.onerror = function() {
-            alert("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ (Network Error)");
+            alert("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้");
             document.getElementById('loader').style.display = 'none';
             document.getElementById('submitBtn').disabled = false;
         };
-
         document.body.appendChild(script);
     });
 }
