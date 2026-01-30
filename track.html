@@ -58,7 +58,7 @@
 
 <script>
     // --- Config (ตรวจสอบให้ตรงกับระบบของคุณ) ---
-    const URL_GAS = "https://script.google.com/macros/s/AKfycbwan1hur0UQ3GOUTzdBco-sw-ukWrG8WUv0KuHwA5kAhzPRhNApQ_qkkVr3k9O7YDr2/exec";
+    const URL_GAS = "https://script.google.com/macros/s/AKfycbzooQqtAi4ScigF_cW-wgOb_jk0l2Yl90R4CQdEgvatLtFiIc2kOkOavqnbkANgOyQQ/exec";
     const LIFF_ID_TRACK = "2008875334-wOYUvNha";
     const LIFF_ID_REVIEW = "2008875334-d6l72Uox"; 
 
@@ -142,10 +142,6 @@
                                             { "type": "text", "text": fRoom, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
                                         ]},
                                         { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
-                                            { "type": "text", "text": "📁 ประเภท:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
-                                            { "type": "text", "text": fCategory, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
-                                        ]},
-                                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
                                             { "type": "text", "text": "⚙️ รายละเอียด:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
                                             { "type": "text", "text": fIssue, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
                                         ]},
@@ -168,6 +164,24 @@
                                         },
                                         "contents": [{ "type": "text", "text": "⭐ " + score, "size": "xs", "align": "center", "weight": "bold", "color": "#333333" }]
                                     }))
+                                }
+                            ]
+                        },
+                        // --- ส่วนที่หายไป: Footer สำหรับปุ่มติดตามสถานะ ---
+                        "footer": {
+                            "type": "box",
+                            "layout": "vertical",
+                            "contents": [
+                                {
+                                    "type": "button",
+                                    "style": "primary",
+                                    "color": "#000080",
+                                    "height": "sm",
+                                    "action": {
+                                        "type": "uri",
+                                        "label": "🔍 ตรวจสอบสถานะอีกครั้ง",
+                                        "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(fTicket)
+                                    }
                                 }
                             ]
                         }
