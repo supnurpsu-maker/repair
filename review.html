@@ -75,51 +75,70 @@
             await liff.init({ liffId: LIFF_ID });
             if (!liff.isLoggedIn()) {
                 liff.login();
+            } else {
+                // เมื่อ Login แล้ว ให้ตรวจสอบ Parameter จาก URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const row = urlParams.get('row');
+                const score = urlParams.get('score');
+
+                // 1. ถ้ามีคะแนนส่งมาจาก Flex ให้ทำการติ๊กดาวในหน้าเว็บให้เห็น
+                if (score) {
+                    const starRadio = document.getElementById('star' + score);
+                    if (starRadio) starRadio.checked = true;
+                }
+
+                // 2. ถ้ามีทั้ง row และ score ให้ส่งประเมินอัตโนมัติทันที
+                if (row && score) {
+                    sendReview(row, score);
+                }
             }
         } catch (e) {
             console.error(e);
         }
     }
 
-    async function sendReview() {
-        // ดึงเลขแถว (row) จาก Parameter ใน URL
+    async function sendReview(autoRow = null, autoScore = null) {
+        // ดึงค่าจาก Parameter หรือจากที่ User ติ๊กเอง
         const urlParams = new URLSearchParams(window.location.search);
-        const row = urlParams.get('row');
+        const row = autoRow || urlParams.get('row');
         
-        // ดึงคะแนนที่เลือก
         const selectedStar = document.querySelector('input[name="stars"]:checked');
+        const score = autoScore || (selectedStar ? selectedStar.value : null);
         
         if (!row) {
             alert("ไม่พบหมายเลขอ้างอิงรายการซ่อม");
             return;
         }
-        if (!selectedStar) {
+        if (!score) {
             alert("กรุณาเลือกดาวเพื่อประเมินคะแนน");
             return;
         }
 
-        const score = selectedStar.value;
         const submitBtn = document.getElementById('submitBtn');
         const loader = document.getElementById('loader');
 
-        // ปิดปุ่มและแสดง Loader
         submitBtn.disabled = true;
         loader.style.display = 'block';
 
         try {
-            const response = await fetch(`${URL_GAS}?action=submitReview&row=${row}&score=${score}`);
+            // ดึง Profile เพื่อเอาชื่อไปอัปเดตใน Sheet user
+            const profile = await liff.getProfile();
+            const displayName = encodeURIComponent(profile.displayName);
+
+            // ส่ง Request ไปยัง GAS
+            const response = await fetch(`${URL_GAS}?action=submitReview&row=${row}&score=${score}&name=${displayName}`);
             const result = await response.text();
 
             if (result === "OK") {
-                alert("🌟 บันทึกคะแนนเรียบร้อย ขอบคุณที่ใช้บริการครับ");
-                liff.closeWindow(); // ปิดหน้าต่าง LIFF ทันที
+                alert("🌟 ขอบคุณสำหรับคะแนนประเมิน " + score + " ดาวครับ");
+                liff.closeWindow();
             } 
             else if (result === "ERROR_NOT_FINISHED") {
-                alert("❌ ไม่สามารถประเมินได้: เนื่องจากสถานะงานยังดำเนินการไม่เสร็จสิ้น");
+                alert("❌ สถานะงานยังไม่เสร็จสมบูรณ์\nกรุณาประเมินเมื่อช่างปิดงานแล้วครับ");
                 liff.closeWindow();
             } 
             else if (result === "ERROR_ALREADY_RATED") {
-                alert("⚠️ รายการนี้เคยมีการประเมินคะแนนไปแล้ว");
+                alert("⚠️ รายการนี้เคยมีการประเมินไปแล้วครับ");
                 liff.closeWindow();
             } 
             else {
