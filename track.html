@@ -231,7 +231,7 @@
             "header": {
                 "type": "box", "layout": "horizontal", "backgroundColor": "#000080",
                 "contents": [
-                    { "type": "text", "text": "รายการแจ้งซ่อม (อัปเดต)", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
+                    { "type": "text", "text": "รายการแจ้งซ่อม", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
                     { "type": "text", "text": String(tid), "align": "end", "weight": "bold", "color": "#FFFFFF", "size": "sm" }
                 ]
             },
@@ -254,7 +254,7 @@
                 "type": "box", "layout": "vertical",
                 "contents": [{
                     "type": "button", "style": "primary", "color": "#000080", "height": "sm",
-                    "action": { "type": "uri", "label": "เปิดหน้าติดตามสถานะ", "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(tid) }
+                    "action": { "type": "uri", "label": "ติดตามสถานะงาน", "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(tid) }
                 }]
             }
         };
