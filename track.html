@@ -10,9 +10,18 @@
         :root { --primary: #000080; --bg: #f0f2f5; --white: #ffffff; }
         * { box-sizing: border-box; font-family: 'Prompt', sans-serif; }
         body { background-color: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 450px; }
+        .container { width: 100%; max-width: 450px; padding-bottom: 40px; }
 
-        .flex-style-card { background: var(--white); border-radius: 18px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid #e0e0e0; }
+        /* ส่วนค้นหา */
+        .search-card { background: white; padding: 25px; border-radius: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; border: 1px solid #e0e0e0; }
+        .form-group { text-align: left; margin-bottom: 15px; }
+        .form-group label { font-size: 14px; color: var(--primary); font-weight: 600; display: block; margin-bottom: 5px; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; outline: none; }
+        .btn-search { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-search:active { transform: scale(0.98); opacity: 0.9; }
+
+        /* การ์ดผลลัพธ์สไตล์ Flex */
+        .flex-style-card { background: var(--white); border-radius: 18px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid #e0e0e0; display: none; }
         .card-header { background: var(--primary); color: white; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; }
         .header-title { font-size: 15px; font-weight: 600; }
         .header-ticket { font-size: 14px; opacity: 0.9; }
@@ -28,14 +37,11 @@
         .info-val.bold { color: var(--primary); font-weight: 600; }
 
         .separator { height: 1px; background: #eee; margin: 15px 0; }
-        .search-card { background: white; padding: 25px; border-radius: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; }
-        .form-group { text-align: left; margin-bottom: 15px; }
-        .form-group label { font-size: 14px; color: var(--primary); font-weight: 600; display: block; margin-bottom: 5px; }
-        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; outline: none; }
-        .btn-search { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; }
         .btn-review { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
         
-        #loader { text-align: center; padding: 50px 0; color: var(--primary); }
+        #loader { text-align: center; padding: 30px 0; color: var(--primary); display: none; }
+        .loading-dots:after { content: ' .'; animation: dots 1.5s steps(5, end) infinite; }
+        @keyframes dots { 0%, 20% { color: rgba(0,0,0,0); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); } 40% { color: var(--primary); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); } 60% { text-shadow: .25em 0 0 var(--primary), .5em 0 0 rgba(0,0,0,0); } 80%, 100% { text-shadow: .25em 0 0 var(--primary), .5em 0 0 var(--primary); } }
     </style>
 </head>
 <body>
@@ -54,11 +60,13 @@
         <button class="btn-search" onclick="manualSearch()">ตรวจสอบข้อมูล</button>
     </div>
 
-    <div id="loader" style="display:none"><h3>⏳ กำลังตรวจสอบข้อมูล...</h3></div>
+    <div id="loader">
+        <h3 class="loading-dots">⏳ กำลังตรวจสอบข้อมูล</h3>
+    </div>
 
-    <div id="result" class="flex-style-card" style="display:none">
+    <div id="result" class="flex-style-card">
         <div class="card-header">
-            <span class="header-title">รายการแจ้งซ่อม</span>
+            <span class="header-title">📋 รายการแจ้งซ่อม (อัปเดต)</span>
             <span id="dispId" class="header-ticket"></span>
         </div>
         <div class="card-body">
@@ -71,9 +79,10 @@
             <div class="info-item"><span class="info-key">🛠️ รายละเอียด:</span><span id="dispIssue" class="info-val"></span></div>
             <div class="info-item"><span class="info-key">👷‍♂️ เจ้าหน้าที่:</span><span id="dispAdmin" class="info-val bold"></span></div>
             <div style="text-align: right; margin-top: 5px;"><span id="dispTime" style="font-size: 10px; color: #ccc;"></span></div>
+            
             <div id="reviewArea" style="display:none">
                 <div class="separator"></div>
-                <p style="text-align:center; font-size:11px; color:#aaa; margin-bottom:10px;">✨ รบกวนให้คะแนนเมื่อบริการเสร็จสิ้น</p>
+                <p style="text-align:center; font-size:11px; color:#aaa; margin-bottom:10px;">✨ รบกวนให้คะแนนเพื่อพัฒนาการบริการ</p>
                 <button class="btn-review" id="reviewBtn">⭐ ประเมินความพึงพอใจ</button>
             </div>
         </div>
@@ -96,7 +105,13 @@
 
             const urlParams = new URLSearchParams(window.location.search);
             const ticketFromUrl = urlParams.get('ticket');
-            if (ticketFromUrl) { autoProcess(decodeURIComponent(ticketFromUrl)); } else { loadDepts(); }
+
+            // ถ้ามี ticket ใน URL (กดมาจากแชท)
+            if (ticketFromUrl) { 
+                autoProcess(decodeURIComponent(ticketFromUrl), false); 
+            } else { 
+                loadDepts(); 
+            }
         } catch (e) { console.error(e); }
     }
 
@@ -118,53 +133,47 @@
         const dept = document.getElementById('deptSelect').value;
         const num = document.getElementById('numInput').value;
         if (!dept || !num) return alert("กรุณาระบุข้อมูลให้ครบ");
+        
         const fullId = `${dept}#${num.padStart(3, '0')}`;
+        
+        // เคลียร์ผลลัพธ์เก่าทิ้งก่อนเริ่มค้นหาใหม่
+        document.getElementById('result').style.display = 'none';
         autoProcess(fullId, true);
     }
 
-    // ... (ส่วน CSS และ HTML เหมือนเดิม) ...
-
     async function autoProcess(tid, isManual = false) {
-        document.getElementById('searchSection').style.display = 'none';
         document.getElementById('loader').style.display = 'block';
-        document.getElementById('result').style.display = 'none';
 
         try {
             const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(tid)}&uid=${myUid}`);
             const data = await res.json();
 
             if (data.found) {
-                // 1. แสดงผลบนหน้าจอเว็บเสมอ
                 renderUI(tid, data);
 
-                // 2. เงื่อนไขการส่ง Flex Message เข้าแชท
-                // ส่งเฉพาะเมื่อกดมาจากปุ่ม (มี ticket ใน URL) และไม่ใช่การค้นหาเองด้วยมือ (isManual === false)
+                // ส่ง Flex และปิดหน้าต่าง เฉพาะกรณี "ไม่ใช่" การค้นหาเอง
                 if (liff.isInClient() && !isManual) {
                     try {
                         await sendFlexUpdate(tid, data);
-                        // เมื่อส่ง Flex เสร็จ ให้ปิดหน้าต่างอัตโนมัติ (ประสบการณ์ใช้งานจะดีมาก)
-                        setTimeout(() => { liff.closeWindow(); }, 2000);
+                        setTimeout(() => { liff.closeWindow(); }, 2500);
                     } catch (err) {
                         console.error("Flex Error:", err);
-                        // ถ้า Flex พัง ให้โชว์หน้าเว็บทิ้งไว้
-                        document.getElementById('loader').style.display = 'none';
                         document.getElementById('result').style.display = 'block';
                     }
                 } else {
-                    // ถ้าเป็นการค้นหาด้วยมือ (Manual Search) หรือเปิดผ่าน Browser ทั่วไป
-                    // ให้หยุดอยู่ที่หน้าผลลัพธ์ ไม่ต้องปิดหน้าต่าง
-                    document.getElementById('loader').style.display = 'none';
+                    // กรณีค้นหาด้วยมือ ให้หยุดอยู่ที่หน้าผลลัพธ์
                     document.getElementById('result').style.display = 'block';
+                    document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
                 }
             } else {
-                alert("ไม่พบข้อมูล หรือคุณไม่มีสิทธิ์เข้าถึง");
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('searchSection').style.display = 'block';
+                alert("ไม่พบข้อมูล หรือคุณไม่มีสิทธิ์เข้าถึงเลขที่งานนี้");
+                document.getElementById('result').style.display = 'none';
             }
         } catch (e) { alert("Error: " + e.message); }
+        finally {
+            document.getElementById('loader').style.display = 'none';
+        }
     }
-
-// ... (ฟังก์ชัน renderUI และ sendFlexUpdate คงไว้เหมือนเดิม) ...
 
     function renderUI(tid, data) {
         document.getElementById('dispId').innerText = tid;
@@ -172,7 +181,7 @@
         document.getElementById('dispCategory').innerText = data.category || "-";
         document.getElementById('dispIssue').innerText = data.issue || "-";
         document.getElementById('dispAdmin').innerText = data.admin || "กำลังรอเจ้าหน้าที่";
-        document.getElementById('dispTime').innerText = "อัปเดต: " + (data.time || "-");
+        document.getElementById('dispTime').innerText = "อัปเดตเมื่อ: " + (data.time || "-");
         
         const status = data.status || "รอดำเนินการ";
         const badgeBox = document.getElementById('statusBadgeBox');
@@ -196,117 +205,75 @@
             queueText.style.display = "block";
             queueText.innerText = "⏳ มีคิวก่อนหน้าคุณ: " + (data.pendingCount || "0") + " คิว";
         }
-        document.getElementById('loader').style.display = 'none';
         document.getElementById('result').style.display = 'block';
     }
 
     async function sendFlexUpdate(tid, data) {
-    // เตรียมข้อมูลและป้องกันค่าว่างเพื่อไม่ให้ Flex Error
-    const fStatus = String(data.status || "รอดำเนินการ");
-    const fQueue = String(data.pendingCount || "0");
-    const fRoom = String(data.room || "-");
-    const fCategory = String(data.category || "-");
-    const fIssue = String(data.issue || "-");
-    const fAdmin = String(data.admin || "กำลังรอเจ้าหน้าที่");
-    const fRow = data.row; // สำหรับใช้ใน Link ประเมิน
+        const fStatus = String(data.status || "รอดำเนินการ");
+        const fQueue = String(data.pendingCount || "0");
+        const fRoom = String(data.room || "-");
+        const fCategory = String(data.category || "-");
+        const fIssue = String(data.issue || "-");
+        const fAdmin = String(data.admin || "กำลังรอเจ้าหน้าที่");
+        const fRow = data.row;
 
-    // 1. กำหนดสีตามสถานะ (Pastel Style)
-    let statusBg = "#eef3ff";   
-    let statusColor = "#000080"; 
-    if (fStatus === "กำลังดำเนินการ") {
-        statusBg = "#fff4e6"; statusColor = "#d9480f";
-    } else if (fStatus === "ดำเนินการเรียบร้อยแล้ว") {
-        statusBg = "#ebfbee"; statusColor = "#2b8a3e";
-    }
+        let statusBg = "#eef3ff"; let statusColor = "#000080";
+        if (fStatus === "กำลังดำเนินการ") { statusBg = "#fff4e6"; statusColor = "#d9480f"; }
+        else if (fStatus === "ดำเนินการเรียบร้อยแล้ว") { statusBg = "#ebfbee"; statusColor = "#2b8a3e"; }
 
-    // 2. เตรียมชุดข้อความสถานะ (แสดงคิวเฉพาะ "รอดำเนินการ")
-    let statusContents = [
-        { "type": "text", "text": "สถานะ: " + fStatus, "weight": "bold", "color": statusColor, "size": "sm" }
-    ];
-    if (fStatus === "รอดำเนินการ") {
-        statusContents.push({ 
-            "type": "text", 
-            "text": "⏳ มีคิวก่อนหน้าคุณ: " + fQueue + " คิว", 
-            "size": "xs", "color": "#666666", "margin": "xs" 
-        });
-    }
-
-    // 3. โครงสร้าง Flex Message ตัวเต็ม
-    const flexPayload = {
-        "type": "bubble",
-        "size": "mega",
-        "header": {
-            "type": "box", "layout": "horizontal", "backgroundColor": "#000080",
-            "contents": [
-                { "type": "text", "text": "รายการแจ้งซ่อม", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
-                { "type": "text", "text": String(tid), "align": "end", "weight": "bold", "color": "#FFFFFF", "size": "sm" }
-            ]
-        },
-        "body": {
-            "type": "box", "layout": "vertical", "spacing": "md",
-            "contents": [
-                {
-                    "type": "box", "layout": "vertical", "backgroundColor": statusBg, 
-                    "cornerRadius": "md", "paddingAll": "md",
-                    "contents": statusContents
-                },
-                {
-                    "type": "box", "layout": "vertical", "spacing": "sm",
-                    "contents": [
-                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
-                            { "type": "text", "text": "🏢 สถานที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
-                            { "type": "text", "text": fRoom, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
-                        ]},
-                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
-                            { "type": "text", "text": "📁 ประเภท:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
-                            { "type": "text", "text": fCategory, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
-                        ]},
-                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
-                            { "type": "text", "text": "🛠️ รายละเอียด:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
-                            { "type": "text", "text": fIssue, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
-                        ]},
-                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
-                            { "type": "text", "text": "👨‍🔧 เจ้าหน้าที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
-                            { "type": "text", "text": fAdmin, "wrap": true, "color": "#000080", "size": "xs", "flex": 5, "weight": "bold" }
-                        ]}
-                    ]
-                }
-            ]
+        let statusContents = [{ "type": "text", "text": "สถานะ: " + fStatus, "weight": "bold", "color": statusColor, "size": "sm" }];
+        if (fStatus === "รอดำเนินการ") {
+            statusContents.push({ "type": "text", "text": "⏳ มีคิวก่อนหน้าคุณ: " + fQueue + " คิว", "size": "xs", "color": "#666666", "margin": "xs" });
         }
-    };
 
-    // 4. เพิ่มปุ่มประเมินคะแนน (ถ้าซ่อมเสร็จแล้ว) เหมือนใน review.html
-    if (fStatus === "ดำเนินการเรียบร้อยแล้ว") {
-        flexPayload.body.contents.push({ "type": "separator", "margin": "xl" });
-        flexPayload.body.contents.push({ "type": "text", "text": "✨ รบกวนให้คะแนนเมื่อบริการเสร็จสิ้น", "align": "center", "size": "xxs", "color": "#aaaaaa", "margin": "md" });
-        flexPayload.body.contents.push({
-            "type": "box", "layout": "horizontal", "margin": "md", "spacing": "xs",
-            "contents": [1, 2, 3, 4, 5].map(score => ({
-                "type": "box", "layout": "vertical", "backgroundColor": "#eeeeee", "cornerRadius": "sm", "paddingAll": "8px",
-                "action": {
-                    "type": "uri",
-                    "label": "⭐ " + score,
-                    "uri": `https://liff.line.me/${LIFF_ID_REVIEW}?row=${fRow}&score=${score}`
-                },
-                "contents": [{ "type": "text", "text": "⭐ " + score, "size": "xs", "align": "center", "weight": "bold", "color": "#333333" }]
-            }))
-        });
-    }
-
-    // 5. เพิ่ม Footer สำหรับปุ่มติดตามสถานะ (ป้องกันการหลุดหน้า)
-    flexPayload.footer = {
-        "type": "box", "layout": "vertical",
-        "contents": [{
-            "type": "button", "style": "primary", "color": "#000080", "height": "sm",
-            "action": {
-                "type": "uri", "label": "เปิดหน้าติดตามสถานะ",
-                "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(tid)
+        const flexPayload = {
+            "type": "bubble", "size": "mega",
+            "header": {
+                "type": "box", "layout": "horizontal", "backgroundColor": "#000080",
+                "contents": [
+                    { "type": "text", "text": "รายการแจ้งซ่อม (อัปเดต)", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
+                    { "type": "text", "text": String(tid), "align": "end", "weight": "bold", "color": "#FFFFFF", "size": "sm" }
+                ]
+            },
+            "body": {
+                "type": "box", "layout": "vertical", "spacing": "md",
+                "contents": [
+                    { "type": "box", "layout": "vertical", "backgroundColor": statusBg, "cornerRadius": "md", "paddingAll": "md", "contents": statusContents },
+                    {
+                        "type": "box", "layout": "vertical", "spacing": "sm",
+                        "contents": [
+                            { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "🏢 สถานที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": fRoom, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }] },
+                            { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "📁 ประเภท:", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": fCategory, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }] },
+                            { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "🛠️ รายละเอียด:", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": fIssue, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }] },
+                            { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "👨‍🔧 เจ้าหน้าที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": fAdmin, "wrap": true, "color": "#000080", "size": "xs", "flex": 5, "weight": "bold" }] }
+                        ]
+                    }
+                ]
+            },
+            "footer": {
+                "type": "box", "layout": "vertical",
+                "contents": [{
+                    "type": "button", "style": "primary", "color": "#000080", "height": "sm",
+                    "action": { "type": "uri", "label": "เปิดหน้าติดตามสถานะ", "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(tid) }
+                }]
             }
-        }]
-    };
+        };
 
-    return await liff.sendMessages([{ "type": "flex", "altText": "อัปเดตสถานะงาน " + tid, "contents": flexPayload }]);
-}
+        if (fStatus === "ดำเนินการเรียบร้อยแล้ว") {
+            flexPayload.body.contents.push({ "type": "separator", "margin": "xl" });
+            flexPayload.body.contents.push({ "type": "text", "text": "✨ รบกวนให้คะแนนเมื่อบริการเสร็จสิ้น", "align": "center", "size": "xxs", "color": "#aaaaaa", "margin": "md" });
+            flexPayload.body.contents.push({
+                "type": "box", "layout": "horizontal", "margin": "md", "spacing": "xs",
+                "contents": [1, 2, 3, 4, 5].map(score => ({
+                    "type": "box", "layout": "vertical", "backgroundColor": "#eeeeee", "cornerRadius": "sm", "paddingAll": "8px",
+                    "action": { "type": "uri", "label": "⭐ " + score, "uri": `https://liff.line.me/${LIFF_ID_REVIEW}?row=${fRow}&score=${score}` },
+                    "contents": [{ "type": "text", "text": "⭐ " + score, "size": "xs", "align": "center", "weight": "bold", "color": "#333333" }]
+                }))
+            });
+        }
+
+        return await liff.sendMessages([{ "type": "flex", "altText": "อัปเดตสถานะงาน " + tid, "contents": flexPayload }]);
+    }
 
     init();
 </script>
