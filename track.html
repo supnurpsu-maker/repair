@@ -201,51 +201,112 @@
     }
 
     async function sendFlexUpdate(tid, data) {
-        // กรองข้อมูลป้องกันค่าว่าง (Null/Undefined) ที่จะทำให้ Flex พัง
-        const fStatus = String(data.status || "รอดำเนินการ");
-        const fQueue = String(data.pendingCount || "0");
-        const fRoom = String(data.room || "-");
-        const fAdmin = String(data.admin || "รอมอบหมาย");
+    // เตรียมข้อมูลและป้องกันค่าว่างเพื่อไม่ให้ Flex Error
+    const fStatus = String(data.status || "รอดำเนินการ");
+    const fQueue = String(data.pendingCount || "0");
+    const fRoom = String(data.room || "-");
+    const fCategory = String(data.category || "-");
+    const fIssue = String(data.issue || "-");
+    const fAdmin = String(data.admin || "กำลังรอเจ้าหน้าที่");
+    const fRow = data.row; // สำหรับใช้ใน Link ประเมิน
 
-        let statusContents = [{ "type": "text", "text": "สถานะ: " + fStatus, "weight": "bold", "color": (fStatus==="ดำเนินการเรียบร้อยแล้ว"?"#2b8a3e":"#000080"), "size": "sm" }];
-        
-        if (fStatus === "รอดำเนินการ") {
-            statusContents.push({ "type": "text", "text": "⏳ มีคิวก่อนหน้าคุณ: " + fQueue + " คิว", "size": "xs", "color": "#666666", "margin": "xs" });
-        }
-
-        // โครงสร้าง Flex ที่รองรับ MimeType และป้องกัน Error
-        const flexPayload = {
-            "type": "bubble",
-            "size": "mega",
-            "header": {
-                "type": "box", "layout": "horizontal", "backgroundColor": "#000080",
-                "contents": [
-                    { "type": "text", "text": "📋 รายการแจ้งซ่อม (อัปเดต)", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
-                    { "type": "text", "text": String(tid), "align": "end", "weight": "bold", "color": "#FFFFFF", "size": "sm" }
-                ]
-            },
-            "body": {
-                "type": "box", "layout": "vertical", "spacing": "md",
-                "contents": [
-                    {
-                        "type": "box", "layout": "vertical", 
-                        "backgroundColor": (fStatus==="ดำเนินการเรียบร้อยแล้ว"?"#ebfbee": (fStatus==="กำลังดำเนินการ"?"#fff4e6":"#eef3ff")), 
-                        "cornerRadius": "md", "paddingAll": "md",
-                        "contents": statusContents
-                    },
-                    {
-                        "type": "box", "layout": "vertical", "spacing": "sm",
-                        "contents": [
-                            { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "🏢 สถานที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": fRoom, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }] },
-                            { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "👷‍♂️ เจ้าหน้าที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": fAdmin, "wrap": true, "color": "#000080", "size": "xs", "flex": 5, "weight": "bold" }] }
-                        ]
-                    }
-                ]
-            }
-        };
-
-        return await liff.sendMessages([{ "type": "flex", "altText": "อัปเดตสถานะงาน " + tid, "contents": flexPayload }]);
+    // 1. กำหนดสีตามสถานะ (Pastel Style)
+    let statusBg = "#eef3ff";   
+    let statusColor = "#000080"; 
+    if (fStatus === "กำลังดำเนินการ") {
+        statusBg = "#fff4e6"; statusColor = "#d9480f";
+    } else if (fStatus === "ดำเนินการเรียบร้อยแล้ว") {
+        statusBg = "#ebfbee"; statusColor = "#2b8a3e";
     }
+
+    // 2. เตรียมชุดข้อความสถานะ (แสดงคิวเฉพาะ "รอดำเนินการ")
+    let statusContents = [
+        { "type": "text", "text": "สถานะ: " + fStatus, "weight": "bold", "color": statusColor, "size": "sm" }
+    ];
+    if (fStatus === "รอดำเนินการ") {
+        statusContents.push({ 
+            "type": "text", 
+            "text": "⏳ มีคิวก่อนหน้าคุณ: " + fQueue + " คิว", 
+            "size": "xs", "color": "#666666", "margin": "xs" 
+        });
+    }
+
+    // 3. โครงสร้าง Flex Message ตัวเต็ม
+    const flexPayload = {
+        "type": "bubble",
+        "size": "mega",
+        "header": {
+            "type": "box", "layout": "horizontal", "backgroundColor": "#000080",
+            "contents": [
+                { "type": "text", "text": "รายการแจ้งซ่อม (อัปเดต)", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
+                { "type": "text", "text": String(tid), "align": "end", "weight": "bold", "color": "#FFFFFF", "size": "sm" }
+            ]
+        },
+        "body": {
+            "type": "box", "layout": "vertical", "spacing": "md",
+            "contents": [
+                {
+                    "type": "box", "layout": "vertical", "backgroundColor": statusBg, 
+                    "cornerRadius": "md", "paddingAll": "md",
+                    "contents": statusContents
+                },
+                {
+                    "type": "box", "layout": "vertical", "spacing": "sm",
+                    "contents": [
+                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
+                            { "type": "text", "text": "🏢 สถานที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
+                            { "type": "text", "text": fRoom, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
+                        ]},
+                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
+                            { "type": "text", "text": "📁 ประเภท:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
+                            { "type": "text", "text": fCategory, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
+                        ]},
+                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
+                            { "type": "text", "text": "🛠️ รายละเอียด:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
+                            { "type": "text", "text": fIssue, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
+                        ]},
+                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
+                            { "type": "text", "text": "👨‍🔧 เจ้าหน้าที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
+                            { "type": "text", "text": fAdmin, "wrap": true, "color": "#000080", "size": "xs", "flex": 5, "weight": "bold" }
+                        ]}
+                    ]
+                }
+            ]
+        }
+    };
+
+    // 4. เพิ่มปุ่มประเมินคะแนน (ถ้าซ่อมเสร็จแล้ว) เหมือนใน review.html
+    if (fStatus === "ดำเนินการเรียบร้อยแล้ว") {
+        flexPayload.body.contents.push({ "type": "separator", "margin": "xl" });
+        flexPayload.body.contents.push({ "type": "text", "text": "✨ รบกวนให้คะแนนเมื่อบริการเสร็จสิ้น", "align": "center", "size": "xxs", "color": "#aaaaaa", "margin": "md" });
+        flexPayload.body.contents.push({
+            "type": "box", "layout": "horizontal", "margin": "md", "spacing": "xs",
+            "contents": [1, 2, 3, 4, 5].map(score => ({
+                "type": "box", "layout": "vertical", "backgroundColor": "#eeeeee", "cornerRadius": "sm", "paddingAll": "8px",
+                "action": {
+                    "type": "uri",
+                    "label": "⭐ " + score,
+                    "uri": `https://liff.line.me/${LIFF_ID_REVIEW}?row=${fRow}&score=${score}`
+                },
+                "contents": [{ "type": "text", "text": "⭐ " + score, "size": "xs", "align": "center", "weight": "bold", "color": "#333333" }]
+            }))
+        });
+    }
+
+    // 5. เพิ่ม Footer สำหรับปุ่มติดตามสถานะ (ป้องกันการหลุดหน้า)
+    flexPayload.footer = {
+        "type": "box", "layout": "vertical",
+        "contents": [{
+            "type": "button", "style": "primary", "color": "#000080", "height": "sm",
+            "action": {
+                "type": "uri", "label": "เปิดหน้าติดตามสถานะ",
+                "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(tid)
+            }
+        }]
+    };
+
+    return await liff.sendMessages([{ "type": "flex", "altText": "อัปเดตสถานะงาน " + tid, "contents": flexPayload }]);
+}
 
     init();
 </script>
