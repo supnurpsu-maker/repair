@@ -7,57 +7,127 @@
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #000080; --bg: #f8f9fa; }
+        :root { --primary: #000080; --bg: #f0f2f5; --white: #ffffff; }
         * { box-sizing: border-box; font-family: 'Prompt', sans-serif; }
-        body { background-color: var(--bg); margin: 0; padding: 15px; }
-        .container { max-width: 100%; margin: auto; }
-        .header-box { background: var(--primary); color: white; padding: 20px 15px; border-radius: 15px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .search-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        select, input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; }
-        .btn-search { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; margin-top: 10px; cursor: pointer; }
-        .result-box { background: white; padding: 20px; border-radius: 15px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .badge { display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 14px; color: white; margin-bottom: 10px; }
-        .st-1 { background: #6c757d; } .st-2 { background: #007bff; } .st-3 { background: #fd7e14; } .st-4 { background: #28a745; }
-        .info-row { display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        .info-label { color: #666; font-size: 14px; }
-        .info-value { font-weight: 600; color: #333; text-align: right; }
-        .btn-review { width: 100%; padding: 12px; background: #ffc107; color: #000; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; margin-top: 15px; cursor: pointer; }
-        #loader { display: none; text-align: center; margin: 20px 0; color: var(--primary); font-weight: bold; }
+        body { background-color: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 450px; }
+
+        /* การ์ดหลักดีไซน์ตาม Flex Message */
+        .flex-style-card { 
+            background: var(--white); 
+            border-radius: 18px; 
+            overflow: hidden; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+            border: 1px solid #e0e0e0;
+        }
+
+        /* Header Navy */
+        .card-header { 
+            background: var(--primary); 
+            color: white; 
+            padding: 18px 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        .header-title { font-size: 15px; font-weight: 600; }
+        .header-ticket { font-size: 14px; opacity: 0.9; font-weight: 300; }
+
+        .card-body { padding: 20px; }
+
+        /* แถบสถานะ Pastel */
+        .status-badge-box { padding: 15px; border-radius: 12px; margin-bottom: 20px; transition: 0.3s; }
+        .status-label { font-weight: 600; font-size: 16px; margin: 0; }
+        .queue-label { font-size: 13px; color: #555; margin-top: 5px; display: block; }
+
+        /* ส่วนข้อมูลรายแถว */
+        .info-item { display: flex; margin-bottom: 12px; line-height: 1.4; }
+        .info-key { flex: 2; color: #aaaaaa; font-size: 13px; }
+        .info-val { flex: 5; color: #444; font-size: 13px; font-weight: 400; }
+        .info-val.bold { color: var(--primary); font-weight: 600; }
+
+        .separator { height: 1px; background: #eee; margin: 15px 0; }
+
+        /* ส่วนค้นหา */
+        .search-card { background: white; padding: 25px; border-radius: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; }
+        .form-group { text-align: left; margin-bottom: 15px; }
+        .form-group label { font-size: 14px; color: var(--primary); font-weight: 600; display: block; margin-bottom: 5px; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; outline: none; }
+        .btn-search { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-search:active { transform: scale(0.98); opacity: 0.9; }
+
+        /* ปุ่มประเมิน */
+        .btn-review { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        
+        #loader { text-align: center; padding: 50px 0; color: var(--primary); }
+        .loading-dots:after { content: ' .'; animation: dots 1.5s steps(5, end) infinite; }
+        @keyframes dots { 0%, 20% { color: rgba(0,0,0,0); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); } 40% { color: var(--primary); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); } 60% { text-shadow: .25em 0 0 var(--primary), .5em 0 0 rgba(0,0,0,0); } 80%, 100% { text-shadow: .25em 0 0 var(--primary), .5em 0 0 var(--primary); } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header-box">
-        <h2 style="margin:0">ติดตามสถานะงาน</h2>
-        <p style="margin:5px 0 0; opacity:0.8; font-size:14px">ตรวจสอบความคืบหน้าการแจ้งซ่อม</p>
-    </div>
-
     <div id="searchSection" class="search-card">
-        <label>เลือกแผนก</label>
-        <select id="deptSelect"><option value="">-- กำลังโหลด --</option></select>
-        <label>หมายเลขงาน</label>
-        <input type="number" id="numInput" placeholder="เช่น: 1">
-        <button class="btn-search" onclick="manualSearch()">🔍 ค้นหาสถานะ</button>
+        <h3 style="margin-top:0; color: var(--primary);">🔍 ติดตามสถานะงานซ่อม</h3>
+        <div class="form-group">
+            <label>เลือกแผนก</label>
+            <select id="deptSelect"><option value="">-- กำลังโหลดแผนก --</option></select>
+        </div>
+        <div class="form-group">
+            <label>หมายเลขงาน</label>
+            <input type="number" id="numInput" placeholder="กรอกเฉพาะตัวเลข เช่น 1">
+        </div>
+        <button class="btn-search" onclick="manualSearch()">ตรวจสอบข้อมูล</button>
     </div>
 
-    <div id="loader">⏳ กำลังโหลดข้อมูล...</div>
+    <div id="loader" style="display:none">
+        <h3 class="loading-dots">⏳ กำลังดึงข้อมูลจากระบบ</h3>
+    </div>
 
-    <div id="result" class="result-box">
-        <div style="text-align: center;">
-            <div id="dispBadge" class="badge"></div>
-            <h3 id="dispId" style="margin: 5px 0; color: var(--primary);"></h3>
+    <div id="result" class="flex-style-card" style="display:none">
+        <div class="card-header">
+            <span class="header-title">📋 รายการแจ้งซ่อม (อัปเดต)</span>
+            <span id="dispId" class="header-ticket"></span>
         </div>
-        <div class="info-row"><span class="info-label">สถานที่:</span><span id="dispRoom" class="info-value"></span></div>
-        <div class="info-row"><span class="info-label">รายละเอียด:</span><span id="dispIssue" class="info-value"></span></div>
-        <div class="info-row"><span class="info-label">ช่างรับผิดชอบ:</span><span id="dispAdmin" class="info-value"></span></div>
-        <div class="info-row"><span class="info-label">อัปเดตเมื่อ:</span><span id="dispTime" class="info-value" style="font-size:12px"></span></div>
-        <div id="btnArea"></div>
+        
+        <div class="card-body">
+            <div id="statusBadgeBox" class="status-badge-box">
+                <p id="dispStatus" class="status-label"></p>
+                <p id="dispQueue" class="queue-label"></p>
+            </div>
+
+            <div class="info-item">
+                <span class="info-key">🏢 สถานที่:</span>
+                <span id="dispRoom" class="info-val"></span>
+            </div>
+            <div class="info-item">
+                <span class="info-key">📁 ประเภท:</span>
+                <span id="dispCategory" class="info-val"></span>
+            </div>
+            <div class="info-item">
+                <span class="info-key">🛠️ รายละเอียด:</span>
+                <span id="dispIssue" class="info-val"></span>
+            </div>
+            <div class="info-item">
+                <span class="info-key">👷‍♂️ เจ้าหน้าที่:</span>
+                <span id="dispAdmin" class="info-val bold"></span>
+            </div>
+
+            <div style="text-align: right; margin-top: 5px;">
+                <span id="dispTime" style="font-size: 10px; color: #ccc;"></span>
+            </div>
+
+            <div id="reviewArea" style="display:none">
+                <div class="separator"></div>
+                <p style="text-align:center; font-size:11px; color:#aaa; margin-bottom:10px;">✨ รบกวนให้คะแนนเพื่อพัฒนาการบริการ</p>
+                <button class="btn-review" id="reviewBtn">⭐ ประเมินความพึงพอใจ</button>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    // --- Config (ตรวจสอบให้ตรงกับระบบของคุณ) ---
+    // --- Config จากระบบเดิมของคุณ ---
     const URL_GAS = "https://script.google.com/macros/s/AKfycbxxWlrYM-ZxEX3LlFXk5-hVBN3sObXx022FIaiEvM_zagh_SJRtlWrc8kF0FBxOH0we/exec";
     const LIFF_ID_TRACK = "2008875334-wOYUvNha";
     const LIFF_ID_REVIEW = "2008875334-d6l72Uox"; 
@@ -68,7 +138,6 @@
         try {
             await liff.init({ liffId: LIFF_ID_TRACK });
             if (!liff.isLoggedIn()) { liff.login(); return; }
-            
             const profile = await liff.getProfile();
             myUid = profile.userId;
 
@@ -76,170 +145,11 @@
             const ticketFromUrl = urlParams.get('ticket');
 
             if (ticketFromUrl) {
-                // แก้ปัญหาเรื่องเครื่องหมาย # ที่ส่งมาจาก URL
-                const cleanTicket = decodeURIComponent(ticketFromUrl);
-                autoProcess(cleanTicket);
+                autoProcess(decodeURIComponent(ticketFromUrl));
             } else {
                 loadDepts();
             }
-        } catch (e) { alert("Error Init: " + e.message); }
-    }
-
-    async function autoProcess(tid, isManual = false) {
-        document.getElementById('searchSection').style.display = 'none';
-        document.getElementById('loader').style.display = 'block';
-
-        try {
-            const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(tid)}&uid=${myUid}`);
-            const data = await res.json();
-
-            if (data.found) {
-                renderResult(tid, data);
-                
-                if (liff.isInClient()) {
-                    // --- เตรียมข้อมูลสำหรับ Flex Message ---
-                    const fTicket = String(tid).replace(/["\\]/g, "");
-                    const fStatus = String(data.status || "กำลังตรวจสอบ").replace(/["\\]/g, "");
-                    const fQueue = data.pendingCount || "0";
-                    const fRoom = String(data.room || "-").replace(/["\\]/g, "");
-                    const fCategory = String(data.category || "-").replace(/["\\]/g, "");
-                    const fIssue = String(data.issue || "-").replace(/["\\]/g, "");
-                    const fRow = data.row; // สำคัญมากสำหรับส่งไปประเมิน
-                    const adminName = (data.admin && data.admin !== "" && data.admin !== "กำลังรอช่างรับงาน") 
-                                      ? String(data.admin).replace(/["\\]/g, "") 
-                                      : "กำลังจัดหาเจ้าหน้าที่";
-
-                    // กำหนดสีตามสถานะ
-                    // --- ส่วนกำหนดสีตามสถานะ (Pastel Style) ---
-                    // 1. กำหนดสีตามสถานะ (Pastel Style)
-                    let statusBg = "#eef3ff";   
-                    let statusColor = "#000080"; 
-                    
-                    if (fStatus === "กำลังดำเนินการ") {
-                        statusBg = "#fff4e6";    
-                        statusColor = "#d9480f"; 
-                    } else if (fStatus === "ดำเนินการเรียบร้อยแล้ว") {
-                        statusBg = "#ebfbee";    
-                        statusColor = "#2b8a3e"; 
-                    }
-                    
-                    // 2. เตรียม Contents ภายในแถบสถานะ
-                    // เริ่มต้นด้วยการใส่ข้อความ "สถานะ" เสมอ
-                    let statusContents = [
-                        { "type": "text", "text": "สถานะ: " + fStatus, "weight": "bold", "color": statusColor, "size": "sm" }
-                    ];
-                    
-                    // --- หัวใจสำคัญ: ถ้าสถานะเป็น "รอดำเนินการ" เท่านั้น ถึงจะเพิ่มบรรทัดคิวลงไป ---
-                    if (fStatus === "รอดำเนินการ") {
-                        statusContents.push({ 
-                            "type": "text", 
-                            "text": "⏳ คิวที่รอขณะนี้: " + fQueue + " คิว", 
-                            "size": "xs", 
-                            "color": "#666666", 
-                            "margin": "xs" 
-                        });
-                    }
-                    
-                    // 3. นำ statusContents ไปใส่ใน flexPayload
-                    const flexPayload = {
-                        "type": "bubble",
-                        "size": "mega",
-                        "header": {
-                            "type": "box", "layout": "horizontal", "backgroundColor": "#000080",
-                            "contents": [
-                                { "type": "text", "text": "รายการแจ้งซ่อม", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
-                                { "type": "text", "text": fTicket, "align": "end", "weight": "bold", "color": "#FFFFFF", "size": "sm" }
-                            ]
-                        },
-                        "body": {
-                            "type": "box", "layout": "vertical", "spacing": "md",
-                            "contents": [
-                                {
-                                    "type": "box", "layout": "vertical", 
-                                    "backgroundColor": statusBg, 
-                                    "cornerRadius": "md", "paddingAll": "md",
-                                    "contents": statusContents // ใส่ชุดข้อความที่เราเตรียมไว้ (จะมีคิวหรือไม่มีคิวขึ้นอยู่กับ Logic ด้านบน)
-                                },
-                                {
-                                    "type": "box", "layout": "vertical", "spacing": "sm",
-                                    "contents": [
-                                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
-                                            { "type": "text", "text": "🏢 สถานที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
-                                            { "type": "text", "text": fRoom, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
-                                        ]},
-                                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
-                                            { "type": "text", "text": "📁 ประเภท:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
-                                            { "type": "text", "text": fCategory, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
-                                        ]},
-                                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
-                                            { "type": "text", "text": "🛠️ รายละเอียด:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
-                                            { "type": "text", "text": fIssue, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
-                                        ]},
-                                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
-                                            { "type": "text", "text": "👨‍🔧 เจ้าหน้าที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
-                                            { "type": "text", "text": adminName, "wrap": true, "color": "#000080", "size": "xs", "flex": 5, "weight": "bold" }
-                                        ]}
-                                    ]
-                                },
-                                { "type": "separator", "margin": "xl" },
-                                { "type": "text", "text": "✨ รบกวนให้คะแนนเมื่อบริการเสร็จสิ้น", "align": "center", "size": "xxs", "color": "#aaaaaa", "margin": "md" },
-                                {
-                                    "type": "box", "layout": "horizontal", "margin": "md", "spacing": "xs",
-                                    "contents": [1, 2, 3, 4, 5].map(score => ({
-                                        "type": "box", "layout": "vertical", "backgroundColor": "#eeeeee", "cornerRadius": "sm", "paddingAll": "8px",
-                                        "action": {
-                                            "type": "uri",
-                                            "label": "⭐ " + score,
-                                            "uri": `https://liff.line.me/${LIFF_ID_REVIEW}?row=${fRow}&score=${score}`
-                                        },
-                                        "contents": [{ "type": "text", "text": "⭐ " + score, "size": "xs", "align": "center", "weight": "bold", "color": "#333333" }]
-                                    }))
-                                }
-                            ]
-                        },
-                        "footer": {
-                            "type": "box", "layout": "vertical",
-                            "contents": [
-                                {
-                                    "type": "button", "style": "primary", "color": "#000080", "height": "sm",
-                                    "action": {
-                                        "type": "uri",
-                                        "label": "ติดตามสถานะงาน",
-                                        "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(fTicket)
-                                    }
-                                }
-                            ]
-                        }
-                    };
-
-                    await liff.sendMessages([{
-                        "type": "flex",
-                        "altText": "อัปเดตสถานะงาน " + fTicket,
-                        "contents": flexPayload
-                    }]);
-                    
-                    if (!isManual) {
-                        setTimeout(() => { liff.closeWindow(); }, 1500);
-                    } else {
-                        document.getElementById('loader').style.display = 'none';
-                    }
-                }
-            } else {
-                alert("ไม่พบข้อมูล หรือคุณไม่มีสิทธิ์เข้าถึงเลขที่งานนี้");
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('searchSection').style.display = 'block';
-            }
-        } catch (e) {
-            alert("Error: " + e.message);
-        }
-    }
-
-    async function manualSearch() {
-        const dept = document.getElementById('deptSelect').value;
-        const num = document.getElementById('numInput').value;
-        if (!dept || !num) return alert("กรุณาระบุข้อมูลให้ครบ");
-        const fullId = `${dept}#${num.padStart(3, '0')}`;
-        autoProcess(fullId, true);
+        } catch (e) { console.error(e); }
     }
 
     async function loadDepts() {
@@ -256,34 +166,123 @@
         } catch(e) {}
     }
 
-    function renderResult(tid, data) {
+    async function manualSearch() {
+        const dept = document.getElementById('deptSelect').value;
+        const num = document.getElementById('numInput').value;
+        if (!dept || !num) return alert("กรุณาระบุข้อมูลให้ครบ");
+        const fullId = `${dept}#${num.padStart(3, '0')}`;
+        autoProcess(fullId, true);
+    }
+
+    async function autoProcess(tid, isManual = false) {
+        document.getElementById('searchSection').style.display = 'none';
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('result').style.display = 'none';
+
+        try {
+            const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(tid)}&uid=${myUid}`);
+            const data = await res.json();
+
+            if (data.found) {
+                // แสดงผลในหน้าเว็บ
+                renderUI(tid, data);
+                
+                // --- ส่วนที่รักษาไว้: ส่ง Flex Message อัตโนมัติเข้าแชท ---
+                if (liff.isInClient()) {
+                    await sendFlexUpdate(tid, data);
+                    
+                    // หากไม่ใช่การค้นหาเองด้วยมือ ให้ปิดหน้าต่างอัตโนมัติเหมือนเดิม
+                    if (!isManual) {
+                        setTimeout(() => { liff.closeWindow(); }, 2000);
+                    }
+                }
+            } else {
+                alert("ไม่พบข้อมูล หรือคุณไม่มีสิทธิ์เข้าถึงเลขที่งานนี้");
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('searchSection').style.display = 'block';
+            }
+        } catch (e) { alert("Error: " + e.message); }
+    }
+
+    function renderUI(tid, data) {
         document.getElementById('dispId').innerText = tid;
         document.getElementById('dispRoom').innerText = data.room || "-";
+        document.getElementById('dispCategory').innerText = data.category || "-";
         document.getElementById('dispIssue').innerText = data.issue || "-";
-        document.getElementById('dispAdmin').innerText = data.admin || "กำลังรอช่าง...";
-        document.getElementById('dispTime').innerText = data.time || "-";
+        document.getElementById('dispAdmin').innerText = data.admin || "กำลังรอเจ้าหน้าที่รับงาน";
+        document.getElementById('dispTime').innerText = "อัปเดต: " + (data.time || "-");
+        
+        const status = data.status;
+        const badgeBox = document.getElementById('statusBadgeBox');
+        const statusText = document.getElementById('dispStatus');
+        const queueText = document.getElementById('dispQueue');
+        
+        statusText.innerText = "สถานะ: " + status;
 
-        const badge = document.getElementById('dispBadge');
-        badge.innerText = data.status;
-        badge.className = 'badge ' + (data.status === "รอดำเนินการ" ? "st-1" : data.status === "กำลังดำเนินการ" ? "st-2" : data.status === "จัดจ้างร้านภายนอก" ? "st-3" : "st-4");
-
-        const btnArea = document.getElementById('btnArea');
-        btnArea.innerHTML = "";
-        if (data.status === "ดำเนินการเรียบร้อยแล้ว") {
-            const btn = document.createElement('button');
-            btn.className = "btn-review";
-            btn.innerText = "⭐ ประเมินความพึงพอใจ";
-            btn.onclick = () => {
+        // Logic เปลี่ยนสี Pastel และซ่อน/แสดงคิว เหมือน Flex
+        if (status === "กำลังดำเนินการ") {
+            badgeBox.style.backgroundColor = "#fff4e6"; statusText.style.color = "#d9480f";
+            queueText.style.display = "none";
+        } else if (status === "ดำเนินการเรียบร้อยแล้ว") {
+            badgeBox.style.backgroundColor = "#ebfbee"; statusText.style.color = "#2b8a3e";
+            queueText.style.display = "none";
+            document.getElementById('reviewArea').style.display = 'block';
+            document.getElementById('reviewBtn').onclick = () => {
                 liff.openWindow({ url: `https://liff.line.me/${LIFF_ID_REVIEW}?row=${data.row}`, external: false });
             };
-            btnArea.appendChild(btn);
+        } else {
+            // สถานะ รอดำเนินการ
+            badgeBox.style.backgroundColor = "#eef3ff"; statusText.style.color = "#000080";
+            queueText.style.display = "block";
+            queueText.innerText = "⏳ มีคิวก่อนหน้าคุณ: " + (data.pendingCount || "0") + " คิว";
         }
-        document.getElementById('result').style.display = 'block';
+
         document.getElementById('loader').style.display = 'none';
+        document.getElementById('result').style.display = 'block';
+    }
+
+    // --- ฟังก์ชันส่ง Flex Message (ตัวเดิมที่คุณเคยมี) ---
+    async function sendFlexUpdate(tid, data) {
+        const fStatus = data.status || "รอดำเนินการ";
+        const fQueue = data.pendingCount || "0";
+        
+        // Logic จัดการส่วนแสดงคิวใน Flex
+        let statusContents = [{ "type": "text", "text": "สถานะ: " + fStatus, "weight": "bold", "color": (fStatus==="ดำเนินการเรียบร้อยแล้ว"?"#2b8a3e":"#000080"), "size": "sm" }];
+        if (fStatus === "รอดำเนินการ") {
+            statusContents.push({ "type": "text", "text": "⏳ มีคิวก่อนหน้าคุณ: " + fQueue + " คิว", "size": "xs", "color": "#666666", "margin": "xs" });
+        }
+
+        const flexPayload = {
+            "type": "bubble",
+            "header": {
+                "type": "box", "layout": "horizontal", "backgroundColor": "#000080",
+                "contents": [
+                    { "type": "text", "text": "📋 รายการแจ้งซ่อม (อัปเดต)", "weight": "bold", "color": "#FFFFFF", "size": "sm" },
+                    { "type": "text", "text": tid, "align": "end", "weight": "bold", "color": "#FFFFFF", "size": "sm" }
+                ]
+            },
+            "body": {
+                "type": "box", "layout": "vertical", "spacing": "md",
+                "contents": [
+                    {
+                        "type": "box", "layout": "vertical", "backgroundColor": (fStatus==="ดำเนินการเรียบร้อยแล้ว"?"#ebfbee":"#eef3ff"), "cornerRadius": "md", "paddingAll": "md",
+                        "contents": statusContents
+                    },
+                    {
+                        "type": "box", "layout": "vertical", "spacing": "sm",
+                        "contents": [
+                            { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "🏢 สถานที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": data.room, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }] },
+                            { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "👷‍♂️ เจ้าหน้าที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": data.admin || "รอมอบหมาย", "wrap": true, "color": "#000080", "size": "xs", "flex": 5, "weight": "bold" }] }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        await liff.sendMessages([{ "type": "flex", "altText": "อัปเดตสถานะงาน " + tid, "contents": flexPayload }]);
     }
 
     init();
 </script>
-
 </body>
 </html>
