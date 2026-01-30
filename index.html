@@ -249,6 +249,7 @@
 
                     // 1. เตรียมข้อมูลสำหรับ Flex Message
                     var fRoom = (document.getElementById('room').value || "-").replace(/["\\]/g, "");
+                    var fCategory = (document.getElementById('issue').value || "-").replace(/["\\]/g, "");
                     var fIssue = (document.getElementById('issue').value || "-").replace(/["\\]/g, "");
                     var fTicket = String(res.ticketId || "ID");
                     var fQueue = String(res.pendingCount || "0");
@@ -296,7 +297,7 @@
                                                 "layout": "baseline",
                                                 "spacing": "sm",
                                                 "contents": [
-                                                    { "type": "text", "text": "📍 สถานที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
+                                                    { "type": "text", "text": "🏢 สถานที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
                                                     { "type": "text", "text": fRoom, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
                                                 ]
                                             },
@@ -305,7 +306,16 @@
                                                 "layout": "baseline",
                                                 "spacing": "sm",
                                                 "contents": [
-                                                    { "type": "text", "text": "🛠 ปัญหา:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
+                                                    { "type": "text", "text": "📁 ประเภท:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
+                                                    { "type": "text", "text": fCategory, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
+                                                ]
+                                            },
+                                            {
+                                                "type": "box",
+                                                "layout": "baseline",
+                                                "spacing": "sm",
+                                                "contents": [
+                                                    { "type": "text", "text": "⚙️ รายละเอียด:", "color": "#aaaaaa", "size": "xs", "flex": 2 },
                                                     { "type": "text", "text": fIssue, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }
                                                 ]
                                             }
