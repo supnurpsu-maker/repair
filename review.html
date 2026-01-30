@@ -106,58 +106,61 @@
     }
 
     async function sendReview(autoRow = null, autoScore = null) {
-        const urlParams = new URLSearchParams(window.location.search);
-        
-        // รับค่าจาก parameter หรือจากหน้าเว็บ
-        const row = autoRow || urlParams.get('row');
-        const selectedStar = document.querySelector('input[name="stars"]:checked');
-        const score = autoScore || (selectedStar ? selectedStar.value : null);
-        
-        if (!row || !score) {
-            alert("ข้อมูลไม่ครบถ้วน ไม่สามารถประเมินได้");
-            return;
-        }
-
-        const submitBtn = document.getElementById('submitBtn');
-        const loader = document.getElementById('loader');
-
-        // แสดงสถานะกำลังบันทึก
-        submitBtn.disabled = true;
-        loader.style.display = 'block';
-
-        try {
-            // ดึงชื่อผู้ใช้ (ต้องดึงหลังจาก liff.init สำเร็จแล้วเท่านั้น)
-            const profile = await liff.getProfile();
-            const displayName = encodeURIComponent(profile.displayName);
-
-            // ยิงข้อมูลไปที่ GAS
-            const fetchUrl = `${URL_GAS}?action=submitReview&row=${row}&score=${score}&name=${displayName}`;
-            const response = await fetch(fetchUrl);
-            const result = await response.text();
-
-            console.log("GAS Result:", result);
-
-            if (result === "OK") {
-                alert("🌟 บันทึกคะแนน " + score + " ดาวเรียบร้อยแล้ว ขอบคุณครับ");
-                liff.closeWindow();
-            } else if (result === "ERROR_NOT_FINISHED") {
-                alert("❌ สถานะงานยังไม่เสร็จสมบูรณ์ ประเมินไม่ได้ครับ");
-                liff.closeWindow();
-            } else if (result === "ERROR_ALREADY_RATED") {
-                alert("⚠️ คุณเคยให้คะแนนรายการนี้ไปแล้วครับ");
-                liff.closeWindow();
-            } else {
-                alert("ผลการทำงาน: " + result);
-                submitBtn.disabled = false;
-            }
-        } catch (e) {
-            console.error("Fetch Error:", e);
-            alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่");
-            submitBtn.disabled = false;
-        } finally {
-            loader.style.display = 'none';
-        }
+    const urlParams = new URLSearchParams(window.location.search);
+    const row = autoRow || urlParams.get('row');
+    const selectedStar = document.querySelector('input[name="stars"]:checked');
+    const score = autoScore || (selectedStar ? selectedStar.value : null);
+    
+    if (!row || !score) {
+        alert("ข้อมูลไม่ครบถ้วน ไม่สามารถประเมินได้");
+        return;
     }
+
+    const submitBtn = document.getElementById('submitBtn');
+    const loader = document.getElementById('loader');
+
+    submitBtn.disabled = true;
+    loader.style.display = 'block';
+
+    try {
+        // ดึงชื่อโปรไฟล์
+        const profile = await liff.getProfile();
+        const displayName = encodeURIComponent(profile.displayName);
+
+        // สร้าง URL สำหรับส่งข้อมูล
+        const fetchUrl = `${URL_GAS}?action=submitReview&row=${row}&score=${score}&name=${displayName}`;
+
+        // แก้ไขจุดสำคัญ: ใช้ fetch แบบเรียบง่ายที่สุดสำหรับ GAS
+        const response = await fetch(fetchUrl);
+        
+        // ตรวจสอบว่าเชื่อมต่อได้ไหม
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const result = await response.text();
+
+        // ตรวจสอบคำตอบจาก GAS
+        if (result.trim() === "OK") {
+            alert("🌟 ขอบคุณสำหรับคะแนนประเมิน " + score + " ดาวครับ");
+            liff.closeWindow();
+        } else if (result.includes("ERROR_NOT_FINISHED")) {
+            alert("❌ งานยังไม่เสร็จสมบูรณ์: กรุณาประเมินเมื่อช่างปิดงานแล้วครับ");
+            liff.closeWindow();
+        } else if (result.includes("ERROR_ALREADY_RATED")) {
+            alert("⚠️ รายการนี้เคยมีการประเมินไปแล้วครับ");
+            liff.closeWindow();
+        } else {
+            alert("ผลการทำงานจากระบบ: " + result);
+            submitBtn.disabled = false;
+        }
+    } catch (e) {
+        console.error("Fetch Error:", e);
+        // แสดงรายละเอียด Error ให้ชัดเจนเพื่อการ Debug
+        alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้\nสาเหตุ: " + e.message + "\nกรุณาตรวจสอบการตั้งค่า Deploy ใน GAS (ต้องเป็น Anyone)");
+        submitBtn.disabled = false;
+    } finally {
+        loader.style.display = 'none';
+    }
+}
 
     // เริ่มทำงานเมื่อโหลดหน้า
     window.onload = init;
