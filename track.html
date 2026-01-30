@@ -247,6 +247,17 @@
                             { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "⚙️ รายละเอียด:", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": fIssue, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }] },
                             { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "👨‍🔧 เจ้าหน้าที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": fAdmin, "wrap": true, "color": "#000080", "size": "xs", "flex": 5, "weight": "bold" }] }
                         ]
+                    },
+                    /* --- ส่วนของดาวที่แสดงตลอดเวลา --- */
+                    { "type": "separator", "margin": "xl" },
+                    { "type": "text", "text": "รบกวนให้คะแนนเมื่อบริการเสร็จสิ้น", "align": "center", "size": "xxs", "color": "#aaaaaa", "margin": "md" },
+                    {
+                        "type": "box", "layout": "horizontal", "margin": "md", "spacing": "xs",
+                        "contents": [1, 2, 3, 4, 5].map(score => ({
+                            "type": "box", "layout": "vertical", "backgroundColor": "#eeeeee", "cornerRadius": "sm", "paddingAll": "8px",
+                            "action": { "type": "uri", "label": "⭐ " + score, "uri": `https://liff.line.me/${LIFF_ID_REVIEW}?row=${fRow}&score=${score}` },
+                            "contents": [{ "type": "text", "text": "⭐ " + score, "size": "xs", "align": "center", "weight": "bold", "color": "#333333" }]
+                        }))
                     }
                 ]
             },
@@ -254,23 +265,10 @@
                 "type": "box", "layout": "vertical",
                 "contents": [{
                     "type": "button", "style": "primary", "color": "#000080", "height": "sm",
-                    "action": { "type": "uri", "label": "ติดตามสถานะงาน", "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(tid) }
+                    "action": { "type": "uri", "label": "เปิดหน้าติดตามสถานะ", "uri": "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(tid) }
                 }]
             }
         };
-
-        if (fStatus === "ดำเนินการเรียบร้อยแล้ว") {
-            flexPayload.body.contents.push({ "type": "separator", "margin": "xl" });
-            flexPayload.body.contents.push({ "type": "text", "text": "✨ รบกวนให้คะแนนเมื่อบริการเสร็จสิ้น", "align": "center", "size": "xxs", "color": "#aaaaaa", "margin": "md" });
-            flexPayload.body.contents.push({
-                "type": "box", "layout": "horizontal", "margin": "md", "spacing": "xs",
-                "contents": [1, 2, 3, 4, 5].map(score => ({
-                    "type": "box", "layout": "vertical", "backgroundColor": "#eeeeee", "cornerRadius": "sm", "paddingAll": "8px",
-                    "action": { "type": "uri", "label": "⭐ " + score, "uri": `https://liff.line.me/${LIFF_ID_REVIEW}?row=${fRow}&score=${score}` },
-                    "contents": [{ "type": "text", "text": "⭐ " + score, "size": "xs", "align": "center", "weight": "bold", "color": "#333333" }]
-                }))
-            });
-        }
 
         return await liff.sendMessages([{ "type": "flex", "altText": "อัปเดตสถานะงาน " + tid, "contents": flexPayload }]);
     }
