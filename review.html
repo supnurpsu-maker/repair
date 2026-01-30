@@ -67,7 +67,7 @@
 </div>
 
 <script>
-    const URL_GAS = "https://script.google.com/macros/s/AKfycbwZB6935xnLJbdLriI4SO869AdHZRsvSlID5oaOuaRdGXt9fejjmo88iZBYu-oEuq_s/exec";
+    const URL_GAS = "https://script.google.com/macros/s/AKfycbwan1hur0UQ3GOUTzdBco-sw-ukWrG8WUv0KuHwA5kAhzPRhNApQ_qkkVr3k9O7YDr2/exec";
     const LIFF_ID = "2008875334-d6l72Uox";
 
     async function init() {
@@ -105,56 +105,49 @@
         }
     }
 
-    function sendReview(autoRow = null, autoScore = null) {
-    // 1. ดึง URL Parameters ใหม่อีกครั้งเพื่อความชัวร์
+    async function sendReview(autoRow = null, autoScore = null) {
     const urlParams = new URLSearchParams(window.location.search);
-    
-    // 2. ลำดับการเช็ค: ถ้ามี autoRow (จาก init) ให้ใช้ก่อน ถ้าไม่มีให้ดึงจาก URL (?row=...)
     const row = autoRow || urlParams.get('row');
-    const score = autoScore || (document.querySelector('input[name="stars"]:checked') ? document.querySelector('input[name="stars"]:checked').value : null);
+    const selectedStar = document.querySelector('input[name="stars"]:checked');
+    const score = autoScore || (selectedStar ? selectedStar.value : null);
     
-    // 3. ดัก Error ฝั่ง Client ก่อนส่งไปหา GAS
-    if (!row || row === "null" || isNaN(parseInt(row))) {
-        alert("❌ ไม่พบเลขแถว (Row ID) กรุณาลองเปิดลิงก์จากหน้าแชทอีกครั้ง");
-        console.error("Row is invalid:", row);
+    if (!row || !score) {
+        alert("ข้อมูลไม่ครบถ้วน");
         return;
     }
 
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('loader').style.display = 'block';
 
-    liff.getProfile().then(profile => {
+    try {
+        const profile = await liff.getProfile();
         const name = encodeURIComponent(profile.displayName);
-        const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
         
-        window[callbackName] = function(data) {
-            delete window[callbackName];
-            document.body.removeChild(script);
-            document.getElementById('loader').style.display = 'none';
-            
-            if (data === "OK") {
-                alert("🌟 ขอบคุณสำหรับคะแนน " + score + " ดาวครับ");
-                liff.closeWindow();
-            } else if (data === "ERROR_NOT_FINISHED") {
-                alert("❌ งานนี้ยังไม่เสร็จสมบูรณ์ ไม่สามารถประเมินได้");
-                liff.closeWindow();
-            } else {
-                alert("แจ้งเตือน: " + data);
-                document.getElementById('submitBtn').disabled = false;
-            }
-        };
+        // สร้าง URL สำหรับส่งข้อมูล
+        const fetchUrl = `${URL_GAS}?action=submitReview&row=${row}&score=${score}&name=${name}`;
 
-        const script = document.createElement('script');
-        // --- จุดที่ส่งข้อมูล ---
-        script.src = `${URL_GAS}?action=submitReview&row=${row}&score=${score}&name=${name}&callback=${callbackName}`;
-        
-        script.onerror = function() {
-            alert("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้");
-            document.getElementById('loader').style.display = 'none';
+        // ใช้ fetch แทนการสร้าง Script Tag
+        const response = await fetch(fetchUrl, {
+            method: "GET", // หรือ POST ตามที่คุณตั้งค่าใน GAS
+            mode: "cors",  // บังคับโหมดข้ามโดเมน
+            redirect: "follow" // *** หัวใจสำคัญ: ให้ตามการ Redirect ของ Google ***
+        });
+
+        const data = await response.text(); // หรือ res.json() ถ้า GAS ตอบกลับเป็น JSON
+
+        if (data.includes("OK")) {
+            alert("🌟 ขอบคุณสำหรับคะแนน " + score + " ดาวครับ");
+            liff.closeWindow();
+        } else {
+            alert("แจ้งเตือนจากระบบ: " + data);
             document.getElementById('submitBtn').disabled = false;
-        };
-        document.body.appendChild(script);
-    });
+        }
+    } catch (error) {
+        console.error("Fetch Error:", error);
+        alert("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ (Network Error)");
+    } finally {
+        document.getElementById('loader').style.display = 'none';
+    }
 }
 
     // เริ่มทำงานเมื่อโหลดหน้า
