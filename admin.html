@@ -64,28 +64,24 @@
     <div id="jobContainer"></div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
+
 <script>
-    // Import the functions you need from the SDKs you need
-    import { initializeApp } from "firebase/app";
-    import { getAnalytics } from "firebase/analytics";
-    // TODO: Add SDKs for Firebase products that you want to use
-    // https://firebase.google.com/docs/web/setup#available-libraries
-    
-    // Your web app's Firebase configuration
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    // 1. Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyC1mBineUmQQddHGi539OoYkar_FpL5HOs",
       authDomain: "supnurpsu-9dcb3.firebaseapp.com",
       projectId: "supnurpsu-9dcb3",
       storageBucket: "supnurpsu-9dcb3.firebasestorage.app",
       messagingSenderId: "626588467857",
-      appId: "1:626588467857:web:85d8218fa31b8b4f69f530",
-      measurementId: "G-GPXP8E1TVM"
+      appId: "1:626588467857:web:85d8218fa31b8b4f69f530"
     };
     
     // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
+    firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging();
+
     // --- 1. CONFIG & LIFF ---
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwEqmvOCX0WDlu9D6QSoIsXp95wECXo8cV4qnx67EvF_C1R7606wyvjLNzv24WjOd3q/exec";
     const LIFF_ID = "2008875334-VPUmuC8D";
@@ -117,7 +113,7 @@
                 await loadPrefixes(); 
             }
             await loadJobs();
-        } catch (err) { alert("Error: " + err.message); }
+        } catch (err) { console.error("Error: " + err.message); }
     }
 
     // --- 2. DATA FUNCTIONS (โหลด/กรอง/อัปเดต) ---
@@ -140,7 +136,7 @@
             const res = await fetch(`${WEB_APP_URL}?action=getAllJobs`);
             allJobs = await res.json();
             filterJobs(); 
-        } catch (err) { alert("โหลดข้อมูลไม่สำเร็จ"); }
+        } catch (err) { console.error("โหลดข้อมูลไม่สำเร็จ"); }
         finally { document.getElementById('loading').style.display = 'none'; }
     }
 
@@ -188,18 +184,15 @@
         const prefix = (adminDept.toLowerCase() === "admin") 
                        ? document.getElementById('prefixFilter').value 
                        : adminDept;
-
         let filtered = allJobs;
         if (prefix !== "ALL") {
             filtered = filtered.filter(j => j.ticketId.split('#')[0] === prefix);
         }
-
         filtered = filtered.filter(job => {
             if (job.status === "รอดำเนินการ") return true;
             if (adminDept.toLowerCase() === "admin") return true;
             return job.responsibleUid === currentAdminUid;
         });
-
         renderJobs(filtered);
     }
 
@@ -216,7 +209,7 @@
             if (await res.text() === "SUCCESS") {
                 await loadJobs();
             }
-        } catch (e) { alert("อัปเดตล้มเหลว"); }
+        } catch (e) { console.error("อัปเดตล้มเหลว"); }
         finally { document.getElementById('loading').style.display = 'none'; }
     }
 
@@ -231,17 +224,36 @@
         }
     }
 
+    async function getTokenAndSave() {
+        if (!currentAdminUid) return; 
+        try {
+            const currentToken = await messaging.getToken({
+                vapidKey: 'BOo7SEZSwEbGtmt886r6_OvMxPvnRXvAemQtMD55P6dVYe5P_o_27rkCfnXO8uRIpmkOCB95RKPQa9u5zQaomBw' 
+            });
+            if (currentToken) {
+                console.log('Token:', currentToken);
+                // ส่งไป GAS (แม้ยังไม่ได้แก้ GAS แต่มันจะไม่ทำให้แอปพัง แค่บันทึกไม่สำเร็จ)
+                fetch(`${WEB_APP_URL}?action=saveAdminToken&uid=${currentAdminUid}&token=${currentToken}`);
+            }
+        } catch (err) { console.error('Token Error:', err); }
+    }
+
     function requestNotificationPermission() {
         if (!('Notification' in window)) return;
         Notification.requestPermission().then(permission => {
             if (permission === 'granted') {
-                console.log('Admin อนุญาตแจ้งเตือน ✅');
+                console.log('Permission Granted ✅');
+                getTokenAndSave();
             }
         });
     }
 
-    // --- Start ---
-    main();
+    // --- Start Logic ---
+    main().then(() => {
+        if (Notification.permission === 'granted') {
+            getTokenAndSave();
+        }
+    });
     registerPWA();
     requestNotificationPermission();
 
