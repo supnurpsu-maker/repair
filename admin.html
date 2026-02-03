@@ -4,7 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Admin Dashboard - ระบบจัดการงานซ่อม</title>
+    
+    <!-- PWA Setup -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000080">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <!-- SDKs -->
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <!-- Firebase SDK (Compat Version สำหรับ HTML ปกติ) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #000080; --bg: #f0f2f5; --white: #ffffff; --text: #333333; }
@@ -22,20 +33,18 @@
         #filterArea label { font-size: 14px; font-weight: 600; color: var(--primary); }
         #prefixFilter { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-size: 14px; outline: none; }
 
-        /* Job Card Style (คล้าย Flex Message) */
-        .job-card { background: var(--white); border-radius: 18px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.06); margin-bottom: 20px; border: 1px solid #e0e0e0; transition: transform 0.2s; }
+        /* Job Card Style */
+        .job-card { background: var(--white); border-radius: 18px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.06); margin-bottom: 20px; border: 1px solid #e0e0e0; position: relative; }
         .card-header { padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; }
-        .priority-border { width: 6px; height: 100%; position: absolute; left: 0; top: 0; }
         
         .ticket-id { font-weight: 600; color: var(--primary); font-size: 15px; }
         .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
         
-        /* Status Colors */
         .badge-pending { background: #eef3ff; color: #000080; }
         .badge-process { background: #fff4e6; color: #d9480f; }
         .badge-done { background: #ebfbee; color: #2b8a3e; }
 
-        .card-body { padding: 18px; position: relative; }
+        .card-body { padding: 18px; }
         .job-issue { font-size: 16px; font-weight: 600; color: #222; margin-bottom: 12px; display: block; }
         
         .info-grid { display: flex; flex-direction: column; gap: 8px; }
@@ -44,17 +53,13 @@
         .info-value { flex: 5; color: #444; font-weight: 400; }
         .info-value.admin { color: var(--primary); font-weight: 600; }
 
-        /* Action Select */
         .action-box { margin-top: 15px; padding-top: 15px; border-top: 1px solid #f0f0f0; }
         .action-select { width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #eee; background: #fafafa; font-size: 14px; font-weight: 600; color: var(--primary); outline: none; cursor: pointer; }
-        .action-select:focus { border-color: var(--primary); }
 
-        /* Priority Colors Left Border */
         .prio-ด่วนที่สุด { border-left: 6px solid #ff4d4d; }
         .prio-ด่วน { border-left: 6px solid #ffa500; }
         .prio-ปกติ { border-left: 6px solid #2ecc71; }
 
-        /* Loading Overlay */
         #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -79,8 +84,17 @@
 </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxxWlrYM-ZxEX3LlFXk5-hVBN3sObXx022FIaiEvM_zagh_SJRtlWrc8kF0FBxOH0we/exec";
-    const LIFF_ID = "2008875334-VPUmuC8D";
+    // --- CONFIGURATION ---
+    const WEB_APP_URL = "ใส่ URL ของ Google Apps Script ของคุณ";
+    const LIFF_ID = "ใส่ LIFF ID ของคุณ";
+    const FIREBASE_CONFIG = {
+        apiKey: "AIzaSyC1mBineUmQQddHGi539OoYkar_FpL5HOs",
+        authDomain: "supnurpsu-9dcb3.firebaseapp.com",
+        projectId: "supnurpsu-9dcb3",
+        messagingSenderId: "626588467857",
+        appId: "1:626588467857:web:85d8218fa31b8b4f69f530"
+    };
+    const VAPID_KEY = "BErH0dF9sGe_kH4WrNVa9KAUg4Y5Pya5LPs8al9suLV4XsPnr5aBnhjuWbH2go0CpPZIXp92QleA9nwmWP_dyuA";
 
     let allJobs = [];
     let currentAdminUid = "";
@@ -88,21 +102,30 @@
 
     async function main() {
         try {
+            // 1. Initial LIFF
             await liff.init({ liffId: LIFF_ID });
             if (!liff.isLoggedIn()) { liff.login(); return; }
             const profile = await liff.getProfile();
             currentAdminUid = profile.userId;
             
+            // 2. ตรวจสอบสิทธิ์ Admin
             const authRes = await fetch(`${WEB_APP_URL}?action=getAdminRole&uid=${currentAdminUid}`);
             const authData = await authRes.json();
             
             if (authData.role === "GUEST") {
-                document.body.innerHTML = "<div style='text-align:center; padding:50px;'><h2 style='color:#ff4d4d;'>❌ คุณไม่มีสิทธิ์เข้าถึง</h2><p>กรุณาติดต่อผู้จัดการระบบ</p></div>";
+                document.body.innerHTML = "<div style='text-align:center; padding:50px;'><h2 style='color:#ff4d4d;'>❌ คุณไม่มีสิทธิ์เข้าถึง</h2></div>";
                 return;
             }
 
             adminDept = authData.dept; 
             document.getElementById('adminName').innerText = `👨‍🔧 ${profile.displayName} | ${adminDept}`;
+
+            // 3. Register PWA Service Worker & Notifications
+            if ('serviceWorker' in navigator) {
+                const registration = await navigator.serviceWorker.register('sw.js');
+                console.log('SW Registered');
+                setupNotifications(registration);
+            }
 
             if (adminDept.toLowerCase() === "admin") {
                 document.getElementById('filterArea').style.display = 'flex';
@@ -110,6 +133,29 @@
             }
             await loadJobs();
         } catch (err) { alert("Error: " + err.message); }
+    }
+
+    async function setupNotifications(reg) {
+        firebase.initializeApp(FIREBASE_CONFIG);
+        const messaging = firebase.messaging();
+
+        try {
+            // ขออนุญาตแจ้งเตือน
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                const token = await messaging.getToken({ 
+                    serviceWorkerRegistration: reg,
+                    vapidKey: VAPID_KEY 
+                });
+                if (token) {
+                    console.log('Token generated');
+                    // ส่ง Token ไปเก็บที่ Google Sheets
+                    await fetch(`${WEB_APP_URL}?action=saveToken&uid=${currentAdminUid}&token=${token}`);
+                }
+            }
+        } catch (err) {
+            console.error('Notification Setup Error:', err);
+        }
     }
 
     async function loadPrefixes() {
@@ -141,7 +187,6 @@
 
         jobs.forEach(job => {
             const card = document.createElement('div');
-            // ใช้คลาส prio- ตามด้วยความสำคัญเพื่อสีขอบซ้าย
             card.className = `job-card prio-${job.priority}`;
             
             let badgeClass = 'badge-pending';
