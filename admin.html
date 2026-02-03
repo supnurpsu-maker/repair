@@ -4,57 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Admin Dashboard - ระบบจัดการงานซ่อม</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000080">
+    
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
+        /* ... CSS เดิมของคุณ (คงที่ไว้เหมือนเดิม) ... */
         :root { --primary: #000080; --bg: #f0f2f5; --white: #ffffff; --text: #333333; }
         * { box-sizing: border-box; font-family: 'Prompt', sans-serif; }
         body { background-color: var(--bg); margin: 0; padding: 15px; color: var(--text); }
         .container { width: 100%; max-width: 500px; margin: 0 auto; }
-
-        /* Header */
         .header { background: var(--primary); color: white; padding: 25px 20px; border-radius: 18px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .header h2 { margin: 0; font-size: 20px; font-weight: 600; }
         .header p { margin: 5px 0 0; font-size: 13px; opacity: 0.8; }
-
-        /* Filter Section */
         #filterArea { display: none; background: white; padding: 15px; border-radius: 15px; margin-bottom: 15px; align-items: center; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         #filterArea label { font-size: 14px; font-weight: 600; color: var(--primary); }
         #prefixFilter { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-size: 14px; outline: none; }
-
-        /* Job Card Style (คล้าย Flex Message) */
-        .job-card { background: var(--white); border-radius: 18px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.06); margin-bottom: 20px; border: 1px solid #e0e0e0; transition: transform 0.2s; }
+        .job-card { background: var(--white); border-radius: 18px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.06); margin-bottom: 20px; border: 1px solid #e0e0e0; transition: transform 0.2s; position: relative; }
         .card-header { padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; }
-        .priority-border { width: 6px; height: 100%; position: absolute; left: 0; top: 0; }
-        
         .ticket-id { font-weight: 600; color: var(--primary); font-size: 15px; }
         .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-        
-        /* Status Colors */
         .badge-pending { background: #eef3ff; color: #000080; }
         .badge-process { background: #fff4e6; color: #d9480f; }
         .badge-done { background: #ebfbee; color: #2b8a3e; }
-
         .card-body { padding: 18px; position: relative; }
         .job-issue { font-size: 16px; font-weight: 600; color: #222; margin-bottom: 12px; display: block; }
-        
         .info-grid { display: flex; flex-direction: column; gap: 8px; }
         .info-row { display: flex; font-size: 13px; line-height: 1.4; }
         .info-label { flex: 2; color: #888; }
         .info-value { flex: 5; color: #444; font-weight: 400; }
         .info-value.admin { color: var(--primary); font-weight: 600; }
-
-        /* Action Select */
         .action-box { margin-top: 15px; padding-top: 15px; border-top: 1px solid #f0f0f0; }
         .action-select { width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #eee; background: #fafafa; font-size: 14px; font-weight: 600; color: var(--primary); outline: none; cursor: pointer; }
-        .action-select:focus { border-color: var(--primary); }
-
-        /* Priority Colors Left Border */
         .prio-ด่วนที่สุด { border-left: 6px solid #ff4d4d; }
         .prio-ด่วน { border-left: 6px solid #ffa500; }
         .prio-ปกติ { border-left: 6px solid #2ecc71; }
-
-        /* Loading Overlay */
         #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -77,15 +63,9 @@
 
     <div id="jobContainer"></div>
 </div>
-<link rel="manifest" href="manifest.json">
+
 <script>
-    if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js')
-        .then(reg => console.log('Service Worker registered!', reg))
-        .catch(err => console.log('Registration failed!', err));
-    });
-  }
+    // --- 1. CONFIG & LIFF ---
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwEqmvOCX0WDlu9D6QSoIsXp95wECXo8cV4qnx67EvF_C1R7606wyvjLNzv24WjOd3q/exec";
     const LIFF_ID = "2008875334-VPUmuC8D";
 
@@ -119,6 +99,7 @@
         } catch (err) { alert("Error: " + err.message); }
     }
 
+    // --- 2. DATA FUNCTIONS (โหลด/กรอง/อัปเดต) ---
     async function loadPrefixes() {
         try {
             const res = await fetch(`${WEB_APP_URL}?action=getPrefixes`);
@@ -148,7 +129,6 @@
 
         jobs.forEach(job => {
             const card = document.createElement('div');
-            // ใช้คลาส prio- ตามด้วยความสำคัญเพื่อสีขอบซ้าย
             card.className = `job-card prio-${job.priority}`;
             
             let badgeClass = 'badge-pending';
@@ -219,7 +199,31 @@
         finally { document.getElementById('loading').style.display = 'none'; }
     }
 
+    // --- 3. PWA & NOTIFICATION ---
+    function registerPWA() {
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registered!', reg))
+                .catch(err => console.error('Registration failed!', err));
+            });
+        }
+    }
+
+    function requestNotificationPermission() {
+        if (!('Notification' in window)) return;
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                console.log('Admin อนุญาตแจ้งเตือน ✅');
+            }
+        });
+    }
+
+    // --- Start ---
     main();
+    registerPWA();
+    requestNotificationPermission();
+
 </script>
 </body>
 </html>
