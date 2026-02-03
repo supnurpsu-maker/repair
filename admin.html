@@ -65,6 +65,27 @@
 </div>
 
 <script>
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "firebase/app";
+    import { getAnalytics } from "firebase/analytics";
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+    
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+      apiKey: "AIzaSyC1mBineUmQQddHGi539OoYkar_FpL5HOs",
+      authDomain: "supnurpsu-9dcb3.firebaseapp.com",
+      projectId: "supnurpsu-9dcb3",
+      storageBucket: "supnurpsu-9dcb3.firebasestorage.app",
+      messagingSenderId: "626588467857",
+      appId: "1:626588467857:web:85d8218fa31b8b4f69f530",
+      measurementId: "G-GPXP8E1TVM"
+    };
+    
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
     // --- 1. CONFIG & LIFF ---
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwEqmvOCX0WDlu9D6QSoIsXp95wECXo8cV4qnx67EvF_C1R7606wyvjLNzv24WjOd3q/exec";
     const LIFF_ID = "2008875334-VPUmuC8D";
