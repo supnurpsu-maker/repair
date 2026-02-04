@@ -250,21 +250,20 @@
     //        }
     //    });
     //}
-    async function requestNotificationPermission() {
-    alert('กำลังตรวจสอบ Service Worker...');
-    
-    // บังคับลงทะเบียน SW ก่อน
-    if ('serviceWorker' in navigator) {
-        const reg = await navigator.serviceWorker.ready;
-        alert('Service Worker พร้อมใช้งานแล้ว!');
-    }
+    function requestNotificationPermission() {
+    // แจ้งเตือนเพื่อให้รู้ว่าปุ่มทำงาน
+    alert('เริ่มขั้นตอนขอสิทธิ์...');
 
-    alert('กำลังขอสิทธิ์แจ้งเตือน...');
+    // เรียกขอสิทธิ์ตรงๆ เลย ไม่ต้องรอ Service Worker Ready
     Notification.requestPermission().then(permission => {
         alert('ผลการขอสิทธิ์คือ: ' + permission);
         if (permission === 'granted') {
+            // ถ้าผ่านแล้ว ค่อยไปลงทะเบียน SW และดึง Token
+            registerPWA(); 
             getTokenAndSave();
         }
+    }).catch(err => {
+        alert('Error: ' + err);
     });
 }
 
