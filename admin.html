@@ -250,42 +250,28 @@
             console.error(err);
         }
     }
+ 
+    // --- Start Logic ---
+    async function initializeApp() {
+    // 1. ลงทะเบียน Service Worker ก่อน (หัวใจสำคัญของ PWA)
+    await registerPWA();
 
-    //function requestNotificationPermission() {
-    //    if (!('Notification' in window)) return;
-    //    Notification.requestPermission().then(permission => {
-    //        if (permission === 'granted') {
-    //            console.log('Permission Granted ✅');
-    //            getTokenAndSave();
-    //        }
-    //    });
-    //}
-    function requestNotificationPermission() {
-    // แจ้งเตือนเพื่อให้รู้ว่าปุ่มทำงาน
-    alert('เริ่มขั้นตอนขอสิทธิ์...');
+    // 2. รันระบบหลัก (LIFF / ดึงข้อมูลผู้ใช้) ให้เสร็จ
+    await main();
 
-    // เรียกขอสิทธิ์ตรงๆ เลย ไม่ต้องรอ Service Worker Ready
-    Notification.requestPermission().then(permission => {
-        alert('ผลการขอสิทธิ์คือ: ' + permission);
-        if (permission === 'granted') {
-            // ถ้าผ่านแล้ว ค่อยไปลงทะเบียน SW และดึง Token
-            registerPWA(); 
-            getTokenAndSave();
-        }
-    }).catch(err => {
-        alert('Error: ' + err);
-    });
+    // 3. จัดการเรื่องแจ้งเตือน
+    if (Notification.permission === 'granted') {
+        // ถ้าเคยอนุญาตแล้ว ให้ดึง/อัปเดต Token ทันที
+        getTokenAndSave();
+    } else if (Notification.permission === 'default') {
+        // ถ้ายังไม่เคยถาม ให้เรียกฟังก์ชันขอสิทธิ์ (ซึ่งควรมี Alert หรือปุ่มให้กด)
+        // สำหรับ iOS 17+ แนะนำให้เรียกผ่านการคลิก แต่ลองเรียกตรงนี้ดูก่อนได้ครับ
+        requestNotificationPermission();
+    }
 }
 
-    
-    // --- Start Logic ---
-    main().then(() => {
-        if (Notification.permission === 'granted') {
-            getTokenAndSave();
-        }
-    });
-    registerPWA();
-    requestNotificationPermission();
+// เรียกใช้งานฟังก์ชันเริ่มต้น
+initializeApp();
 
 </script>
 </body>
