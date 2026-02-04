@@ -253,21 +253,21 @@
         }
     }
     async function enableNotificationForIOS() {
-    alert("กำลังเริ่มการตั้งค่าสำหรับ iOS...");
+        alert("สถานะสิทธิ์ปัจจุบัน: " + Notification.permission);
+        
+        if (Notification.permission === 'denied') {
+            alert("คุณเคยปฏิเสธสิทธิ์ไว้ครับ กรุณาไปที่ Settings > Notifications เพื่อเปิดสิทธิ์ด้วยตัวเอง");
+            return;
+        }
     
-    // 1. ลงทะเบียน Service Worker ซ้ำอีกครั้งเพื่อความชัวร์
-    const reg = await registerPWA();
-    
-    // 2. ขอสิทธิ์ (iOS บังคับว่าต้องเกิดจากการคลิกปุ่มเท่านั้น)
-    const permission = await Notification.requestPermission();
-    
-    if (permission === 'granted') {
-        alert("อนุญาตสำเร็จ! กำลังดึง Token...");
-        getTokenAndSave(); // ดึง Token และส่งเข้า Sheet
-    } else {
-        alert("สิทธิ์ถูกปฏิเสธ: " + permission);
+        alert("กำลังขอสิทธิ์...");
+        const permission = await Notification.requestPermission();
+        alert("ผลการขอสิทธิ์ใหม่: " + permission);
+        
+        if (permission === 'granted') {
+            getTokenAndSave();
+        }
     }
-}
 
     
     // --- Start Logic ---
