@@ -229,27 +229,27 @@
 
     async function getTokenAndSave() {
         try {
-            // 1. ลงทะเบียน Service Worker ก่อน
+            // 1. ลงทะเบียน Service Worker และระบุชื่อไฟล์ให้ชัดเจน
             const registration = await navigator.serviceWorker.register('sw.js');
-            alert('Service Worker ลงทะเบียนแล้ว!');
+            console.log('SW registered');
     
-            // 2. ขอ Token โดยระบุ Service Worker Registration
+            // 2. ขอ Token โดยระบุตัว registration ลงไปด้วย
             const currentToken = await messaging.getToken({
-                serviceWorkerRegistration: registration, // เพิ่มบรรทัดนี้
-                vapidKey: 'รหัส VAPID Key ของคุณ' // ตรวจสอบรหัสนี้อีกครั้ง
+                serviceWorkerRegistration: registration, // บรรทัดนี้สำคัญมาก!
+                vapidKey: 'รหัส VAPID_KEY_ยาวๆ_ของคุณ' 
             });
     
             if (currentToken) {
-                alert('ได้ Token แล้ว: ' + currentToken);
-                // ส่งไป GAS
-                const res = await fetch(`${WEB_APP_URL}?action=saveAdminToken&uid=${currentAdminUid}&token=${currentToken}`);
-                const result = await res.text();
-                alert('ผลการบันทึก: ' + result);
+                alert('สำเร็จ! ได้ Token แล้ว');
+                // ส่งค่าไปที่ Google Sheets
+                const response = await fetch(`${WEB_APP_URL}?action=saveAdminToken&uid=${currentAdminUid}&token=${currentToken}`);
+                const result = await response.text();
+                alert('ผลการบันทึก Sheet: ' + result);
             } else {
-                alert('ไม่ได้รับ Token (Check Permission)');
+                alert('ไม่ได้รับ Token (กรุณากดอนุญาตแจ้งเตือน)');
             }
         } catch (err) {
-            alert('Error แบบละเอียด: ' + err.message);
+            alert('Firebase Error: ' + err.message);
             console.error(err);
         }
     }
