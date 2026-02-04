@@ -2,6 +2,7 @@
   "name": "Repair Admin Dashboard",
   "short_name": "RepairAdmin",
   "start_url": "admin.html",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#000080",
   "theme_color": "#000080",
