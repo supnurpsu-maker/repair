@@ -250,32 +250,23 @@
     //        }
     //    });
     //}
-    function requestNotificationPermission() {
-        // 1. เช็กว่า Browser รองรับไหม
-        if (!('Notification' in window)) {
-            alert('Browser นี้ไม่รองรับระบบแจ้งเตือน');
-            return;
-        }
+    async function requestNotificationPermission() {
+    alert('กำลังตรวจสอบ Service Worker...');
     
-        alert('กำลังขอสิทธิ์แจ้งเตือน...');
-    
-        // 2. เรียกคำสั่งขอสิทธิ์
-        Notification.requestPermission().then(permission => {
-            alert('ผลการขอสิทธิ์คือ: ' + permission);
-            
-            if (permission === 'granted') {
-                alert('ยินดีด้วย! คุณอนุญาตเรียบร้อยแล้ว ✅');
-                // ถ้าอนุญาตแล้ว ให้ลองดึง Token ทันที
-                getTokenAndSave();
-                // ซ่อนปุ่มทิ้งไปเพราะไม่จำเป็นแล้ว
-                document.getElementById('forceAuthBtn').style.display = 'none';
-            } else if (permission === 'denied') {
-                alert('คุณเผลอกด "ปฏิเสธ" ❌ ไปครับ ต้องไปแก้ใน Settings ของ iPhone');
-            }
-        }).catch(err => {
-            alert('เกิดข้อผิดพลาด: ' + err);
-        });
+    // บังคับลงทะเบียน SW ก่อน
+    if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.ready;
+        alert('Service Worker พร้อมใช้งานแล้ว!');
     }
+
+    alert('กำลังขอสิทธิ์แจ้งเตือน...');
+    Notification.requestPermission().then(permission => {
+        alert('ผลการขอสิทธิ์คือ: ' + permission);
+        if (permission === 'granted') {
+            getTokenAndSave();
+        }
+    });
+}
 
     
     // --- Start Logic ---
