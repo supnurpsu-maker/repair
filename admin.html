@@ -228,21 +228,29 @@
     }
 
     async function getTokenAndSave() {
-        if (!currentAdminUid) { alert('ยังไม่มี UID แอดมิน'); return; } 
         try {
-            alert('กำลังขอ Token จาก Firebase...'); // เพิ่ม Alert นี้
+            // 1. ลงทะเบียน Service Worker ก่อน
+            const registration = await navigator.serviceWorker.register('sw.js');
+            alert('Service Worker ลงทะเบียนแล้ว!');
+    
+            // 2. ขอ Token โดยระบุ Service Worker Registration
             const currentToken = await messaging.getToken({
-                vapidKey: '...' 
+                serviceWorkerRegistration: registration, // เพิ่มบรรทัดนี้
+                vapidKey: 'รหัส VAPID Key ของคุณ' // ตรวจสอบรหัสนี้อีกครั้ง
             });
+    
             if (currentToken) {
-                alert('ได้ Token แล้ว: ' + currentToken); // ถ้าขึ้นรหัสยาวๆ แสดงว่าสำเร็จ
-                await fetch(`${WEB_APP_URL}?action=saveAdminToken&uid=${currentAdminUid}&token=${currentToken}`);
-                alert('บันทึกเข้า Sheet สำเร็จ!');
+                alert('ได้ Token แล้ว: ' + currentToken);
+                // ส่งไป GAS
+                const res = await fetch(`${WEB_APP_URL}?action=saveAdminToken&uid=${currentAdminUid}&token=${currentToken}`);
+                const result = await res.text();
+                alert('ผลการบันทึก: ' + result);
             } else {
-                alert('ไม่ได้รับ Token - เช็กการตั้งค่าใน Console');
+                alert('ไม่ได้รับ Token (Check Permission)');
             }
         } catch (err) {
-            alert('Error getToken: ' + err);
+            alert('Error แบบละเอียด: ' + err.message);
+            console.error(err);
         }
     }
 
