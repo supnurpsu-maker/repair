@@ -47,7 +47,9 @@
     </style>
 </head>
 <body>
-
+<button onclick="enableNotificationForIOS()" style="position:fixed; bottom:20px; right:20px; padding:10px; background:blue; color:white; border-radius:50%; z-index:999;">
+  🔔
+</button>
 <div id="loading"><div class="spinner"></div><p id="loadingText">กำลังตรวจสอบสิทธิ์...</p></div>
 
 <div class="container">
@@ -250,7 +252,24 @@
             console.error(err);
         }
     }
- 
+    async function enableNotificationForIOS() {
+    alert("กำลังเริ่มการตั้งค่าสำหรับ iOS...");
+    
+    // 1. ลงทะเบียน Service Worker ซ้ำอีกครั้งเพื่อความชัวร์
+    const reg = await registerPWA();
+    
+    // 2. ขอสิทธิ์ (iOS บังคับว่าต้องเกิดจากการคลิกปุ่มเท่านั้น)
+    const permission = await Notification.requestPermission();
+    
+    if (permission === 'granted') {
+        alert("อนุญาตสำเร็จ! กำลังดึง Token...");
+        getTokenAndSave(); // ดึง Token และส่งเข้า Sheet
+    } else {
+        alert("สิทธิ์ถูกปฏิเสธ: " + permission);
+    }
+}
+
+    
     // --- Start Logic ---
     async function initializeApp() {
     // 1. ลงทะเบียน Service Worker ก่อน (หัวใจสำคัญของ PWA)
