@@ -47,7 +47,10 @@
     </style>
 </head>
 <body>
-
+<button id="forceAuthBtn" onclick="requestNotificationPermission()" 
+    style="width: 100%; padding: 20px; background-color: #ff4d4d; color: white; font-weight: bold; border: none; font-size: 18px; cursor: pointer; z-index: 10000; position: relative;">
+    🛠️ คลิกที่นี่เพื่อเปิดแจ้งเตือน (สำหรับ iOS)
+</button>
 <div id="loading"><div class="spinner"></div><p id="loadingText">กำลังตรวจสอบสิทธิ์...</p></div>
 
 <div class="container">
@@ -238,16 +241,43 @@
         } catch (err) { console.error('Token Error:', err); }
     }
 
+    //function requestNotificationPermission() {
+    //    if (!('Notification' in window)) return;
+    //    Notification.requestPermission().then(permission => {
+    //        if (permission === 'granted') {
+    //            console.log('Permission Granted ✅');
+    //            getTokenAndSave();
+    //        }
+    //    });
+    //}
     function requestNotificationPermission() {
-        if (!('Notification' in window)) return;
+        // 1. เช็กว่า Browser รองรับไหม
+        if (!('Notification' in window)) {
+            alert('Browser นี้ไม่รองรับระบบแจ้งเตือน');
+            return;
+        }
+    
+        alert('กำลังขอสิทธิ์แจ้งเตือน...');
+    
+        // 2. เรียกคำสั่งขอสิทธิ์
         Notification.requestPermission().then(permission => {
+            alert('ผลการขอสิทธิ์คือ: ' + permission);
+            
             if (permission === 'granted') {
-                console.log('Permission Granted ✅');
+                alert('ยินดีด้วย! คุณอนุญาตเรียบร้อยแล้ว ✅');
+                // ถ้าอนุญาตแล้ว ให้ลองดึง Token ทันที
                 getTokenAndSave();
+                // ซ่อนปุ่มทิ้งไปเพราะไม่จำเป็นแล้ว
+                document.getElementById('forceAuthBtn').style.display = 'none';
+            } else if (permission === 'denied') {
+                alert('คุณเผลอกด "ปฏิเสธ" ❌ ไปครับ ต้องไปแก้ใน Settings ของ iPhone');
             }
+        }).catch(err => {
+            alert('เกิดข้อผิดพลาด: ' + err);
         });
     }
 
+    
     // --- Start Logic ---
     main().then(() => {
         if (Notification.permission === 'granted') {
