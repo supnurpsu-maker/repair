@@ -240,8 +240,8 @@
                 alert('สำเร็จ! ได้ Token แล้ว');
                 
                 // เตรียม URL สำหรับส่งข้อมูล
-                const url = `${WEB_APP_URL}?action=saveAdminToken&uid=${currentAdminUid}&token=${currentToken}`;
-                
+                //const url = `${WEB_APP_URL}?action=saveAdminToken&uid=${currentAdminUid}&token=${currentToken}`;
+                const url = `${WEB_APP_URL}?action=saveAdminToken&uid=${encodeURIComponent(currentAdminUid)}&token=${encodeURIComponent(currentToken)}`;
                 // ใช้ mode: 'no-cors' เพื่อแก้ปัญหา Load failed บน iOS
                 fetch(url, {
                     method: 'GET',
