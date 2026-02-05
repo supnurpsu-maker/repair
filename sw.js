@@ -13,24 +13,52 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// ฟังก์ชันรับข้อความขณะปิดแอป หรือแอปอยู่เบื้องหลัง
+// ฟังก์ชันรับข้อความ (ทำงานใน Background)
 messaging.onBackgroundMessage((payload) => {
-    console.log('Received background message ', payload);
-    
-    // ดึงค่าจาก data ทั้งหมด (ตามที่ GAS ส่งมา)
-    const title = payload.data.title || "แจ้งเตือนงานซ่อม";
-    const body = payload.data.body || "มีรายการแจ้งซ่อมใหม่";
-    
+    console.log('[firebase-messaging-sw.js] Received background message ', payload);
+
+    // 1. ดึงข้อมูลจาก payload.data เป็นหลัก (เพราะ GAS เราจะส่งแบบ data)
+    // ใช้เครื่องหมาย ?. เพื่อกัน Error กรณีค่าเป็น null
+    const title = payload.data?.title || "แจ้งเตือนงานซ่อม";
+    const body = payload.data?.body || "มีรายการอัปเดตสถานะ";
+    const icon = payload.data?.icon || 'https://cdn-icons-png.flaticon.com/512/1048/1048339.png'; // ใส่ URL icon กลางๆ เผื่อไว้
+    const clickUrl = payload.data?.url || 'admin.html';
+
+    // 2. ตั้งค่า Notification Options
     const notificationOptions = {
         body: body,
-        icon: 'icon-192.png',
-        badge: 'icon-192.png',
-        tag: 'repair-notification', // ป้องกัน Noti ซ้อนกัน
-        renotify: true,
+        icon: icon,
+        badge: icon, // สำหรับ Android จะโชว์รูปเล็กๆ
+        tag: 'repair-system', // tag เดิมจะถูกแทนที่ด้วยอันใหม่ (กันข้อความซ้อน)
+        renotify: true, // บังคับให้สั่น/เตือนเสียงทุกครั้งที่ข้อความเข้า
         data: {
-            url: 'admin.html' 
+            url: clickUrl
         }
     };
 
-    self.registration.showNotification(title, notificationOptions);
+    // 3. สั่งแสดงผล
+    return self.registration.showNotification(title, notificationOptions);
+});
+
+// ฟังก์ชันจัดการเมื่อผู้ใช้คลิกที่แจ้งเตือน
+self.addEventListener('notificationclick', function(event) {
+    event.notification.close(); // ปิด popup
+
+    // เปิดหน้า admin.html
+    event.waitUntil(
+        clients.matchAll({type: 'window'}).then(function(windowClients) {
+            // ถ้าเปิดอยู่แล้วให้ Focus
+            for (var i = 0; i < windowClients.length; i++) {
+                var client = windowClients[i];
+                if (client.url.indexOf('admin.html') !== -1 && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+            // ถ้ายังไม่เปิด ให้เปิดใหม่
+            if (clients.openWindow) {
+                const urlToOpen = event.notification.data.url || 'admin.html';
+                return clients.openWindow(urlToOpen);
+            }
+        })
+    );
 });
