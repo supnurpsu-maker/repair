@@ -20,8 +20,8 @@ messaging.onBackgroundMessage((payload) => {
     // 1. ดึงข้อมูลจาก payload.data เป็นหลัก (เพราะ GAS เราจะส่งแบบ data)
     // ใช้เครื่องหมาย ?. เพื่อกัน Error กรณีค่าเป็น null
     const title = payload.data?.title || "แจ้งเตือนงานซ่อม";
-    const body = payload.data?.body || "มีรายการอัปเดตสถานะ";
-    const icon = payload.data?.icon || 'https://cdn-icons-png.flaticon.com/512/1048/1048339.png'; // ใส่ URL icon กลางๆ เผื่อไว้
+    const body = payload.data?.body || "มีรายการใหม่";
+    const icon = payload.data?.icon || 'https://supnurpsu-maker.github.io/repair/icon-192.png';
     const clickUrl = payload.data?.url || 'admin.html';
 
     // 2. ตั้งค่า Notification Options
