@@ -11,10 +11,17 @@
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        /* ... CSS เดิมของคุณ (คงที่ไว้เหมือนเดิม) ... */
+        /* ... CSS เดิมของคุณ ... */
         :root { --primary: #000080; --bg: #f0f2f5; --white: #ffffff; --text: #333333; }
         * { box-sizing: border-box; font-family: 'Prompt', sans-serif; }
-        body { background-color: var(--bg); margin: 0; padding: 15px; color: var(--text); }
+        body { 
+            background-color: var(--bg); 
+            margin: 0; 
+            padding: 15px; 
+            color: var(--text);
+            /* เพิ่มเพื่อให้ iOS ลากลงได้ลื่นไหลขึ้น */
+            overscroll-behavior-y: contain; 
+        }
         .container { width: 100%; max-width: 500px; margin: 0 auto; }
         .header { background: var(--primary); color: white; padding: 25px 20px; border-radius: 18px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .header h2 { margin: 0; font-size: 20px; font-weight: 600; }
@@ -44,9 +51,22 @@
         #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- เพิ่ม CSS สำหรับ Pull to Refresh --- */
+        #pullToRefresh {
+            display: none;
+            text-align: center;
+            padding: 15px;
+            font-size: 14px;
+            color: var(--primary);
+            font-weight: 600;
+            background: transparent;
+        }
     </style>
 </head>
 <body>
+<div id="pullToRefresh">⬇️ ลากลงเพื่อรีเฟรชข้อมูล...</div>
+
 <button onclick="enableNotificationForIOS()" style="position:fixed; bottom:20px; right:20px; padding:10px; background:blue; color:white; border-radius:50%; z-index:999;">
   🔔
 </button>
@@ -70,7 +90,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
 
 <script>
-    // 1. Firebase Configuration
+    // 1. Firebase Configuration (คงเดิม)
     const firebaseConfig = {
       apiKey: "AIzaSyC1mBineUmQQddHGi539OoYkar_FpL5HOs",
       authDomain: "supnurpsu-9dcb3.firebaseapp.com",
@@ -80,17 +100,50 @@
       appId: "1:626588467857:web:85d8218fa31b8b4f69f530"
     };
     
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const messaging = firebase.messaging();
 
-    // --- 1. CONFIG & LIFF ---
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzIDVDxbFwJRTFV2K99fkaAhEXzE4ltMYxOpSLrp6tzG4vCB3bSm0szLL8TxfF2A1Iq/exec";
     const LIFF_ID = "2008875334-VPUmuC8D";
 
     let allJobs = [];
     let currentAdminUid = "";
     let adminDept = "";
+
+    // --- เพิ่มระบบ Pull-to-Refresh Logic ---
+    let touchStartPoint = 0;
+    const ptrDiv = document.getElementById('pullToRefresh');
+
+    window.addEventListener('touchstart', (e) => {
+        touchStartPoint = e.touches[0].pageY;
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+        const touchMovePoint = e.touches[0].pageY;
+        const distance = touchMovePoint - touchStartPoint;
+        if (window.scrollY === 0 && distance > 50) {
+            ptrDiv.style.display = 'block';
+            ptrDiv.innerText = distance > 100 ? "🔄 ปล่อยนิ้วเพื่อรีเฟรช..." : "⬇️ ลากลงเพื่อรีเฟรช...";
+        }
+    }, { passive: true });
+
+    window.addEventListener('touchend', async (e) => {
+        const touchEndPoint = e.changedTouches[0].pageY;
+        const distance = touchEndPoint - touchStartPoint;
+        if (window.scrollY === 0 && distance > 100) {
+            ptrDiv.innerText = "⏳ กำลังอัปเดต...";
+            await loadJobs();
+        }
+        ptrDiv.style.display = 'none';
+    }, { passive: true });
+
+    // --- เพิ่ม Auto-Refresh เมื่อหน้าจอกลับมา Active (iOS Resume) ---
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && currentAdminUid) {
+            console.log('App resumed: Refreshing data...');
+            loadJobs();
+        }
+    });
 
     async function main() {
         try {
@@ -118,7 +171,6 @@
         } catch (err) { console.error("Error: " + err.message); }
     }
 
-    // --- 2. DATA FUNCTIONS (โหลด/กรอง/อัปเดต) ---
     async function loadPrefixes() {
         try {
             const res = await fetch(`${WEB_APP_URL}?action=getPrefixes`);
@@ -132,14 +184,20 @@
     }
 
     async function loadJobs() {
-        document.getElementById('loadingText').innerText = "กำลังโหลดข้อมูลงาน...";
-        document.getElementById('loading').style.display = 'flex';
+        // เช็คว่ามี UI Loading โชว์อยู่ไหม ถ้าไม่มี (เช่นกรณี PTR) ให้เปลี่ยน Text เฉยๆ
+        const loadingDiv = document.getElementById('loading');
+        if (loadingDiv.style.display === 'none') {
+            console.log("Background refreshing...");
+        } else {
+            document.getElementById('loadingText').innerText = "กำลังโหลดข้อมูลงาน...";
+        }
+        
         try {
             const res = await fetch(`${WEB_APP_URL}?action=getAllJobs`);
             allJobs = await res.json();
             filterJobs(); 
         } catch (err) { console.error("โหลดข้อมูลไม่สำเร็จ"); }
-        finally { document.getElementById('loading').style.display = 'none'; }
+        finally { loadingDiv.style.display = 'none'; }
     }
 
     function renderJobs(jobs) {
@@ -215,29 +273,23 @@
         finally { document.getElementById('loading').style.display = 'none'; }
     }
 
-    // --- 3. PWA & NOTIFICATION (ฉบับปรับปรุง) ---
-
 async function getTokenAndSave() {
     try {
-        // ตรวจสอบว่ามี UID หรือยัง ถ้าไม่มีให้รอ 2 วินาที (เผื่อ LIFF โหลดช้า)
         if (!currentAdminUid) {
             console.log("Waiting for UID...");
             await new Promise(res => setTimeout(res, 2000));
         }
         
-        const registration = await navigator.serviceWorker.register('sw.js'); // ใช้ชื่อนี้เท่านั้น    
+        const registration = await navigator.serviceWorker.register('sw.js');    
         await navigator.serviceWorker.ready;
         console.log('SW Ready');
         const currentToken = await messaging.getToken({
-            serviceWorkerRegistration: registration, // บอก Firebase ว่าให้ใช้ registration ของ sw.js
+            serviceWorkerRegistration: registration,
             vapidKey: 'BOo7SEZSwEbGtmt886r6_OvMxPvnRXvAemQtMD55P6dVYe5P_o_27rkCfnXO8uRIpmkOCB95RKPQa9u5zQaomBw'
         });
 
         if (currentToken) {
-            // ใช้ UID จริง ถ้าไม่มีจริงๆ ค่อยใช้ค่าสำรอง
             const finalUid = currentAdminUid || "NO_UID_FOUND";
-            
-            // ใช้ URLSearchParams เพื่อความปลอดภัยของอักขระ
             const params = new URLSearchParams({
                 action: 'saveAdminToken',
                 uid: finalUid,
@@ -246,7 +298,6 @@ async function getTokenAndSave() {
 
             console.log('Sending to GAS:', finalUid);
 
-            // ส่งข้อมูลแบบ no-cors (รองรับทั้ง GET/POST แต่แนะนำ GET สำหรับ GAS ง่ายสุด)
             fetch(`${WEB_APP_URL}?${params.toString()}`, {
                 method: 'GET',
                 mode: 'no-cors',
@@ -264,7 +315,6 @@ async function getTokenAndSave() {
 }
 
 async function enableNotificationForIOS() {
-    // iOS บังคับให้เริ่มจาก User Gesture (การกดปุ่ม)
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
         await getTokenAndSave();
@@ -273,27 +323,20 @@ async function enableNotificationForIOS() {
     }
 }
 
-// --- Start Logic ---
 async function initializeApp() {
-    // 1. ลงทะเบียน SW
     if ('serviceWorker' in navigator) {
         try {
             await navigator.serviceWorker.register('sw.js');
         } catch (e) { console.error("SW Register Fail"); }
     }
 
-    // 2. รันระบบหลัก (LIFF)
     await main();
 
-    // 3. จัดการสิทธิ์
     if (Notification.permission === 'granted') {
         getTokenAndSave();
     }
-    // บน iOS เราจะไม่เรียกขอสิทธิ์อัตโนมัติ (เพราะมักจะโดนบล็อก) 
-    // ให้ผู้ใช้กดปุ่ม 🔔 เองจะชัวร์ที่สุดครับ
 }
 
-// เรียกใช้งานฟังก์ชันเริ่มต้น
 initializeApp();
 
 </script>
