@@ -224,13 +224,12 @@ async function getTokenAndSave() {
             console.log("Waiting for UID...");
             await new Promise(res => setTimeout(res, 2000));
         }
-
-        const registration = await navigator.serviceWorker.ready; // ใช้ .ready แทนการ register ซ้ำ
+        
+        const registration = await navigator.serviceWorker.register('sw.js'); // ใช้ชื่อนี้เท่านั้น       
         console.log('SW Ready');
-
         const currentToken = await messaging.getToken({
-            serviceWorkerRegistration: registration,
-            vapidKey: 'BOo7SEZSwEbGtmt886r6_OvMxPvnRXvAemQtMD55P6dVYe5P_o_27rkCfnXO8uRIpmkOCB95RKPQa9u5zQaomBw' 
+            serviceWorkerRegistration: registration, // บอก Firebase ว่าให้ใช้ registration ของ sw.js
+            vapidKey: 'BOo7SEZSwEbGtmt886r6_OvMxPvnRXvAemQtMD55P6dVYe5P_o_27rkCfnXO8uRIpmkOCB95RKPQa9u5zQaomBw'
         });
 
         if (currentToken) {
