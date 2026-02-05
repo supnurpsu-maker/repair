@@ -228,22 +228,31 @@
 
     async function getTokenAndSave() {
         try {
-            // 1. ลงทะเบียน Service Worker และระบุชื่อไฟล์ให้ชัดเจน
             const registration = await navigator.serviceWorker.register('sw.js');
             console.log('SW registered');
     
-            // 2. ขอ Token โดยระบุตัว registration ลงไปด้วย
             const currentToken = await messaging.getToken({
-                serviceWorkerRegistration: registration, // บรรทัดนี้สำคัญมาก!
+                serviceWorkerRegistration: registration,
                 vapidKey: 'BOo7SEZSwEbGtmt886r6_OvMxPvnRXvAemQtMD55P6dVYe5P_o_27rkCfnXO8uRIpmkOCB95RKPQa9u5zQaomBw' 
             });
     
             if (currentToken) {
                 alert('สำเร็จ! ได้ Token แล้ว');
-                // ส่งค่าไปที่ Google Sheets
-                const response = await fetch(`${WEB_APP_URL}?action=saveAdminToken&uid=${currentAdminUid}&token=${currentToken}`);
-                const result = await response.text();
-                alert('ผลการบันทึก Sheet: ' + result);
+                
+                // เตรียม URL สำหรับส่งข้อมูล
+                const url = `${WEB_APP_URL}?action=saveAdminToken&uid=${currentAdminUid}&token=${currentToken}`;
+                
+                // ใช้ mode: 'no-cors' เพื่อแก้ปัญหา Load failed บน iOS
+                fetch(url, {
+                    method: 'GET',
+                    mode: 'no-cors',
+                    cache: 'no-cache'
+                });
+    
+                // บน iOS mode 'no-cors' จะไม่อนุญาตให้อ่าน response
+                // ดังนั้นเรา Alert บอกผู้ใช้ไปเลยว่า "ส่งข้อมูลแล้ว"
+                alert('กำลังส่งข้อมูลเข้าระบบ... กรุณาเช็คใน Sheet อีกสักครู่ครับ');
+                
             } else {
                 alert('ไม่ได้รับ Token (กรุณากดอนุญาตแจ้งเตือน)');
             }
