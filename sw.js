@@ -16,11 +16,21 @@ const messaging = firebase.messaging();
 // ฟังก์ชันรับข้อความขณะปิดแอป หรือแอปอยู่เบื้องหลัง
 messaging.onBackgroundMessage((payload) => {
     console.log('Received background message ', payload);
-    const notificationTitle = payload.data.title;
+    
+    // ดึงค่าจาก data ทั้งหมด (ตามที่ GAS ส่งมา)
+    const title = payload.data.title || "แจ้งเตือนงานซ่อม";
+    const body = payload.data.body || "มีรายการแจ้งซ่อมใหม่";
+    
     const notificationOptions = {
-        body: payload.data.body,
-        icon: 'icon-192.png'
+        body: body,
+        icon: 'icon-192.png',
+        badge: 'icon-192.png',
+        tag: 'repair-notification', // ป้องกัน Noti ซ้อนกัน
+        renotify: true,
+        data: {
+            url: 'admin.html' 
+        }
     };
 
-    self.registration.showNotification(notificationTitle, notificationOptions);
+    self.registration.showNotification(title, notificationOptions);
 });
