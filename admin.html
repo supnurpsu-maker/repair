@@ -103,7 +103,7 @@
     firebase.initializeApp(firebaseConfig);
     const messaging = firebase.messaging();
 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwdqUxisXWL_YrPA9EAuV5v8uj7Ll82qKbR8Du8h1nOdR3ft34U2NIZ_UfCIY3hNWig/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzIMg8TiuSqBAfi-MGDpXhXWXDzLLD-Pdp9_lQvhdDczZtSd-ShxwEPQUV_0SKcRYKa/exec";
     const LIFF_ID = "2008875334-VPUmuC8D";
 
     let allJobs = [];
@@ -206,39 +206,46 @@
 
     jobs.forEach(job => {
         const card = document.createElement('div');
-        card.className = `job-card prio-${job.priority}`;
+        card.className = `job-card prio-${job.priority || 'ปกติ'}`;
         
         let badgeClass = 'badge-pending';
         if (job.status === 'กำลังดำเนินการ') badgeClass = 'badge-process';
         if (job.status === 'ดำเนินการเรียบร้อยแล้ว') badgeClass = 'badge-done';
         
-        // จัดการชื่อเจ้าหน้าที่
-        const responsibleStaff = job.adminName ? `👷 ${job.adminName}` : "⚠️ รอเจ้าหน้าที่รับงาน";
+        // ตรวจสอบชื่อเจ้าหน้าที่: ถ้าไม่มีให้แสดง "รอเจ้าหน้าที่รับงาน"
+        const responsibleStaff = (job.adminName && job.adminName !== "undefined") 
+                                 ? `👷 ${job.adminName}` 
+                                 : "⚠️ รอเจ้าหน้าที่รับงาน";
 
         card.innerHTML = `
             <div class="card-header">
-                <span class="ticket-id">#${job.ticketId}</span>
-                <span class="status-badge ${badgeClass}">${job.status}</span>
+                <span class="ticket-id">#${job.ticketId || 'N/A'}</span>
+                <span class="status-badge ${badgeClass}">${job.status || 'รอดำเนินการ'}</span>
             </div>
             <div class="card-body">
-                <span class="job-issue">${job.issue}</span>
+                <span class="job-issue">${job.issue || 'ไม่มีหัวข้อ'}</span>
+                
                 <div class="info-grid">
-                    <div class="info-row"><span class="info-label">👤 ผู้แจ้ง:</span><span class="info-value">${job.name}</span></div>
-                    <div class="info-row"><span class="info-label">🏢 สถานที่:</span><span class="info-value">${job.room}</span></div>
-                    <div class="info-row"><span class="info-label">🔧 ประเภท:</span><span class="info-value">${job.category || '-'}</span></div>
-                    <div class="info-row"><span class="info-label">📝 รายละเอียด:</span><span class="info-value">${job.description || '-'}</span></div>
-                    <div class="info-row"><span class="info-label">⏰ เวลา:</span><span class="info-value">${job.timeStr}</span></div>
+                    <div class="info-row"><span class="info-label">👤 ผู้แจ้ง:</span><span class="info-value">${job.name || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">🏢 สถานที่:</span><span class="info-value">${job.room || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">📁 ประเภท:</span><span class="info-value">${job.category || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">📝 รายละเอียด:</span><span class="info-value">${job.issue || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">⏰ เวลา:</span><span class="info-value">${job.timeStr || '-'}</span></div>
                     <div class="info-row"><span class="info-label">👤 จนท.:</span><span class="info-value admin">${responsibleStaff}</span></div>
                 </div>
 
-                ${job.imageUrl ? `
+                ${(job.imageUrl && job.imageUrl !== "") ? `
                 <div style="margin-top:15px; border-top:1px dashed #eee; padding-top:10px;">
-                    <button onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'" 
+                    <button onclick="let target = this.nextElementSibling; target.style.display = target.style.display === 'none' ? 'block' : 'none';" 
                             style="width:100%; background:#f8f9fa; border:1px solid #ddd; padding:8px; border-radius:8px; font-size:12px; color:#666; cursor:pointer;">
                         📷 กดเพื่อดูรูปภาพประกอบ
                     </button>
                     <div style="display:none; margin-top:10px; text-align:center;">
-                        <img src="${job.imageUrl}" style="max-width:100%; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1);" alt="Job Image">
+                        <img src="${job.imageUrl}" 
+                             loading="lazy"
+                             style="max-width:100%; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1); cursor:zoom-in;"
+                             onclick="window.open(this.src, '_blank')"
+                             onerror="this.style.display='none'; this.parentElement.innerHTML='<p style=font-size:12px;color:red;>⚠️ ไม่สามารถโหลดรูปได้</p>';">
                     </div>
                 </div>
                 ` : ''}
