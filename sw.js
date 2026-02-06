@@ -28,6 +28,7 @@ messaging.onBackgroundMessage((payload) => {
     const notificationOptions = {
         body: body,
         icon: icon,
+        image: payload.data?.image,
         badge: icon, // สำหรับ Android จะโชว์รูปเล็กๆ
         tag: 'repair-system', // tag เดิมจะถูกแทนที่ด้วยอันใหม่ (กันข้อความซ้อน)
         renotify: true, // บังคับให้สั่น/เตือนเสียงทุกครั้งที่ข้อความเข้า
