@@ -84,9 +84,9 @@
             transition: 0.3s;
         }
 
-            button:disabled {
-                background: #ccc;
-            }
+        button:disabled {
+            background: #ccc;
+        }
 
         #loading {
             display: none;
@@ -115,6 +115,11 @@
         </div>
 
         <form id="repairForm">
+            <div id="guestField" style="display:none;">
+                <label for="username">Username (ภาษาอังกฤษพิมพ์เล็ก/ตัวเลข)</label>
+                <input type="text" id="username" placeholder="เช่น somchai.p" pattern="[a-z0-9.]+" title="กรุณาใช้ภาษาอังกฤษพิมพ์เล็กหรือตัวเลขเท่านั้น">
+            </div>
+
             <label for="room">สถานที่ / เลขห้อง</label>
             <input type="text" id="room" required placeholder="ห้องประชุมดวงวดี สังโขบล / 2228">
 
@@ -153,21 +158,15 @@
     </div>
 
     <script>
-        // ==========================================
-        // ส่วนตั้งค่า Configuration
-        // ==========================================
-        // URL ของ GAS (ใช้ตัวล่าสุดที่คุณแนบมาในไฟล์)
         const GAS_URL = "https://script.google.com/macros/s/AKfycbxo13HaRUQIfdzDTcJCGt8o4TFU2fsI0oMsSD1RU_M1dZGcEdQbl4VDb38Rw4pohBaG/exec";
-
-        // LIFF ID (ตรวจสอบให้แน่ใจว่าถูกต้อง)
-        const LIFF_ID_MAIN = "2008875334-eZXiyz43"; // LIFF ID ของหน้าแจ้งซ่อมนี้
-        const LIFF_ID_TRACK = "2008875334-wOYUvNha"; // LIFF ID ของหน้าติดตามสถานะ (track.html)
-        // ==========================================
+        const LIFF_ID_MAIN = "2008875334-eZXiyz43"; 
+        const LIFF_ID_TRACK = "2008875334-wOYUvNha"; 
 
         const form = document.getElementById('repairForm');
         const btn = document.getElementById('submitBtn');
         const loading = document.getElementById('loading');
         let userProfile = null;
+        let isGuestMode = false;
 
         async function main() {
             try {
@@ -177,17 +176,23 @@
                     document.getElementById('userImg').src = userProfile.pictureUrl || "https://via.placeholder.com/45";
                     document.getElementById('userName').innerText = userProfile.displayName;
                 } else {
-                    liff.login();
+                    // ปรับให้เป็น Guest Mode แทนการสั่ง login() ทันที
+                    isGuestMode = true;
+                    document.getElementById('userImg').src = "https://via.placeholder.com/45";
+                    document.getElementById('userName').innerText = "ผู้ใช้งานทั่วไป (Guest)";
+                    document.getElementById('guestField').style.display = 'block';
+                    document.getElementById('username').required = true;
                 }
             } catch (err) {
                 console.error("LIFF Error:", err);
-                alert("LIFF Init Failed: " + err.message);
+                isGuestMode = true;
+                document.getElementById('guestField').style.display = 'block';
+                document.getElementById('username').required = true;
             }
         }
 
         main();
 
-        // Preview รูปภาพ
         document.getElementById('image').onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -200,11 +205,10 @@
             }
         };
 
-        // จัดการเมื่อกดส่งฟอร์ม
         form.onsubmit = async (e) => {
             e.preventDefault();
 
-            if (!userProfile) {
+            if (!isGuestMode && !userProfile) {
                 alert("กรุณารอโหลดข้อมูลโปรไฟล์สักครู่");
                 return;
             }
@@ -213,7 +217,6 @@
             btn.innerText = "กำลังส่งข้อมูล...";
             loading.style.display = 'block';
 
-            // แปลงรูปภาพเป็น Base64
             const fileInput = document.getElementById('image');
             let base64 = "";
             if (fileInput.files.length > 0) {
@@ -225,9 +228,13 @@
                 });
             }
 
+            // กำหนด UID และ DisplayName ตามเงื่อนไข Guest
+            let finalUid = isGuestMode ? "GUEST_" + document.getElementById('username').value.trim().toLowerCase() : userProfile.userId;
+            let finalDisplayName = isGuestMode ? document.getElementById('username').value.trim() : userProfile.displayName;
+
             const payload = {
-                uid: userProfile.userId,
-                displayName: userProfile.displayName,
+                uid: finalUid,
+                displayName: finalDisplayName,
                 room: document.getElementById('room').value,
                 phone: document.getElementById('phone').value,
                 category: document.getElementById('category').value,
@@ -237,7 +244,6 @@
             };
 
             try {
-                // ส่งข้อมูลไปยัง GAS
                 const response = await fetch(GAS_URL, {
                     method: "POST",
                     body: JSON.stringify(payload)
@@ -245,19 +251,14 @@
                 const res = await response.json();
 
                 if (res.result === "ok") {
-                    // --- ส่วนจัดการหลังส่งสำเร็จ ---
-
-                    // 1. เตรียมข้อมูลสำหรับ Flex Message
                     var fRoom = (document.getElementById('room').value || "-").replace(/["\\]/g, "");
                     var fCategory = (document.getElementById('category').value || "-").replace(/["\\]/g, "");
                     var fIssue = (document.getElementById('issue').value || "-").replace(/["\\]/g, "");
                     var fTicket = String(res.ticketId || "ID");
                     var fQueue = String(res.pendingCount || "0");
                     const fRow = res.row;
-                    // 2. สร้างลิงก์ติดตามสถานะ (เชื่อมกับ track.html)
-                    // รูปแบบ: LIFF_ID_TRACK + ?ticket=TICKET_ID
-                    // var trackUrl = "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + fTicket;
                     var trackUrl = "https://liff.line.me/" + LIFF_ID_TRACK + "?ticket=" + encodeURIComponent(fTicket);
+
                     if (liff.isInClient()) {
                         const flexPayload = {
                             "type": "bubble",
@@ -350,14 +351,7 @@
                                                     "uri": "https://liff.line.me/2008875334-d6l72Uox?row=" + fRow + "&score=" + score
                                                 },
                                                 "contents": [
-                                                    {
-                                                        "type": "text",
-                                                        "text": "⭐ " + score,
-                                                        "size": "xs",
-                                                        "align": "center",
-                                                        "weight": "bold",
-                                                        "color": "#333333"
-                                                    }
+                                                    { "type": "text", "text": "⭐ " + score, "size": "xs", "align": "center", "weight": "bold", "color": "#333333" }
                                                 ]
                                             };
                                         })
@@ -373,41 +367,27 @@
                                         "style": "primary",
                                         "color": "#000080",
                                         "height": "sm",
-                                        "action": {
-                                            "type": "uri",
-                                            "label": "ติดตามสถานะงาน",
-                                            "uri": trackUrl
-                                        }
+                                        "action": { "type": "uri", "label": "ติดตามสถานะงาน", "uri": trackUrl }
                                     }
                                 ]
                             }
                         };
 
-                        liff.sendMessages([{
-                            "type": "flex",
-                            "altText": "แจ้งซ่อมสำเร็จ Ticket: " + fTicket,
-                            "contents": flexPayload
-                        }])
-                            .then(function () {
-                                liff.closeWindow();
-                            })
-                            .catch(function (err) {
-                                alert("ส่งข้อความไม่สำเร็จ: " + err.message);
-                                liff.closeWindow();
-                            });
+                        liff.sendMessages([{ "type": "flex", "altText": "แจ้งซ่อมสำเร็จ Ticket: " + fTicket, "contents": flexPayload }])
+                            .then(() => liff.closeWindow())
+                            .catch((err) => { alert("ส่งข้อความไม่สำเร็จ: " + err.message); liff.closeWindow(); });
                     } else {
-                        // กรณีเปิดผ่าน Browser ภายนอก
-                        alert("บันทึกข้อมูลสำเร็จ! Ticket: " + fTicket + "\nกรุณาตรวจสอบสถานะผ่านเมนูใน LINE");
+                        alert("บันทึกข้อมูลสำเร็จ! Ticket: " + fTicket + "\nUsername: " + finalDisplayName);
                         window.location.reload();
                     }
                 } else {
-                    alert("เกิดข้อผิดพลาดจาก Server: " + (res.message || "Unknown Error"));
+                    alert("เกิดข้อผิดพลาด: " + res.message);
                 }
             } catch (err) {
-                alert("Error Fetching: " + err.message);
+                alert("Error: " + err.message);
             } finally {
                 btn.disabled = false;
-                btn.innerText = "ส่งข้อมูลแจ้งซ่อม";
+                btn.innerText = "ส่งข้อมูลขอใช้บริการ";
                 loading.style.display = 'none';
             }
         };
