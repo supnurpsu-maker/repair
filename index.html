@@ -390,7 +390,7 @@
                 btn.innerText = "ส่งข้อมูลขอใช้บริการ";
                 loading.style.display = 'none';
             }
-        }
+        };
         else {
             // กรณีเปิดผ่าน Browser ภายนอก
             alert("บันทึกข้อมูลสำเร็จ!\nTicket ID: " + fTicket);
@@ -401,7 +401,7 @@
                                  "&user=" + encodeURIComponent(finalDisplayName);
             
             window.location.href = trackPageUrl;
-        };
+        }
     </script>
 </body>
 </html>
