@@ -22,7 +22,7 @@ messaging.onBackgroundMessage((payload) => {
     const title = payload.data?.title || "แจ้งเตือนงานซ่อม";
     const body = payload.data?.body || "มีรายการใหม่";
     const icon = payload.data?.icon || 'https://supnurpsu-maker.github.io/repair/icon-192.png';
-    const clickUrl = payload.data?.url || 'admin.html';
+    const clickUrl = payload.data?.url || 'https://supnurpsu-maker.github.io/repair/admin.html';
 
     // 2. ตั้งค่า Notification Options
     const notificationOptions = {
