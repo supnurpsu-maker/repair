@@ -219,19 +219,19 @@
 
         card.innerHTML = `
             <div class="card-header">
-                <span class="ticket-id">#${job.ticketId || 'N/A'}</span>
+                <span class="ticket-id">${job.ticketId || 'N/A'}</span>
                 <span class="status-badge ${badgeClass}">${job.status || 'รอดำเนินการ'}</span>
             </div>
             <div class="card-body">
                 <span class="job-issue">${job.issue || 'ไม่มีหัวข้อ'}</span>
                 
                 <div class="info-grid">
+                    <div class="info-row"><span class="info-label">⏰ เวลา:</span><span class="info-value">${job.timeStr || '-'}</span></div>
                     <div class="info-row"><span class="info-label">👤 ผู้แจ้ง:</span><span class="info-value">${job.name || '-'}</span></div>
                     <div class="info-row"><span class="info-label">🏢 สถานที่:</span><span class="info-value">${job.room || '-'}</span></div>
                     <div class="info-row"><span class="info-label">📁 ประเภท:</span><span class="info-value">${job.category || '-'}</span></div>
                     <div class="info-row"><span class="info-label">📝 รายละเอียด:</span><span class="info-value">${job.issue || '-'}</span></div>
-                    <div class="info-row"><span class="info-label">⏰ เวลา:</span><span class="info-value">${job.timeStr || '-'}</span></div>
-                    <div class="info-row"><span class="info-label">👤 จนท.:</span><span class="info-value admin">${responsibleStaff}</span></div>
+                    <div class="info-row"><span class="info-label">👨‍🔧 จนท.:</span><span class="info-value admin">${responsibleStaff}</span></div>
                 </div>
 
                 ${(job.imageUrl && job.imageUrl !== "") ? `
