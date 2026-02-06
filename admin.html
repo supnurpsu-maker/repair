@@ -161,7 +161,7 @@
             }
 
             adminDept = authData.dept; 
-            document.getElementById('adminName').innerText = `👨‍🔧 ${profile.displayName} | ${adminDept}`;
+            document.getElementById('adminName').innerText = `👷 ${profile.displayName} | ${adminDept}`;
 
             if (adminDept.toLowerCase() === "admin") {
                 document.getElementById('filterArea').style.display = 'flex';
@@ -214,7 +214,7 @@
         
         // ตรวจสอบชื่อเจ้าหน้าที่: ถ้าไม่มีให้แสดง "รอเจ้าหน้าที่รับงาน"
         const responsibleStaff = (job.adminName && job.adminName !== "undefined") 
-                                 ? `👷 ${job.adminName}` 
+                                 ? `${job.adminName}` 
                                  : "⚠️ รอเจ้าหน้าที่รับงาน";
 
         card.innerHTML = `
@@ -231,7 +231,7 @@
                     <div class="info-row"><span class="info-label">🏢 สถานที่:</span><span class="info-value">${job.room || '-'}</span></div>
                     <div class="info-row"><span class="info-label">📁 ประเภท:</span><span class="info-value">${job.category || '-'}</span></div>
                     <div class="info-row"><span class="info-label">📝 รายละเอียด:</span><span class="info-value">${job.issue || '-'}</span></div>
-                    <div class="info-row"><span class="info-label">👨‍🔧 จนท.:</span><span class="info-value admin">${responsibleStaff}</span></div>
+                    <div class="info-row"><span class="info-label">👷 จนท.:</span><span class="info-value admin">${responsibleStaff}</span></div>
                 </div>
 
                 ${(job.imageUrl && job.imageUrl !== "") ? `
@@ -253,9 +253,9 @@
                 <div class="action-box">
                     <select class="action-select" onchange="updateJobStatus(${job.row}, this.value)">
                         <option value="">-- อัปเดตสถานะงาน --</option>
-                        <option value="กำลังดำเนินการ">✅ รับงาน/กำลังดำเนินการ</option>
+                        <option value="กำลังดำเนินการ">▶️ รับงาน/กำลังดำเนินการ</option>
                         <option value="จัดจ้างร้านภายนอก">🚚 จัดจ้างภายนอก</option>
-                        <option value="ดำเนินการเรียบร้อยแล้ว">🏁 ปิดงาน/เสร็จสิ้น</option>
+                        <option value="ดำเนินการเรียบร้อยแล้ว">✅ ปิดงาน/เสร็จสิ้น</option>
                         <option value="รอดำเนินการ">🔄 ยกเลิกงาน/รอดำเนินการ</option>
                     </select>
                 </div>
