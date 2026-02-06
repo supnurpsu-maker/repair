@@ -116,8 +116,8 @@
 
         <form id="repairForm">
             <div id="guestField" style="display:none;">
-                <label for="username">Username (ภาษาอังกฤษพิมพ์เล็ก/ตัวเลข)</label>
-                <input type="text" id="username" placeholder="เช่น somchai.p" pattern="[a-z0-9.]+" title="กรุณาใช้ภาษาอังกฤษพิมพ์เล็กหรือตัวเลขเท่านั้น">
+                <label for="username">PSU Passport(Username/Student ID)</label>
+                <input type="text" id="username" placeholder="เช่น thunyapong.u" pattern="[a-z0-9.]+" title="กรุณาใช้ภาษาอังกฤษพิมพ์เล็กหรือตัวเลขสำหรับรหัสนักศึกษาเท่านั้น">
             </div>
 
             <label for="room">สถานที่ / เลขห้อง</label>
@@ -152,8 +152,8 @@
             <input type="file" id="image" accept="image/*">
             <img id="preview" class="img-preview">
 
-            <button type="submit" id="submitBtn">ส่งข้อมูลขอใช้บริการ</button>
-            <div id="loading">🚀 กำลังบันทึกข้อมูล...</div>
+            <button type="submit" id="submitBtn">🚀 ส่งข้อมูลขอใช้บริการ</button>
+            //<div id="loading">🚀 กำลังบันทึกข้อมูล...</div>
         </form>
     </div>
 
@@ -178,8 +178,8 @@
                 } else {
                     // ปรับให้เป็น Guest Mode แทนการสั่ง login() ทันที
                     isGuestMode = true;
-                    document.getElementById('userImg').src = "https://via.placeholder.com/45";
-                    document.getElementById('userName').innerText = "ผู้ใช้งานทั่วไป (Guest)";
+                    document.getElementById('userImg').src = "https://supnurpsu-maker.github.io/repair/bannerlogo.png";
+                    document.getElementById('userName').innerText = "ผู้ใช้งานผ่านเบราว์เซอร์";
                     document.getElementById('guestField').style.display = 'block';
                     document.getElementById('username').required = true;
                 }
