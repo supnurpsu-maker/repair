@@ -377,8 +377,17 @@
                             .then(() => liff.closeWindow())
                             .catch((err) => { alert("ส่งข้อความไม่สำเร็จ: " + err.message); liff.closeWindow(); });
                     } else {
-                        alert("บันทึกข้อมูลสำเร็จ! Ticket: " + fTicket + "\nUsername: " + finalDisplayName);
-                        window.location.reload();
+                        // กรณีเปิดผ่าน Browser ภายนอก (ไม่ใช่แอป LINE)
+                        alert("บันทึกข้อมูลสำเร็จ!\nTicket ID: " + fTicket + "\nUsername: " + finalDisplayName);
+                        
+                        // สร้าง URL สำหรับ Redirect พร้อมส่งค่าไปที่หน้าติดตามสถานะ
+                        // โดยส่ง ticket และ user ไปใน URL เพื่อให้หน้า track.html ดึงไปใช้ได้ทันที
+                        const trackPageUrl = "https://liff.line.me/" + LIFF_ID_TRACK + 
+                                             "?ticket=" + encodeURIComponent(fTicket) + 
+                                             "&user=" + encodeURIComponent(finalDisplayName);
+                        
+                        // เปลี่ยนหน้าไปยังหน้าติดตามสถานะ
+                        window.location.href = trackPageUrl;
                     }
                 } else {
                     alert("เกิดข้อผิดพลาด: " + res.message);
@@ -391,17 +400,6 @@
                 loading.style.display = 'none';
             }
         };
-        else {
-            // กรณีเปิดผ่าน Browser ภายนอก
-            alert("บันทึกข้อมูลสำเร็จ!\nTicket ID: " + fTicket);
-            
-            // Redirect ไปหน้าติดตามสถานะ พร้อมส่งค่าไปใน URL
-            const trackPageUrl = "https://liff.line.me/" + LIFF_ID_TRACK + 
-                                 "?ticket=" + encodeURIComponent(fTicket) + 
-                                 "&user=" + encodeURIComponent(finalDisplayName);
-            
-            window.location.href = trackPageUrl;
-        }
     </script>
 </body>
 </html>
