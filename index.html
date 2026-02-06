@@ -390,6 +390,17 @@
                 btn.innerText = "ส่งข้อมูลขอใช้บริการ";
                 loading.style.display = 'none';
             }
+        }
+        else {
+            // กรณีเปิดผ่าน Browser ภายนอก
+            alert("บันทึกข้อมูลสำเร็จ!\nTicket ID: " + fTicket);
+            
+            // Redirect ไปหน้าติดตามสถานะ พร้อมส่งค่าไปใน URL
+            const trackPageUrl = "https://liff.line.me/" + LIFF_ID_TRACK + 
+                                 "?ticket=" + encodeURIComponent(fTicket) + 
+                                 "&user=" + encodeURIComponent(finalDisplayName);
+            
+            window.location.href = trackPageUrl;
         };
     </script>
 </body>
