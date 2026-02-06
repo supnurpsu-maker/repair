@@ -117,7 +117,7 @@
         <form id="repairForm">
             <div id="guestField" style="display:none;">
                 <label for="username">PSU Passport(Username/Student ID)</label>
-                <input type="text" id="username" placeholder="เช่น thunyapong.u" pattern="[a-z0-9.]+" title="กรุณาใช้ภาษาอังกฤษพิมพ์เล็กหรือตัวเลขสำหรับรหัสนักศึกษาเท่านั้น">
+                <input type="text" id="username" placeholder="thunyapong.u / 6910410000" pattern="[a-z0-9.]+" title="กรุณาใช้ภาษาอังกฤษพิมพ์เล็กหรือตัวเลขสำหรับรหัสนักศึกษาเท่านั้น">
             </div>
 
             <label for="room">สถานที่ / เลขห้อง</label>
@@ -178,7 +178,7 @@
                 } else {
                     // ปรับให้เป็น Guest Mode แทนการสั่ง login() ทันที
                     isGuestMode = true;
-                    document.getElementById('userImg').src = "https://supnurpsu-maker.github.io/repair/bannerlogo.png";
+                    document.getElementById('userImg').src = "https://supnurpsu-maker.github.io/repair/icon-192.png";
                     document.getElementById('userName').innerText = "ผู้ใช้งานผ่านเบราว์เซอร์";
                     document.getElementById('guestField').style.display = 'block';
                     document.getElementById('username').required = true;
