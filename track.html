@@ -20,7 +20,10 @@
         .btn-search { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .btn-search:active { transform: scale(0.98); opacity: 0.9; }
 
-        /* การ์ดผลลัพธ์สไตล์ Flex */
+        /* ส่วนแสดงผล Guest Mode */
+        .guest-alert { background: #fff3e0; color: #e65100; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; border: 1px dashed #ffb74d; text-align: left;}
+
+        /* การ์ดผลลัพธ์ */
         .flex-style-card { background: var(--white); border-radius: 18px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid #e0e0e0; display: none; }
         .card-header { background: var(--primary); color: white; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; }
         .header-title { font-size: 15px; font-weight: 600; }
@@ -41,7 +44,7 @@
         
         #loader { text-align: center; padding: 30px 0; color: var(--primary); display: none; }
         .loading-dots:after { content: ' .'; animation: dots 1.5s steps(5, end) infinite; }
-        @keyframes dots { 0%, 20% { color: rgba(0,0,0,0); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); } 40% { color: var(--primary); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); } 60% { text-shadow: .25em 0 0 var(--primary), .5em 0 0 rgba(0,0,0,0); } 80%, 100% { text-shadow: .25em 0 0 var(--primary), .5em 0 0 var(--primary); } }
+        @keyframes dots { 0%, 20% { color: rgba(0,0,0,0); } 40% { color: var(--primary); } 100% { text-shadow: .25em 0 0 var(--primary), .5em 0 0 var(--primary); } }
     </style>
 </head>
 <body>
@@ -49,14 +52,25 @@
 <div class="container">
     <div id="searchSection" class="search-card">
         <h3 style="margin-top:0; color: var(--primary);">🔍 ติดตามสถานะงานซ่อม</h3>
+        
+        <div id="guestStatus" class="guest-alert" style="display:none;">
+            คุณกำลังใช้งานในโหมดบุคคลทั่วไป (Guest) กรุณาระบุ Username ที่ใช้แจ้งซ่อมเพื่อยืนยันตัวตน
+        </div>
+
         <div class="form-group">
             <label>เลือกแผนก</label>
             <select id="deptSelect"><option value="">-- กำลังโหลดแผนก --</option></select>
         </div>
         <div class="form-group">
-            <label>หมายเลขงาน</label>
-            <input type="number" id="numInput" placeholder="กรอกเฉพาะตัวเลข เช่น 1">
+            <label>หมายเลขงาน (เฉพาะตัวเลข)</label>
+            <input type="number" id="numInput" placeholder="เช่น 1">
         </div>
+        
+        <div class="form-group" id="userGroup" style="display:none;">
+            <label>Username (ที่ระบุตอนแจ้งซ่อม)</label>
+            <input type="text" id="userInput" placeholder="เช่น somchai.p">
+        </div>
+
         <button class="btn-search" onclick="manualSearch()">ตรวจสอบข้อมูล</button>
     </div>
 
@@ -90,29 +104,61 @@
 </div>
 
 <script>
-    const URL_GAS = "https://script.google.com/macros/s/AKfycbxo13HaRUQIfdzDTcJCGt8o4TFU2fsI0oMsSD1RU_M1dZGcEdQbl4VDb38Rw4pohBaG/exec";
+    // *** อย่าลืมตรวจสอบ URL ให้ตรงกับ Deploy ล่าสุด ***
+    const URL_GAS = "https://script.google.com/macros/s/AKfycbxPsiHyYcSmFj6t0nIYzrtsjq0CbFOH1vHGmRRJpabAVZCpf8xWfgXWNuknM5lJGoKH/exec";
     const LIFF_ID_TRACK = "2008875334-wOYUvNha";
     const LIFF_ID_REVIEW = "2008875334-d6l72Uox"; 
 
     let myUid = "";
+    let isGuest = false;
 
     async function init() {
         try {
             await liff.init({ liffId: LIFF_ID_TRACK });
-            if (!liff.isLoggedIn()) { liff.login(); return; }
-            const profile = await liff.getProfile();
-            myUid = profile.userId;
+            
+            // 1. ตรวจสอบสถานะ Login
+            if (liff.isLoggedIn()) {
+                const profile = await liff.getProfile();
+                myUid = profile.userId;
+                isGuest = false;
+            } else {
+                isGuest = true;
+                // แสดง UI สำหรับ Guest
+                document.getElementById('guestStatus').style.display = 'block';
+                document.getElementById('userGroup').style.display = 'block';
+            }
 
+            // 2. ตรวจสอบ Parameter จาก URL
             const urlParams = new URLSearchParams(window.location.search);
             const ticketFromUrl = urlParams.get('ticket');
+            const userFromUrl = urlParams.get('user');
 
-            // ถ้ามี ticket ใน URL (กดมาจากแชท)
-            if (ticketFromUrl) { 
+            // กรณี Auto: มี ticket มากับ URL
+            if (ticketFromUrl) {
+                // ถ้าเป็น Guest และมี user ติดมาด้วย ให้สร้าง UID จำลอง
+                if (isGuest && userFromUrl) {
+                    myUid = "GUEST_" + userFromUrl.trim().toLowerCase();
+                    // เติมค่าใส่ Input ไว้ด้วย เผื่อเขาอยากกดค้นหาเองใหม่
+                    document.getElementById('userInput').value = userFromUrl;
+                }
+                
+                // กรอกข้อมูลลงฟอร์มอัตโนมัติ (เผื่อค้นหาไม่เจอ จะได้ไม่ต้องกรอกใหม่)
+                const parts = decodeURIComponent(ticketFromUrl).split('#');
+                if(parts.length === 2) {
+                     // โหลดแผนกก่อน แล้วค่อย set value
+                    await loadDepts(); 
+                    document.getElementById('deptSelect').value = parts[0];
+                    document.getElementById('numInput').value = parseInt(parts[1]);
+                } else {
+                    loadDepts();
+                }
+
                 autoProcess(decodeURIComponent(ticketFromUrl), false); 
             } else { 
                 loadDepts(); 
             }
-        } catch (e) { console.error(e); }
+
+        } catch (e) { console.error("Init Error:", e); }
     }
 
     async function loadDepts() {
@@ -120,53 +166,68 @@
             const res = await fetch(`${URL_GAS}?action=getPrefixes`);
             const prefixes = await res.json();
             const sel = document.getElementById('deptSelect');
+            // เก็บค่าเดิมไว้ก่อน ถ้ามี
+            const currentVal = sel.value; 
             sel.innerHTML = '<option value="">-- เลือกแผนก --</option>';
             prefixes.forEach(p => {
                 let opt = document.createElement('option');
                 opt.value = p; opt.innerText = p;
                 sel.appendChild(opt);
             });
+            if(currentVal) sel.value = currentVal;
         } catch(e) {}
     }
 
     async function manualSearch() {
         const dept = document.getElementById('deptSelect').value;
         const num = document.getElementById('numInput').value;
-        if (!dept || !num) return alert("กรุณาระบุข้อมูลให้ครบ");
+        
+        if (!dept || !num) return alert("กรุณาระบุแผนกและหมายเลขงาน");
+
+        // ถ้าเป็น Guest ต้องบังคับกรอก Username
+        if (isGuest) {
+            const userInput = document.getElementById('userInput').value.trim();
+            if (!userInput) return alert("กรุณาระบุ Username เพื่อยืนยันตัวตน");
+            myUid = "GUEST_" + userInput.toLowerCase();
+        }
         
         const fullId = `${dept}#${num.padStart(3, '0')}`;
         
-        // เคลียร์ผลลัพธ์เก่าทิ้งก่อนเริ่มค้นหาใหม่
         document.getElementById('result').style.display = 'none';
         autoProcess(fullId, true);
     }
 
     async function autoProcess(tid, isManual = false) {
+        if (!myUid) {
+            alert("ไม่พบข้อมูลผู้ใช้งาน กรุณาลองใหม่");
+            return;
+        }
+
         document.getElementById('loader').style.display = 'block';
 
         try {
-            const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(tid)}&uid=${myUid}`);
+            // ส่ง tid และ uid ไปเช็คที่ GAS
+            // GAS จะเช็คว่า Ticket นี้ เป็นของ UID นี้จริงหรือไม่
+            const res = await fetch(`${URL_GAS}?action=track&tid=${encodeURIComponent(tid)}&uid=${encodeURIComponent(myUid)}`);
             const data = await res.json();
 
             if (data.found) {
                 renderUI(tid, data);
 
-                // ส่ง Flex และปิดหน้าต่าง เฉพาะกรณี "ไม่ใช่" การค้นหาเอง
+                // ถ้าค้นหาเจอและเปิดใน LINE ให้ส่ง Flex Message เก็บไว้ดู
                 if (liff.isInClient() && !isManual) {
                     try {
                         await sendFlexUpdate(tid, data);
-                        setTimeout(() => { liff.closeWindow(); }, 2500);
-                    } catch (err) {
-                        console.error("Flex Error:", err);
-                        document.getElementById('result').style.display = 'block';
-                    }
-                } else {
-                    // กรณีค้นหาด้วยมือ ให้หยุดอยู่ที่หน้าผลลัพธ์
-                    document.getElementById('result').style.display = 'block';
-                    document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+                    } catch (err) { console.error("Flex Error:", err); }
                 }
+                
+                // เลื่อนหน้าจอลงมาที่ผลลัพธ์
+                setTimeout(() => {
+                    document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+
             } else {
-                alert("ไม่พบข้อมูล หรือคุณไม่มีสิทธิ์เข้าถึงเลขที่งานนี้");
+                alert("ไม่พบข้อมูล!\n\nสาเหตุที่เป็นไปได้:\n1. เลขงานไม่ถูกต้อง\n2. คุณไม่ใช่ผู้แจ้งงานนี้ (Username ไม่ตรง)\n3. งานนี้ยังไม่เข้าระบบ");
                 document.getElementById('result').style.display = 'none';
             }
         } catch (e) { alert("Error: " + e.message); }
@@ -198,6 +259,7 @@
             queueText.style.display = "none";
             document.getElementById('reviewArea').style.display = 'block';
             document.getElementById('reviewBtn').onclick = () => {
+                // ส่ง Username ไปด้วยเผื่อใช้ในการยืนยันสิทธิ์รีวิว (ถ้าจำเป็น)
                 liff.openWindow({ url: `https://liff.line.me/${LIFF_ID_REVIEW}?row=${data.row}`, external: false });
             };
         } else {
