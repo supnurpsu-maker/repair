@@ -13,51 +13,50 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// ฟังก์ชันรับข้อความ (ทำงานใน Background)
 messaging.onBackgroundMessage((payload) => {
     console.log('[firebase-messaging-sw.js] Received background message ', payload);
 
-    // 1. ดึงข้อมูลจาก payload.data เป็นหลัก (เพราะ GAS เราจะส่งแบบ data)
-    // ใช้เครื่องหมาย ?. เพื่อกัน Error กรณีค่าเป็น null
-    const title = payload.data?.title || "แจ้งเตือนงานซ่อม";
-    const body = payload.data?.body || "มีรายการใหม่";
-    const icon = payload.data?.icon || 'https://supnurpsu-maker.github.io/repair/icon-192.png';
-    const clickUrl = payload.data?.url || 'https://supnurpsu-maker.github.io/repair/admin.html';
+    const data = payload.data || {};
+    
+    const title = data.title || "แจ้งเตือนงานซ่อม";
+    const body = data.body || "มีรายการใหม่";
+    const icon = data.icon || 'https://supnurpsu-maker.github.io/repair/icon-192.png';
+    const clickUrl = data.url || 'https://supnurpsu-maker.github.io/repair/admin.html';
 
-    // 2. ตั้งค่า Notification Options
+    // *** แก้ไขจุดสำคัญ: ตรวจสอบรูปภาพก่อนใส่ options ***
     const notificationOptions = {
         body: body,
         icon: icon,
-        image: payload.data?.image,
-        badge: icon, // สำหรับ Android จะโชว์รูปเล็กๆ
-        tag: 'repair-system', // tag เดิมจะถูกแทนที่ด้วยอันใหม่ (กันข้อความซ้อน)
-        renotify: true, // บังคับให้สั่น/เตือนเสียงทุกครั้งที่ข้อความเข้า
+        badge: icon,
+        tag: 'repair-system-' + Date.now(), // เปลี่ยน tag ให้ไม่ซ้ำ เพื่อให้แจ้งเตือนเด้งทุกครั้ง ไม่ทับอันเดิม
+        renotify: true,
         data: {
             url: clickUrl
         }
     };
 
-    // 3. สั่งแสดงผล
+    // ใส่รูปภาพเฉพาะเมื่อมี URL จริงๆ เท่านั้น (แก้ปัญหาแจ้งเตือนไม่เด้งเพราะรูปว่าง)
+    if (data.image && data.image.startsWith('http')) {
+        notificationOptions.image = data.image;
+    }
+
     return self.registration.showNotification(title, notificationOptions);
 });
 
-// ฟังก์ชันจัดการเมื่อผู้ใช้คลิกที่แจ้งเตือน
 self.addEventListener('notificationclick', function(event) {
-    event.notification.close(); // ปิด popup
-
-    // เปิดหน้า admin.html
+    event.notification.close();
     event.waitUntil(
         clients.matchAll({type: 'window'}).then(function(windowClients) {
-            // ถ้าเปิดอยู่แล้วให้ Focus
             for (var i = 0; i < windowClients.length; i++) {
                 var client = windowClients[i];
+                // เช็คว่า URL มีคำว่า admin.html หรือไม่
                 if (client.url.indexOf('admin.html') !== -1 && 'focus' in client) {
                     return client.focus();
                 }
             }
-            // ถ้ายังไม่เปิด ให้เปิดใหม่
             if (clients.openWindow) {
-                const urlToOpen = event.notification.data.url || 'admin.html';
+                // ดึง URL จาก data ที่เราแนบไว้
+                const urlToOpen = event.notification.data?.url || 'https://supnurpsu-maker.github.io/repair/admin.html';
                 return clients.openWindow(urlToOpen);
             }
         })
