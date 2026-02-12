@@ -1,7 +1,7 @@
 importScripts('https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js');
 
-// 1. การตั้งค่า Firebase (ใช้ค่าเดิมของคุณ)
+// 1. การตั้งค่า Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyC1mBineUmQQddHGi539OoYkar_FpL5HOs",
     authDomain: "supnurpsu-9dcb3.firebaseapp.com",
@@ -18,11 +18,12 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
     console.log('[firebase-messaging-sw.js] Received background message ', payload);
 
-    // ดึงข้อมูลจาก payload.data (ซึ่งส่งมาจาก GAS)
+    // ดึงข้อมูลจาก payload.data (ที่ส่งมาจาก GAS)
     const data = payload.data || {};
     
+    // ค่า Title และ Body จะถูกเตรียมมาจาก GAS (รวมเครื่องหมาย ✅/❌ ใน Body แล้ว)
     const title = data.title || "แจ้งเตือนงานซ่อม";
-    const body = data.body || "มีรายการแจ้งซ่อมใหม่เข้ามา";
+    const body = data.body || "มีรายการใหม่เข้ามา"; 
     const icon = data.icon || 'https://supnurpsu-maker.github.io/repair/icon-192.png';
     const clickUrl = data.url || 'https://supnurpsu-maker.github.io/repair/admin.html';
 
@@ -31,19 +32,16 @@ messaging.onBackgroundMessage((payload) => {
         body: body,
         icon: icon,
         badge: icon,
-        // ใช้ timestamp เป็น tag เพื่อให้แจ้งเตือนเด้งใหม่ทุกครั้ง ไม่ทับของเดิมที่ยังไม่ได้กดอ่าน
-        tag: 'repair-ticket-' + Date.now(), 
-        renotify: true, // สั่นและแจ้งเตือนเสียงแม้จะเป็นกลุ่มเดียวกัน
-        vibrate: [200, 100, 200], // รูปแบบการสั่น (สำหรับ Android)
+        // ใช้ timestamp เป็น tag เพื่อให้แจ้งเตือนเด้งแยกกันทุกรายการ ไม่ทับกัน
+        tag: 'repair-system-' + Date.now(),
+        renotify: true, 
+        vibrate: [200, 100, 200],
         data: {
             url: clickUrl
         }
+        // หมายเหตุ: ตัด notificationOptions.image ออกตามความต้องการ 
+        // เพื่อให้แสดงผลเฉพาะข้อความแจ้งสถานะรูปภาพแทนการโหลดรูปจริง
     };
-
-    // ตรวจสอบและใส่รูปภาพประกอบ (ถ้ามีส่งมาจาก GAS)
-    if (data.image && data.image.startsWith('http')) {
-        notificationOptions.image = data.image;
-    }
 
     return self.registration.showNotification(title, notificationOptions);
 });
@@ -52,24 +50,22 @@ messaging.onBackgroundMessage((payload) => {
 self.addEventListener('notificationclick', function(event) {
     console.log('[sw.js] Notification clicked');
     
-    // ปิดตัวแจ้งเตือนที่คลิก
     event.notification.close();
 
-    // ดึง URL ที่แนบมากับ data (ถ้าไม่มีให้ไปหน้า admin หลัก)
     const urlToOpen = event.notification.data?.url || 'https://supnurpsu-maker.github.io/repair/admin.html';
 
-    // ตรวจสอบว่ามีหน้าต่างเว็บเปิดอยู่แล้วหรือไม่
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true })
             .then(function(windowClients) {
-                // ถ้ามีหน้าต่างเปิดอยู่แล้ว ให้ Focus ไปที่หน้าต่างนั้น
+                // ตรวจสอบว่าหน้า Admin เปิดอยู่แล้วหรือไม่
                 for (var i = 0; i < windowClients.length; i++) {
                     var client = windowClients[i];
-                    if (client.url === urlToOpen && 'focus' in client) {
+                    // ถ้าเปิดหน้า Admin อยู่แล้ว ให้ Focus ไปที่หน้านั้นเลย
+                    if (client.url.indexOf('admin.html') !== -1 && 'focus' in client) {
                         return client.focus();
                     }
                 }
-                // ถ้ายังไม่เปิด หรือหาไม่เจอ ให้เปิดหน้าต่างใหม่
+                // ถ้ายังไม่เปิด ให้เปิดหน้าต่างใหม่ตาม URL ที่ส่งมา
                 if (clients.openWindow) {
                     return clients.openWindow(urlToOpen);
                 }
