@@ -310,19 +310,19 @@
                             { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "👨‍🔧 เจ้าหน้าที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": fAdmin, "wrap": true, "color": "#000080", "size": "xs", "flex": 5, "weight": "bold" }] }
                         ]
                     },
-            //         /* --- ส่วนของดาวที่แสดงตลอดเวลา --- */
-            //         { "type": "separator", "margin": "xl" },
-            //         { "type": "text", "text": "รบกวนให้คะแนนเมื่อบริการเสร็จสิ้น", "align": "center", "size": "xxs", "color": "#aaaaaa", "margin": "md" },
-            //         {
-            //             "type": "box", "layout": "horizontal", "margin": "md", "spacing": "xs",
-            //             "contents": [1, 2, 3, 4, 5].map(score => ({
-            //                 "type": "box", "layout": "vertical", "backgroundColor": "#eeeeee", "cornerRadius": "sm", "paddingAll": "8px",
-            //                 "action": { "type": "uri", "label": "⭐ " + score, "uri": `https://liff.line.me/${LIFF_ID_REVIEW}?row=${fRow}&score=${score}` },
-            //                 "contents": [{ "type": "text", "text": "⭐ " + score, "size": "xs", "align": "center", "weight": "bold", "color": "#333333" }]
-            //             }))
-            //         }
-            //     ]
-            // },
+                    /* --- ส่วนของดาวที่แสดงตลอดเวลา --- */
+                    { "type": "separator", "margin": "xl" },
+                    { "type": "text", "text": "รบกวนให้คะแนนเมื่อบริการเสร็จสิ้น", "align": "center", "size": "xxs", "color": "#aaaaaa", "margin": "md" },
+                    {
+                        "type": "box", "layout": "horizontal", "margin": "md", "spacing": "xs",
+                        "contents": [1, 2, 3, 4, 5].map(score => ({
+                            "type": "box", "layout": "vertical", "backgroundColor": "#eeeeee", "cornerRadius": "sm", "paddingAll": "8px",
+                            "action": { "type": "uri", "label": "⭐ " + score, "uri": `https://liff.line.me/${LIFF_ID_REVIEW}?row=${fRow}&score=${score}` },
+                            "contents": [{ "type": "text", "text": "⭐ " + score, "size": "xs", "align": "center", "weight": "bold", "color": "#333333" }]
+                        }))
+                    }
+                ]
+            },
             "footer": {
                 "type": "box", "layout": "vertical",
                 "contents": [{
