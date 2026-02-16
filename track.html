@@ -237,45 +237,69 @@
     }
 
     function renderUI(tid, data) {
-    document.getElementById('dispId').innerText = tid;
-    document.getElementById('dispRoom').innerText = data.room || "-";
-    document.getElementById('dispCategory').innerText = data.category || "-";
-    document.getElementById('dispIssue').innerText = data.issue || "-";
-    document.getElementById('dispAdmin').innerText = data.admin || "เรากำลังประสานงานหาเจ้าหน้าที่ให้คุณ";
-    document.getElementById('dispTime').innerText = "อัปเดตเมื่อ: " + (data.time || "-");
-    
-    const status = data.status || "รอดำเนินการ";
-    const badgeBox = document.getElementById('statusBadgeBox');
-    const statusText = document.getElementById('dispStatus');
-    const queueText = document.getElementById('dispQueue');
-    
-    statusText.innerText = "สถานะ: " + status;
+        document.getElementById('dispId').innerText = tid;
+        document.getElementById('dispRoom').innerText = data.room || "-";
+        document.getElementById('dispCategory').innerText = data.category || "-";
+        document.getElementById('dispIssue').innerText = data.issue || "-";
+        document.getElementById('dispAdmin').innerText = data.admin || "เรากำลังประสานงานหาเจ้าหน้าที่ให้คุณ";
+        document.getElementById('dispTime').innerText = "อัปเดตเมื่อ: " + (data.time || "-");
+        
+        const status = data.status || "รอดำเนินการ";
+        const badgeBox = document.getElementById('statusBadgeBox');
+        const statusText = document.getElementById('dispStatus');
+        const queueText = document.getElementById('dispQueue');
+        const reviewArea = document.getElementById('reviewArea'); // พื้นที่ปุ่มรีวิว
+        
+        statusText.innerText = "สถานะ: " + status;
 
-    // ล้าง Style เดิมก่อนตั้งค่าใหม่
-    badgeBox.style.backgroundColor = "#eef3ff"; 
-    statusText.style.color = "#000080";
-    queueText.style.display = "none";
+        // ล้าง Style และซ่อนส่วนประเมินก่อน
+        badgeBox.style.backgroundColor = "#eef3ff"; 
+        statusText.style.color = "#000080";
+        queueText.style.display = "none";
+        reviewArea.style.display = 'none';
 
-    if (status === "กำลังดำเนินการ") {
-        badgeBox.style.backgroundColor = "#fff4e6"; 
-        statusText.style.color = "#d9480f";
-    } else if (status === "ดำเนินการเรียบร้อยแล้ว") {
-        badgeBox.style.backgroundColor = "#ebfbee"; 
-        statusText.style.color = "#2b8a3e";
-        document.getElementById('reviewArea').style.display = 'block';
-    } else if (status === "ยกเลิก") {
-        badgeBox.style.backgroundColor = "#fff5f5"; 
-        statusText.style.color = "#ff3b30";
-    } else if (status === "จัดจ้างร้านภายนอก") {
-        badgeBox.style.backgroundColor = "#343a40"; 
-        statusText.style.color = "#ffbf00";
-    } else if (status === "รอดำเนินการ") {
-        queueText.style.display = "block";
-        queueText.innerText = "คิวที่รอก่อนหน้านี้: " + (data.pendingCount || "0") + " คิว";
+        if (status === "กำลังดำเนินการ") {
+            badgeBox.style.backgroundColor = "#fff4e6"; 
+            statusText.style.color = "#d9480f";
+        } else if (status === "ดำเนินการเรียบร้อยแล้ว") {
+            badgeBox.style.backgroundColor = "#ebfbee"; 
+            statusText.style.color = "#2b8a3e";
+            
+            // --- ส่วนที่เพิ่มเข้ามาเพื่อให้ปุ่มทำงานได้ ---
+            reviewArea.style.display = 'block'; 
+            const reviewBtn = document.getElementById('reviewBtn');
+            
+            // ล้าง Event เก่า (ป้องกันการสะสมจากการค้นหาหลายครั้ง)
+            const newBtn = reviewBtn.cloneNode(true);
+            reviewBtn.parentNode.replaceChild(newBtn, reviewBtn);
+
+            newBtn.onclick = () => {
+                if (!data.row) return alert("ไม่พบข้อมูลเลขแถวสำหรับการประเมิน");
+                
+                // สร้างลิงก์ไปยัง LIFF Review
+                const reviewUrl = `https://liff.line.me/${LIFF_ID_REVIEW}?row=${data.row}`;
+                
+                if (liff.isInClient()) {
+                    liff.openWindow({ url: reviewUrl, external: false });
+                } else {
+                    window.location.href = reviewUrl;
+                }
+            };
+            // ------------------------------------------
+
+        } else if (status === "ยกเลิก") {
+            badgeBox.style.backgroundColor = "#fff5f5"; 
+            statusText.style.color = "#ff3b30";
+        } else if (status === "จัดจ้างร้านภายนอก") {
+            badgeBox.style.backgroundColor = "#343a40"; 
+            statusText.style.color = "#ffbf00";
+        } else if (status === "รอดำเนินการ") {
+            queueText.style.display = "block";
+            queueText.innerText = "คิวที่รอก่อนหน้านี้: " + (data.pendingCount || "0") + " คิว";
+        }
+        
+        document.getElementById('result').style.display = 'block';
     }
-    
-    document.getElementById('result').style.display = 'block';
-}
 
     async function sendFlexUpdate(tid, data) {
         const fStatus = String(data.status || "รอดำเนินการ");
