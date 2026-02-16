@@ -201,70 +201,85 @@
     }
 
     function renderJobs(jobs) {
-    const container = document.getElementById('jobContainer');
-    container.innerHTML = jobs.length === 0 ? "<div style='text-align:center; color:#999; margin-top:50px;'>📭 ไม่พบรายการงานซ่อม</div>" : "";
-
-    jobs.forEach(job => {
-        const card = document.createElement('div');
-        card.className = `job-card prio-${job.priority || 'ปกติ'}`;
-        
-        let badgeClass = 'badge-pending';
-        if (job.status === 'กำลังดำเนินการ') badgeClass = 'badge-process';
-        if (job.status === 'ดำเนินการเรียบร้อยแล้ว') badgeClass = 'badge-done';
-        
-        // ตรวจสอบชื่อเจ้าหน้าที่: ถ้าไม่มีให้แสดง "รอเจ้าหน้าที่รับงาน"
-        const responsibleStaff = (job.adminName && job.adminName !== "undefined") 
-                                 ? `${job.adminName}` 
-                                 : "⚠️ รอเจ้าหน้าที่รับงาน";
-
-        card.innerHTML = `
-            <div class="card-header">
-                <span class="ticket-id">${job.ticketId || 'N/A'}</span>
-                <span class="status-badge ${badgeClass}">${job.status || 'รอดำเนินการ'}</span>
-            </div>
-            <div class="card-body">
-                <span class="job-issue">${job.issue || 'ไม่มีหัวข้อ'}</span>
-                
-                <div class="info-grid">
-                    <div class="info-row"><span class="info-label">⏰ เวลา:</span><span class="info-value">${job.timeStr || '-'}</span></div>
-                    <div class="info-row"><span class="info-label">👤 ผู้แจ้ง:</span><span class="info-value">${job.name || '-'}</span></div>
-                    <div class="info-row"><span class="info-label">🏢 สถานที่:</span><span class="info-value">${job.room || '-'}</span></div>
-                    <div class="info-row"><span class="info-label">📁 ประเภท:</span><span class="info-value">${job.category || '-'}</span></div>
-                    <div class="info-row"><span class="info-label">📝 รายละเอียด:</span><span class="info-value">${job.issue || '-'}</span></div>
-                    <div class="info-row"><span class="info-label">👷 จนท.:</span><span class="info-value admin">${responsibleStaff}</span></div>
+        const container = document.getElementById('jobContainer');
+        container.innerHTML = jobs.length === 0 ? "<div style='text-align:center; color:#999; margin-top:50px;'>📭 ไม่พบรายการงานซ่อม</div>" : "";
+    
+        jobs.forEach(job => {
+            const card = document.createElement('div');
+            card.className = `job-card prio-${job.priority || 'ปกติ'}`;
+            
+            // --- ส่วนที่ปรับปรุง: การจัดการ Badge และสีพิเศษ ---
+            let badgeClass = 'badge-pending'; // สีน้ำเงินมาตรฐาน
+            let adminStyle = ""; // เก็บ Style พิเศษสำหรับชื่อเจ้าหน้าที่
+    
+            if (job.status === 'กำลังดำเนินการ') {
+                badgeClass = 'badge-process'; // สีส้ม
+            } 
+            else if (job.status === 'ดำเนินการเรียบร้อยแล้ว') {
+                badgeClass = 'badge-done'; // สีเขียว
+            }
+            else if (job.status === "จัดจ้างร้านภายนอก") {
+                badgeClass = 'badge-external'; // สร้าง Class ใหม่เพื่อรอรับ CSS สีดำ-ทอง
+                adminStyle = "color: #ffbf00; font-weight: bold;"; // บังคับชื่อเจ้าหน้าที่เป็นสีทอง
+            }
+            else if (job.status === "ยกเลิกรายการ") {
+                badgeClass = 'badge-cancel'; // สีแดง
+            }
+            // ----------------------------------------------
+    
+            // ตรวจสอบชื่อเจ้าหน้าที่: ถ้าไม่มีให้แสดง "รอเจ้าหน้าที่รับงาน"
+            const responsibleStaff = (job.adminName && job.adminName !== "undefined" && job.adminName !== "-") 
+                                     ? `${job.adminName}` 
+                                     : "⚠️ รอเจ้าหน้าที่รับงาน";
+    
+            card.innerHTML = `
+                <div class="card-header">
+                    <span class="ticket-id">${job.ticketId || 'N/A'}</span>
+                    <span class="status-badge ${badgeClass}">${job.status || 'รอดำเนินการ'}</span>
                 </div>
-
-                ${(job.imageUrl && job.imageUrl !== "") ? `
-                <div style="margin-top:15px; border-top:1px dashed #eee; padding-top:10px;">
-                    <button onclick="let target = this.nextElementSibling; target.style.display = target.style.display === 'none' ? 'block' : 'none';" 
-                            style="width:100%; background:#f8f9fa; border:1px solid #ddd; padding:8px; border-radius:8px; font-size:12px; color:#666; cursor:pointer;">
-                        📷 กดเพื่อดูรูปภาพประกอบ
-                    </button>
-                    <div style="display:none; margin-top:10px; text-align:center;">
-                        <img src="${job.imageUrl}" 
-                             loading="lazy"
-                             style="max-width:100%; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1); cursor:zoom-in;"
-                             onclick="window.open(this.src, '_blank')"
-                             onerror="this.style.display='none'; this.parentElement.innerHTML='<p style=font-size:12px;color:red;>⚠️ไม่มีรูปภาพประกอบ</p>';">
+                <div class="card-body">
+                    <span class="job-issue">${job.issue || 'ไม่มีหัวข้อ'}</span>
+                    
+                    <div class="info-grid">
+                        <div class="info-row"><span class="info-label">⏰ เวลา:</span><span class="info-value">${job.timeStr || '-'}</span></div>
+                        <div class="info-row"><span class="info-label">👤 ผู้แจ้ง:</span><span class="info-value">${job.name || '-'}</span></div>
+                        <div class="info-row"><span class="info-label">🏢 สถานที่:</span><span class="info-value">${job.room || '-'}</span></div>
+                        <div class="info-row"><span class="info-label">📁 ประเภท:</span><span class="info-value">${job.category || '-'}</span></div>
+                        <div class="info-row"><span class="info-label">📝 รายละเอียด:</span><span class="info-value">${job.issue || '-'}</span></div>
+                        <div class="info-row"><span class="info-label">👷 จนท.:</span><span class="info-value admin" style="${adminStyle}">${responsibleStaff}</span></div>
+                    </div>
+    
+                    ${(job.imageUrl && job.imageUrl !== "") ? `
+                    <div style="margin-top:15px; border-top:1px dashed #eee; padding-top:10px;">
+                        <button onclick="let target = this.nextElementSibling; target.style.display = target.style.display === 'none' ? 'block' : 'none';" 
+                                style="width:100%; background:#f8f9fa; border:1px solid #ddd; padding:8px; border-radius:8px; font-size:12px; color:#666; cursor:pointer;">
+                            📷 กดเพื่อดูรูปภาพประกอบ
+                        </button>
+                        <div style="display:none; margin-top:10px; text-align:center;">
+                            <img src="${job.imageUrl}" 
+                                 loading="lazy"
+                                 style="max-width:100%; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1); cursor:zoom-in;"
+                                 onclick="window.open(this.src, '_blank')"
+                                 onerror="this.style.display='none'; this.parentElement.innerHTML='<p style=font-size:12px;color:red;>⚠️ไม่มีรูปภาพประกอบ</p>';">
+                        </div>
+                    </div>
+                    ` : ''}
+    
+                    <div class="action-box">
+                        <select class="action-select" onchange="updateJobStatus(${job.row}, this.value)">
+                            <option value="">-- อัปเดตสถานะงาน --</option>
+                            <option value="กำลังดำเนินการ" ${job.status === 'กำลังดำเนินการ' ? 'selected' : ''}>▶️ เข้าดำเนินการ</option>
+                            <option value="จัดจ้างร้านภายนอก" ${job.status === 'จัดจ้างร้านภายนอก' ? 'selected' : ''}>🚚 จัดจ้างภายนอก</option>
+                            <option value="ดำเนินการเรียบร้อยแล้ว" ${job.status === 'ดำเนินการเรียบร้อยแล้ว' ? 'selected' : ''}>✅ ดำเนินการเสร็จสิ้น</option>
+                            <option value="รอดำเนินการ" ${job.status === 'รอดำเนินการ' ? 'selected' : ''}>🔄 ยกเลิกรับรายการนี้/คืนงาน </option>
+                            <option value="ยกเลิกรายการ" ${job.status === 'ยกเลิกรายการ' ? 'selected' : ''}>🚫 ยกเลิกรายการนี้ </option>
+                        </select>
                     </div>
                 </div>
-                ` : ''}
-
-                <div class="action-box">
-                    <select class="action-select" onchange="updateJobStatus(${job.row}, this.value)">
-                        <option value="">-- อัปเดตสถานะงาน --</option>
-                        <option value="กำลังดำเนินการ">▶️ เข้าดำเนินการ</option>
-                        <option value="จัดจ้างร้านภายนอก">🚚 จัดจ้างภายนอก</option>
-                        <option value="ดำเนินการเรียบร้อยแล้ว">✅ ดำเนินการเสร็จสิ้น</option>
-                        <option value="รอดำเนินการ">🔄 ยกเลิกรับรายการนี้/คืนงาน </option>
-                        <option value="ยกเลิกรายการ">🚫 ยกเลิกรายการนี้ </option>
-                    </select>
-                </div>
-            </div>
-        `;
-        container.appendChild(card);
-    });
-}
+            `;
+            container.appendChild(card);
+        });
+    }
 
     function filterJobs() {
         const prefix = (adminDept.toLowerCase() === "admin") 
