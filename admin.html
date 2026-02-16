@@ -103,7 +103,7 @@
     firebase.initializeApp(firebaseConfig);
     const messaging = firebase.messaging();
 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxsC761W4WqRu8oqjN4mZM5sxm0y631lj3kyg7A3xKxgv1fbGZ481Rfcr_Jd7emSxFk/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwPawfeQI4dWRc7LYiYiAvFv1h6d2YjFjXNrAIK8MNvE0G3Rx7Bp_2aIp0ERHoVT3gy/exec";
     const LIFF_ID = "2008875334-VPUmuC8D";
 
     let allJobs = [];
@@ -253,10 +253,11 @@
                 <div class="action-box">
                     <select class="action-select" onchange="updateJobStatus(${job.row}, this.value)">
                         <option value="">-- อัปเดตสถานะงาน --</option>
-                        <option value="กำลังดำเนินการ">▶️ รับงาน/กำลังดำเนินการ</option>
+                        <option value="กำลังดำเนินการ">▶️ เข้าดำเนินการ</option>
                         <option value="จัดจ้างร้านภายนอก">🚚 จัดจ้างภายนอก</option>
-                        <option value="ดำเนินการเรียบร้อยแล้ว">✅ ปิดงาน/เสร็จสิ้น</option>
-                        <option value="รอดำเนินการ">🔄 ยกเลิกงาน/รอดำเนินการ</option>
+                        <option value="ดำเนินการเรียบร้อยแล้ว">✅ ดำเนินการเสร็จสิ้น</option>
+                        <option value="รอดำเนินการ">🔄 ยกเลิกรับรายการนี้/คืนงาน </option>
+                        <option value="ยกเลิกรายการ">🚫 ยกเลิกรายการนี้ </option>
                     </select>
                 </div>
             </div>
