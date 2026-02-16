@@ -237,38 +237,45 @@
     }
 
     function renderUI(tid, data) {
-        document.getElementById('dispId').innerText = tid;
-        document.getElementById('dispRoom').innerText = data.room || "-";
-        document.getElementById('dispCategory').innerText = data.category || "-";
-        document.getElementById('dispIssue').innerText = data.issue || "-";
-        document.getElementById('dispAdmin').innerText = data.admin || "กำลังรอเจ้าหน้าที่";
-        document.getElementById('dispTime').innerText = "อัปเดตเมื่อ: " + (data.time || "-");
-        
-        const status = data.status || "รอดำเนินการ";
-        const badgeBox = document.getElementById('statusBadgeBox');
-        const statusText = document.getElementById('dispStatus');
-        const queueText = document.getElementById('dispQueue');
-        
-        statusText.innerText = "สถานะ: " + status;
+    document.getElementById('dispId').innerText = tid;
+    document.getElementById('dispRoom').innerText = data.room || "-";
+    document.getElementById('dispCategory').innerText = data.category || "-";
+    document.getElementById('dispIssue').innerText = data.issue || "-";
+    document.getElementById('dispAdmin').innerText = data.admin || "เรากำลังประสานงานหาเจ้าหน้าที่ให้คุณ";
+    document.getElementById('dispTime').innerText = "อัปเดตเมื่อ: " + (data.time || "-");
+    
+    const status = data.status || "รอดำเนินการ";
+    const badgeBox = document.getElementById('statusBadgeBox');
+    const statusText = document.getElementById('dispStatus');
+    const queueText = document.getElementById('dispQueue');
+    
+    statusText.innerText = "สถานะ: " + status;
 
-        if (status === "กำลังดำเนินการ") {
-            badgeBox.style.backgroundColor = "#fff4e6"; statusText.style.color = "#d9480f";
-            queueText.style.display = "none";
-        } else if (status === "ดำเนินการเรียบร้อยแล้ว") {
-            badgeBox.style.backgroundColor = "#ebfbee"; statusText.style.color = "#2b8a3e";
-            queueText.style.display = "none";
-            document.getElementById('reviewArea').style.display = 'block';
-            document.getElementById('reviewBtn').onclick = () => {
-                // ส่ง Username ไปด้วยเผื่อใช้ในการยืนยันสิทธิ์รีวิว (ถ้าจำเป็น)
-                liff.openWindow({ url: `https://liff.line.me/${LIFF_ID_REVIEW}?row=${data.row}`, external: false });
-            };
-        } else {
-            badgeBox.style.backgroundColor = "#eef3ff"; statusText.style.color = "#000080";
-            queueText.style.display = "block";
-            queueText.innerText = "คิวที่รอก่อนหน้านี้: " + (data.pendingCount || "0") + " คิว";
-        }
-        document.getElementById('result').style.display = 'block';
+    // ล้าง Style เดิมก่อนตั้งค่าใหม่
+    badgeBox.style.backgroundColor = "#eef3ff"; 
+    statusText.style.color = "#000080";
+    queueText.style.display = "none";
+
+    if (status === "กำลังดำเนินการ") {
+        badgeBox.style.backgroundColor = "#fff4e6"; 
+        statusText.style.color = "#d9480f";
+    } else if (status === "ดำเนินการเรียบร้อยแล้ว") {
+        badgeBox.style.backgroundColor = "#ebfbee"; 
+        statusText.style.color = "#2b8a3e";
+        document.getElementById('reviewArea').style.display = 'block';
+    } else if (status === "ยกเลิก") {
+        badgeBox.style.backgroundColor = "#fff5f5"; 
+        statusText.style.color = "#ff3b30";
+    } else if (status === "จัดจ้างร้านภายนอก") {
+        badgeBox.style.backgroundColor = "#343a40"; 
+        statusText.style.color = "#ffbf00";
+    } else if (status === "รอดำเนินการ") {
+        queueText.style.display = "block";
+        queueText.innerText = "คิวที่รอก่อนหน้านี้: " + (data.pendingCount || "0") + " คิว";
     }
+    
+    document.getElementById('result').style.display = 'block';
+}
 
     async function sendFlexUpdate(tid, data) {
         const fStatus = String(data.status || "รอดำเนินการ");
@@ -276,14 +283,31 @@
         const fRoom = String(data.room || "-");
         const fCategory = String(data.category || "-");
         const fIssue = String(data.issue || "-");
-        const fAdmin = String(data.admin || "กำลังรอเจ้าหน้าที่");
+        const fAdmin = String(data.admin || "เรากำลังประสานงานหาเจ้าหน้าที่ให้คุณ");
         const fRow = data.row;
 
-        let statusBg = "#eef3ff"; let statusColor = "#000080";
-        if (fStatus === "กำลังดำเนินการ") { statusBg = "#fff4e6"; statusColor = "#d9480f"; }
-        else if (fStatus === "ดำเนินการเรียบร้อยแล้ว") { statusBg = "#ebfbee"; statusColor = "#2b8a3e"; }
+        // --- ส่วนที่ปรับปรุงใหม่: เพิ่มสี ยกเลิก และ จัดจ้างร้านภายนอก ---
+        let statusBg = "#eef3ff"; 
+        let statusColor = "#000080";
+
+        if (fStatus === "กำลังดำเนินการ") { 
+            statusBg = "#fff4e6"; 
+            statusColor = "#d9480f"; 
+        } else if (fStatus === "ดำเนินการเรียบร้อยแล้ว") { 
+            statusBg = "#ebfbee"; 
+            statusColor = "#2b8a3e"; 
+        } else if (fStatus === "ยกเลิก") { 
+            statusBg = "#fff5f5"; 
+            statusColor = "#ff3b30"; // สีแดงสด
+        } else if (fStatus === "จัดจ้างร้านภายนอก") { 
+            statusBg = "#343a40";    // สีดำ/เทาเข้ม
+            statusColor = "#ffbf00"; // สีเหลืองทอง
+        }
+        // --------------------------------------------------------
 
         let statusContents = [{ "type": "text", "text": "สถานะ: " + fStatus, "weight": "bold", "color": statusColor, "size": "sm" }];
+        
+        // แสดงคิวเฉพาะตอน รอดำเนินการ
         if (fStatus === "รอดำเนินการ") {
             statusContents.push({ "type": "text", "text": "คิวที่รอก่อนหน้านี้: " + fQueue + " คิว", "size": "xs", "color": "#666666", "margin": "xs" });
         }
@@ -307,23 +331,13 @@
                             { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "🏢 สถานที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": fRoom, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }] },
                             { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "📁 ประเภท:", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": fCategory, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }] },
                             { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "📝 รายละเอียด:", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": fIssue, "wrap": true, "color": "#666666", "size": "xs", "flex": 5 }] },
-                            { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "👨‍🔧 เจ้าหน้าที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": fAdmin, "wrap": true, "color": "#000080", "size": "xs", "flex": 5, "weight": "bold" }] }
+                            { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "👷 เจ้าหน้าที่:", "color": "#aaaaaa", "size": "xs", "flex": 2 }, { "type": "text", "text": fAdmin, "wrap": true, "color": statusColor === "#ffbf00" ? "#ffbf00" : "#000080", "size": "xs", "flex": 5, "weight": "bold" }] }
                         ]
-                    },
-                    /* --- ส่วนของดาวที่แสดงตลอดเวลา --- */
-                    // { "type": "separator", "margin": "xl" },
-                    // { "type": "text", "text": "รบกวนให้คะแนนเมื่อบริการเสร็จสิ้น", "align": "center", "size": "xxs", "color": "#aaaaaa", "margin": "md" },
-                    // {
-                    //     "type": "box", "layout": "horizontal", "margin": "md", "spacing": "xs",
-                    //     "contents": [1, 2, 3, 4, 5].map(score => ({
-                    //         "type": "box", "layout": "vertical", "backgroundColor": "#eeeeee", "cornerRadius": "sm", "paddingAll": "8px",
-                    //         "action": { "type": "uri", "label": "⭐ " + score, "uri": `https://liff.line.me/${LIFF_ID_REVIEW}?row=${fRow}&score=${score}` },
-                    //         "contents": [{ "type": "text", "text": "⭐ " + score, "size": "xs", "align": "center", "weight": "bold", "color": "#333333" }]
-                    //     }))
-                    // }
+                    }
                 ]
             },
-            "footer": {
+            // Footer แสดงปุ่มติดตามงาน (ซ่อนเฉพาะเมื่อ ดำเนินการเรียบร้อยแล้ว)
+            "footer": (fStatus === "ดำเนินการเรียบร้อยแล้ว" || fStatus === "ยกเลิก")? undefined : {
                 "type": "box", "layout": "vertical",
                 "contents": [{
                     "type": "button", "style": "primary", "color": "#000080", "height": "sm",
