@@ -103,7 +103,7 @@
     firebase.initializeApp(firebaseConfig);
     const messaging = firebase.messaging();
 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxW5iNlSu8_xbSRC1LU30ulD9FmzuBypcbdkYYlSXBgLLljkLs0upP2DtI9yq5mZiOn/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby247nUgLompR2Iq3FDXCfvQkjLDsDbi-5qsyMoAapQpp6wl6oN8GybUmrMlBeknCDj/exec";
     const LIFF_ID = "2008875334-VPUmuC8D";
 
     let allJobs = [];
@@ -345,8 +345,8 @@ async function getTokenAndSave() {
                 cache: 'no-cache'
             });
 
-            alert(`บันทึกข้อมูลสำเร็จ!\nUID: ${finalUid}\nกรุณาเช็คใน Sheet ครับ`);
-            
+            //alert(`บันทึกข้อมูลสำเร็จ!\nUID: ${finalUid}\nกรุณาเช็คใน Sheet ครับ`);
+            alert(`บันทึก Request Token สำเร็จ!\nเปิดรับการแจ้งเตือน`);
         } else {
             alert('ไม่ได้รับ Token จาก Firebase');
         }
